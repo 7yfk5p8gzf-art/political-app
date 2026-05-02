@@ -1,0 +1,70 @@
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+
+    const politician = body?.politician || "";
+    const oldStatement = body?.oldStatement || "";
+    const oldDate = body?.oldDate || "";
+    const newStatement = body?.newStatement || "";
+    const newDate = body?.newDate || "";
+
+    if (!politician || !oldStatement || !newStatement) {
+      return NextResponse.json(
+        { error: "Hiányzik a politikus, régi állítás vagy új állítás" },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: `Elemezd röviden magyarul, hogy van-e ellentmondás.
+
+Politikus: ${politician}
+
+Régi állítás dátuma: ${oldDate}
+Régi állítás:
+${oldStatement}
+
+Új állítás dátuma: ${newDate}
+Új állítás:
+${newStatement}
+
+Adj 5-8 mondatos szerkesztői összefoglalót. Legyen benne:
+- miben változott az álláspont
+- mennyire erős az ellentmondás
+- ha nem egyértelmű, azt is írd le.`,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data?.error?.message || "OpenAI API hiba" },
+        { status: 500 }
+      );
+    }
+
+    const summary = data.output?.[0]?.content?.[0]?.text || "";
+
+    if (!summary) {
+      return NextResponse.json(
+        { error: "AI nem adott választ" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ summary });
+  } catch (err) {
+    console.error("Contradiction AI hiba:", err);
+    return NextResponse.json({ error: "AI hiba" }, { status: 500 });
+  }
+}
