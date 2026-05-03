@@ -8,6 +8,7 @@ type Contradiction = {
   id: string;
   politician: string | null;
   topic: string | null;
+  language: string | null;
   slug: string | null;
   old_statement: string | null;
   new_statement: string | null;
@@ -25,7 +26,9 @@ export default function HomePage() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
   const [activeTopic, setActiveTopic] = useState("all");
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [activeLang, setActiveLang] = useState("all");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     load();
@@ -37,12 +40,27 @@ export default function HomePage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    setUserEmail(user?.email || null);
+    if (!user) {
+      setIsLoggedIn(false);
+      setShowAdmin(false);
+      return;
+    }
+
+    setIsLoggedIn(true);
+
+    const { data: profile } = await supabase
+  .from("profiles")
+  .select("role")
+  .eq("id", user.id)
+  .single();
+
+setShowAdmin(!!profile && ["admin", "editor"].includes(profile.role));
   }
 
   async function logout() {
     await supabase.auth.signOut();
-    setUserEmail(null);
+    setIsLoggedIn(false);
+    setShowAdmin(false);
     alert("Kijelentkeztél.");
   }
 
@@ -53,7 +71,9 @@ export default function HomePage() {
       .eq("status", "published")
       .order("id", { ascending: false });
 
-    const { data: vData } = await supabase.from("contradiction_votes").select("*");
+    const { data: vData } = await supabase
+      .from("contradiction_votes")
+      .select("*");
 
     setItems(cData || []);
     setVotes(vData || []);
@@ -69,6 +89,13 @@ export default function HomePage() {
     const percent = total > 0 ? Math.round((yes / total) * 100) : 0;
 
     return { total, percent };
+  }
+
+  function langLabel(lang: string | null) {
+    if (lang === "hu") return "HU";
+    if (lang === "en") return "EN";
+    if (lang === "de") return "DE";
+    return "Nincs nyelv";
   }
 
   const topics = Array.from(
@@ -87,35 +114,34 @@ export default function HomePage() {
     const matchesSearch = text.includes(search.toLowerCase());
     const matchesTopic =
       activeTopic === "all" || item.topic?.trim() === activeTopic;
+    const matchesLang =
+      activeLang === "all" || item.language?.trim() === activeLang;
 
-    return matchesSearch && matchesTopic;
+    return matchesSearch && matchesTopic && matchesLang;
   });
 
-  const latestItems = [...filteredItems]
-  .slice(0, 5);
+  const latestItems = [...filteredItems].slice(0, 5);
 
-const topItems = [...filteredItems]
-  .sort((a, b) => {
-    const aStats = getStats(a.id);
-    const bStats = getStats(b.id);
+  const topItems = [...filteredItems]
+    .sort((a, b) => {
+      const aStats = getStats(a.id);
+      const bStats = getStats(b.id);
 
-    if (bStats.total !== aStats.total) {
-      return bStats.total - aStats.total;
-    }
+      if (bStats.total !== aStats.total) {
+        return bStats.total - aStats.total;
+      }
 
-    return bStats.percent - aStats.percent;
-  })
-  .slice(0, 5);
+      return bStats.percent - aStats.percent;
+    })
+    .slice(0, 5);
 
   return (
     <main style={pageStyle}>
       <section style={containerStyle}>
         <div style={userBarStyle}>
-          {userEmail ? (
+          {isLoggedIn ? (
             <>
-              <span>
-                Bejelentkezve: <strong>{userEmail}</strong>
-              </span>
+              <span>Bejelentkezve</span>
               <button onClick={logout} style={smallButtonStyle}>
                 Kijelentkezés
               </button>
@@ -139,14 +165,16 @@ const topItems = [...filteredItems]
           </p>
 
           <div style={buttonRowStyle}>
-  <a href="/contradictions" style={primaryButtonStyle}>
-    Ellentmondások megnyitása →
-  </a>
+            <a href="/contradictions" style={primaryButtonStyle}>
+              Ellentmondások megnyitása →
+            </a>
 
-  <a href="/admin/contradictions" style={secondaryButtonStyle}>
-    Admin →
-  </a>
-</div>
+            {showAdmin && (
+              <a href="/admin/contradictions" style={secondaryButtonStyle}>
+                Admin →
+              </a>
+            )}
+          </div>
         </header>
 
         <div style={filterBoxStyle}>
@@ -157,12 +185,41 @@ const topItems = [...filteredItems]
             style={searchStyle}
           />
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={filterGroupStyle}>
+            <button
+              onClick={() => setActiveLang("all")}
+              style={activeLang === "all" ? activeFilterStyle : filterButtonStyle}
+            >
+              Összes nyelv
+            </button>
+            <button
+              onClick={() => setActiveLang("hu")}
+              style={activeLang === "hu" ? activeFilterStyle : filterButtonStyle}
+            >
+              HU
+            </button>
+            <button
+              onClick={() => setActiveLang("en")}
+              style={activeLang === "en" ? activeFilterStyle : filterButtonStyle}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setActiveLang("de")}
+              style={activeLang === "de" ? activeFilterStyle : filterButtonStyle}
+            >
+              DE
+            </button>
+          </div>
+
+          <div style={filterGroupStyle}>
             <button
               onClick={() => setActiveTopic("all")}
-              style={activeTopic === "all" ? activeFilterStyle : filterButtonStyle}
+              style={
+                activeTopic === "all" ? activeFilterStyle : filterButtonStyle
+              }
             >
-              Összes
+              Összes téma
             </button>
 
             {topics.map((t) => (
@@ -176,41 +233,46 @@ const topItems = [...filteredItems]
             ))}
           </div>
         </div>
+
         <section style={topSectionStyle}>
-  <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
+          <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
 
-  {latestItems.length === 0 && (
-    <p>Még nincs publikált ellentmondás.</p>
-  )}
+          {latestItems.length === 0 && (
+            <p>Még nincs publikált ellentmondás.</p>
+          )}
 
-  <div style={gridStyle}>
-    {latestItems.map((item) => (
-      <article key={item.id} style={cardStyle}>
-        <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
+          <div style={gridStyle}>
+            {latestItems.map((item) => (
+              <article key={item.id} style={cardStyle}>
+                <div style={badgeRowStyle}>
+                  <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
+                  <p style={langBadgeStyle}>{langLabel(item.language)}</p>
+                </div>
 
-        <h3 style={headlineStyle}>
-          {item.politician || "Ismeretlen"}: régen mást mondott, mint most?
-        </h3>
+                <h3 style={headlineStyle}>
+                  {item.politician || "Ismeretlen"}: régen mást mondott, mint
+                  most?
+                </h3>
 
-        <div style={miniGridStyle}>
-          <div style={miniBoxStyle}>
-            <strong>RÉGEN</strong>
-            <p>{item.old_statement || "Nincs régi állítás"}</p>
+                <div style={miniGridStyle}>
+                  <div style={miniBoxStyle}>
+                    <strong>RÉGEN</strong>
+                    <p>{item.old_statement || "Nincs régi állítás"}</p>
+                  </div>
+
+                  <div style={miniBoxStyle}>
+                    <strong>MOST</strong>
+                    <p>{item.new_statement || "Nincs új állítás"}</p>
+                  </div>
+                </div>
+
+                <a href="/contradictions" style={openStyle}>
+                  Megnyitás →
+                </a>
+              </article>
+            ))}
           </div>
-
-          <div style={miniBoxStyle}>
-            <strong>MOST</strong>
-            <p>{item.new_statement || "Nincs új állítás"}</p>
-          </div>
-        </div>
-
-        <a href="/contradictions" style={openStyle}>
-  Megnyitás →
-</a>
-      </article>
-    ))}
-  </div>
-</section>
+        </section>
 
         <section style={topSectionStyle}>
           <h2 style={sectionTitleStyle}>🔥 Legnagyobb ellentmondások</h2>
@@ -227,7 +289,10 @@ const topItems = [...filteredItems]
                 <article key={item.id} style={cardStyle}>
                   <p style={rankStyle}>#{index + 1}</p>
 
-                  <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
+                  <div style={badgeRowStyle}>
+                    <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
+                    <p style={langBadgeStyle}>{langLabel(item.language)}</p>
+                  </div>
 
                   <h3 style={headlineStyle}>
                     {item.politician || "Ismeretlen"}: régen mást mondott, mint
@@ -250,13 +315,10 @@ const topItems = [...filteredItems]
                     👍 {stats.percent}% szerint ellentmondás ({stats.total}{" "}
                     szavazat)
                   </p>
-                  <a href="/contradictions" style={openStyle}>
-  Megnyitás →
-</a>
-  
 
-                 
-                    
+                  <a href="/contradictions" style={openStyle}>
+                    Megnyitás →
+                  </a>
                 </article>
               );
             })}
@@ -372,6 +434,13 @@ const searchStyle: CSSProperties = {
   marginBottom: 12,
 };
 
+const filterGroupStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  marginTop: 10,
+};
+
 const filterButtonStyle: CSSProperties = {
   padding: "8px 10px",
   border: "1px solid #111827",
@@ -421,11 +490,29 @@ const rankStyle: CSSProperties = {
   color: "#9ca3af",
 };
 
+const badgeRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  alignItems: "center",
+};
+
 const badgeStyle: CSSProperties = {
   display: "inline-block",
   padding: "5px 10px",
   background: "#111827",
   color: "white",
+  fontSize: 12,
+  fontWeight: 900,
+  letterSpacing: 1,
+  margin: 0,
+};
+
+const langBadgeStyle: CSSProperties = {
+  display: "inline-block",
+  padding: "5px 10px",
+  border: "1px solid #111827",
+  color: "#111827",
   fontSize: 12,
   fontWeight: 900,
   letterSpacing: 1,

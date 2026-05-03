@@ -125,30 +125,30 @@ export default function ContradictionsPage() {
   }
 
   function getBadge(item: Contradiction) {
-    const contradictionText = (item.ai_summary || "").toLowerCase();
+  const text = (item.ai_summary || "").toLowerCase();
 
-    let badge = "NINCS";
-    let badgeColor = "#166534";
+  let badge = "NINCS";
+  let color = "#166534"; // zöld
 
-    if (
-      contradictionText.includes("ellentmondás") &&
-      (contradictionText.includes("jelentős") ||
-        contradictionText.includes("egyértelmű") ||
-        contradictionText.includes("ellentétes"))
-    ) {
-      badge = "ELLENTMONDÁS";
-      badgeColor = "#991b1b";
-    } else if (
-      contradictionText.includes("részben") ||
-      contradictionText.includes("nem teljesen") ||
-      contradictionText.includes("kontekstus")
-    ) {
-      badge = "RÉSZBEN";
-      badgeColor = "#92400e";
-    }
-
-    return { badge, badgeColor };
+  if (
+    text.includes("ellentmondás") &&
+    (text.includes("jelentős") ||
+      text.includes("egyértelmű") ||
+      text.includes("ellentétes"))
+  ) {
+    badge = "ELLENTMONDÁS";
+    color = "#991b1b"; // piros
+  } else if (
+    text.includes("részben") ||
+    text.includes("nem teljesen") ||
+    text.includes("kontekstus")
+  ) {
+    badge = "RÉSZBEN";
+    color = "#92400e"; // narancs
   }
+
+  return { badge, badgeColor: color };
+}
 
   const filteredItems = items.filter((item) => {
     const text = `
@@ -185,7 +185,8 @@ export default function ContradictionsPage() {
 
   function renderCard(item: Contradiction, rank?: number) {
     const alreadyVoted = hasUserVoted(item.id);
-    const href = `/compare/${item.id}`;
+    const href = `/contradictions/${item.slug}`;
+
     const stats = getVoteStats(item.id);
     const { badge, badgeColor } = getBadge(item);
 
@@ -240,8 +241,8 @@ export default function ContradictionsPage() {
         <div style={metaStyle}>
           <span>{item.topic || "nincs téma"}</span>
           <span>{item.language?.toUpperCase() || "HU"}</span>
-          <span>RÉGEN: {item.old_date || "nincs"}</span>
-          <span>MOST: {item.new_date || "nincs"}</span>
+          <span>RÉGEN: {item.old_statement || "nincs adat"}</span>
+          <span>MOST: {item.new_statement || "nincs adat"}</span>
         </div>
 
         <div style={compareGridStyle}>
@@ -267,7 +268,13 @@ export default function ContradictionsPage() {
         style={{
           ...progressFillStyle,
           width: `${stats.percent}%`,
-          background: stats.percent >= 50 ? "#16a34a" : "#dc2626",
+          background:
+  stats.total === 0
+    ? "#9ca3af" // szürke ha nincs szavazat
+    : stats.percent >= 50
+    ? "#16a34a" // zöld
+    : "#dc2626", // piros
+
         }}
       />
     </div>

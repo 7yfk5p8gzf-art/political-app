@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 type Source = {
   id: string;
   title: string;
+  url: string | null;
   politician: string | null;
   topic: string | null;
   source_date: string | null;
@@ -146,11 +147,11 @@ setRole(role);
 
     old_statement: oldS?.title || null,
     old_date: oldS?.source_date || null,
-    old_source: oldS?.title || null,
+    old_source: oldS?.url || null,
 
     new_statement: newS?.title || null,
     new_date: newS?.source_date || null,
-    new_source: newS?.title || null,
+    new_source: newS?.url || null,
 
     ai_summary: "",
     status: "draft",

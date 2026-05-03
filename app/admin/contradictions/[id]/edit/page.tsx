@@ -61,11 +61,11 @@ export default function EditContradictionPage() {
         old_statement: item.old_statement,
         old_date: item.old_date,
         old_source: item.old_source,
-        old_video_url: item.old_video_url,
+        
         new_statement: item.new_statement,
         new_date: item.new_date,
         new_source: item.new_source,
-        new_video_url: item.new_video_url,
+        
         ai_summary: item.ai_summary,
         status: item.status,
       })
@@ -147,15 +147,7 @@ export default function EditContradictionPage() {
             onChange={(e) => setItem({ ...item, old_source: e.target.value })}
           />
 
-          <label style={labelStyle}>Régi videó link</label>
-          <input
-            style={inputStyle}
-            placeholder="https://www.youtube.com/watch?v=..."
-            value={item.old_video_url || ""}
-            onChange={(e) =>
-              setItem({ ...item, old_video_url: e.target.value })
-            }
-          />
+          
         </section>
 
         <section style={boxStyle}>
@@ -184,15 +176,7 @@ export default function EditContradictionPage() {
             onChange={(e) => setItem({ ...item, new_source: e.target.value })}
           />
 
-          <label style={labelStyle}>Új videó link</label>
-          <input
-            style={inputStyle}
-            placeholder="https://www.youtube.com/watch?v=..."
-            value={item.new_video_url || ""}
-            onChange={(e) =>
-              setItem({ ...item, new_video_url: e.target.value })
-            }
-          />
+          
         </section>
       </div>
 
@@ -213,7 +197,7 @@ export default function EditContradictionPage() {
         </a>
 
         <a
-          href={`/compare/${item.slug}`}
+          href={`/contradictions/${item.slug}?preview=1`}
           target="_blank"
           style={previewButtonStyle}
         >

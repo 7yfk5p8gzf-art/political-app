@@ -36,14 +36,17 @@ export default function AdminSidebar({ user, onLogout }: { user: User; onLogout:
       </nav>
 
       <div className="mt-auto rounded-2xl bg-white/5 p-4 text-sm">
-        <div className="text-slate-400">Bejelentkezve</div>
-        <div className="mt-1 font-semibold">{user.name}</div>
-        <div className="text-slate-400">{roleLabels[user.role]}</div>
-        <div className="mt-1 break-all text-xs text-slate-500">{user.email}</div>
-        <button onClick={() => onLogout()} className="mt-4 rounded-xl bg-white px-4 py-2 font-medium text-slate-900">
-          Kilépés
-        </button>
-      </div>
+  <div className="text-slate-400">Bejelentkezve</div>
+  <div className="mt-1 font-semibold">{user.name || 'Admin'}</div>
+  <div className="text-slate-400">{roleLabels[user.role]}</div>
+
+  <button
+    onClick={() => onLogout()}
+    className="mt-4 rounded-xl bg-white px-4 py-2 font-medium text-slate-900"
+  >
+    Kilépés
+  </button>
+</div>
     </aside>
   );
 }
