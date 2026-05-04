@@ -23,6 +23,8 @@ type Contradiction = {
   slug: string | null;
   ai_summary: string | null;
   status: string | null
+  created_at: string | null;
+published_at: string | null;
 };
 
 function makeSlug(text: string) {
@@ -271,10 +273,16 @@ if (duplicate) {
     id: string,
     status: "draft" | "review" | "published"
   ) {
-    const { error } = await supabase
-      .from("contradictions")
-      .update({ status })
-      .eq("id", id);
+    const updateData: any = { status };
+
+if (status === "published") {
+  updateData.published_at = new Date().toISOString();
+}
+
+const { error } = await supabase
+  .from("contradictions")
+  .update(updateData)
+  .eq("id", id);
 
     if (error) {
       alert("Status hiba: " + error.message);
@@ -451,6 +459,11 @@ ${data.topic || "Ismeretlen"}
                       </div>
 
                       <div style={miniTextStyle}>{item.slug}</div>
+                      <div style={miniTextStyle}>
+  Létrehozva: {item.created_at ? item.created_at.slice(0, 10) : "-"}
+  {" · "}
+  Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+</div>
                     </div>
 
                     <a

@@ -6,6 +6,11 @@ import { supabase } from "@/lib/supabase";
 export default function AdminDashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sourcesCount, setSourcesCount] = useState(0);
+const [sourcesPublished, setSourcesPublished] = useState(0);
+
+const [contradictionsCount, setContradictionsCount] = useState(0);
+const [contradictionsPublished, setContradictionsPublished] = useState(0);
 
   useEffect(() => {
     loadUser();
@@ -37,7 +42,31 @@ export default function AdminDashboardPage() {
 
     setUserEmail(user.email || null);
     setLoading(false);
+    await loadStats();
   }
+  async function loadStats() {
+  const { data: sources } = await supabase
+    .from("sources")
+    .select("status");
+
+  const { data: contradictions } = await supabase
+    .from("contradictions")
+    .select("status");
+
+  if (sources) {
+    setSourcesCount(sources.length);
+    setSourcesPublished(
+      sources.filter((s) => s.status === "published").length
+    );
+  }
+
+  if (contradictions) {
+    setContradictionsCount(contradictions.length);
+    setContradictionsPublished(
+      contradictions.filter((c) => c.status === "published").length
+    );
+  }
+}
 
   async function logout() {
     await supabase.auth.signOut();
@@ -64,11 +93,17 @@ export default function AdminDashboardPage() {
       <div style={{ display: "grid", gap: 16, maxWidth: 500 }}>
         <a href="/admin/sources" style={cardStyle}>
           📁 Források kezelése
+          <p>
+Sources: {sourcesCount} (published: {sourcesPublished})
+</p>
           <small>Videók, cikkek, nyilatkozatok mentése</small>
         </a>
 
         <a href="/admin/contradictions" style={cardStyle}>
-          ⚔️ Ellentmondások kezelése
+          ⚔️ Ellentmondások kezelé
+          <p>
+Contradictions: {contradictionsCount} (published: {contradictionsPublished})
+</p>
           <small>Régi és új állítás összepárosítása, AI, publish</small>
         </a>
 

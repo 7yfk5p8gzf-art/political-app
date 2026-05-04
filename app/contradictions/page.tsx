@@ -15,6 +15,7 @@ type Item = {
   politician: string | null;
   topic: string | null;
   ai_summary: string | null;
+  published_at: string | null;
 };
 
 export default function PublicContradictionsPage() {
@@ -106,6 +107,9 @@ export default function PublicContradictionsPage() {
               href={`/contradictions/${item.slug}`}
               style={{ display: "block", marginTop: 10 }}
             >
+              <p style={{ fontSize: 12, color: "#64748b" }}>
+  Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+</p>
               Megnyitás →
             </a>
           </article>

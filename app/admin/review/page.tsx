@@ -59,9 +59,62 @@ export default function AdminReviewPage() {
   }
 
   async function updateStatus(id: string, status: "draft" | "published") {
-    await supabase.from("contradictions").update({ status }).eq("id", id);
-    loadItems();
+  const updateData: any = { status };
+
+  if (status === "published") {
+    updateData.published_at = new Date().toISOString();
   }
+
+  await supabase
+    .from("contradictions")
+    .update(updateData)
+    .eq("id", id);
+
+  loadItems();
+}
+  async function generateAI(id: string) {
+  const { data } = await supabase
+    .from("contradictions")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!data) {
+    alert("Nincs adat");
+    return;
+  }
+
+  const prompt = `
+Régi állítás:
+${data.old_statement || "Nincs régi állítás megadva."}
+
+Új állítás:
+${data.new_statement || "Nincs új állítás megadva."}
+
+Politikus:
+${data.politician || "Ismeretlen"}
+
+Téma:
+${data.topic || "Ismeretlen"}
+
+Írj rövid, semleges magyar elemzést.
+`;
+
+  const res = await fetch("/api/ai", {
+    method: "POST",
+    body: JSON.stringify({ prompt }),
+  });
+
+  const json = await res.json();
+
+  await supabase
+    .from("contradictions")
+    .update({ ai_summary: json.text })
+    .eq("id", id);
+
+  alert("AI kész");
+  loadItems();
+}
 
   if (authLoading) {
     return <div style={{ padding: 32 }}>Betöltés...</div>;
@@ -105,6 +158,12 @@ export default function AdminReviewPage() {
             >
               Vissza draft
             </button>
+            <button
+  onClick={() => generateAI(item.id)}
+  style={{ marginLeft: 10 }}
+>
+  AI
+</button>
           </article>
         ))}
       </div>
