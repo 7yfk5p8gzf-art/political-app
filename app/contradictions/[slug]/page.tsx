@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Contradiction = {
+type Item = {
   id: string;
+  slug: string | null;
   politician: string | null;
   topic: string | null;
   language: string | null;
-  slug: string | null;
   old_statement: string | null;
-  old_date: string | null;
-  old_source: string | null;
   new_statement: string | null;
+  old_date: string | null;
   new_date: string | null;
+  old_source: string | null;
   new_source: string | null;
   ai_summary: string | null;
   status: string | null;
@@ -27,18 +27,11 @@ type Vote = {
   vote_type: "yes" | "no";
 };
 
-function getYoutubeId(url: string) {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-  return match ? match[1] : null;
-}
-
 export default function ContradictionDetailPage() {
   const params = useParams();
-const searchParams = useSearchParams();
-const slug = params.slug as string;
-const isPreview = searchParams.get("preview") === "1";
+  const slug = params.slug as string;
 
-  const [item, setItem] = useState<Contradiction | null>(null);
+  const [item, setItem] = useState<Item | null>(null);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
   const [voted, setVoted] = useState(false);
@@ -48,37 +41,28 @@ const isPreview = searchParams.get("preview") === "1";
   }, [slug]);
 
   async function load() {
-  let canPreview = false;
+    setLoading(true);
 
-  if (isPreview) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from("contradictions")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
 
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      canPreview =
-        !!profile && ["admin", "editor"].includes(profile.role);
+    if (error) {
+      console.error(error);
+      setItem(null);
+      setLoading(false);
+      return;
     }
-  }
 
-  let query = supabase
-    .from("contradictions")
-    .select("*")
-    .eq("slug", slug);
+    if (!data) {
+      setItem(null);
+      setLoading(false);
+      return;
+    }
 
-  if (!canPreview) {
-    query = query.eq("status", "published");
-  }
-
-  const { data } = await query.single();
-
-  if (data) {
     setItem(data);
 
     const { data: voteData } = await supabase
@@ -90,10 +74,9 @@ const isPreview = searchParams.get("preview") === "1";
 
     const localVote = localStorage.getItem(`vote_${data.id}`);
     setVoted(Boolean(localVote));
-  }
 
-  setLoading(false);
-}
+    setLoading(false);
+  }
 
   async function vote(type: "yes" | "no") {
     if (!item || voted) return;
@@ -103,174 +86,180 @@ const isPreview = searchParams.get("preview") === "1";
       vote_type: type,
     });
 
-    if (!error) {
-      localStorage.setItem(`vote_${item.id}`, type);
-      setVoted(true);
-      load();
+    if (error) {
+      alert("Szavazási hiba: " + error.message);
+      return;
     }
+
+    localStorage.setItem(`vote_${item.id}`, type);
+    setVoted(true);
+    await load();
   }
 
-  function stats() {
-  const total = votes.length;
-  const yes = votes.filter((v) => v.vote_type === "yes").length;
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Link kimásolva");
+  }
 
-  const yesPercent = total ? Math.round((yes / total) * 100) : 0;
-  const noPercent = 100 - yesPercent;
+  const totalVotes = votes.length;
+  const yesVotes = votes.filter((v) => v.vote_type === "yes").length;
+  const noVotes = totalVotes - yesVotes;
+  const yesPercent = totalVotes ? Math.round((yesVotes / totalVotes) * 100) : 0;
+  const noPercent = totalVotes ? 100 - yesPercent : 0;
 
-  return { total, yes, no: total - yes, yesPercent, noPercent };
-}
-
-  if (loading) return <main style={pageStyle}>Betöltés...</main>;
+  if (loading) {
+    return (
+      <main style={pageStyle}>
+        <section style={containerStyle}>Betöltés...</section>
+      </main>
+    );
+  }
 
   if (!item) {
     return (
       <main style={pageStyle}>
-        {isPreview && (
-  <div style={previewBannerStyle}>
-    ⚠️ PREVIEW MODE – nem publikus
-  </div>
-)}
         <section style={containerStyle}>
-          <h1>Nincs ilyen publikált cikk.</h1>
-          <a href="/contradictions" style={buttonStyle}>Vissza</a>
+          <a href="/contradictions" style={backStyle}>
+            ← Vissza
+          </a>
+
+          <div style={emptyCardStyle}>
+            <h1>Nincs ilyen publikált ellentmondás.</h1>
+            <p>Lehet, hogy még draft/review státuszban van, vagy törölve lett.</p>
+          </div>
         </section>
       </main>
     );
   }
 
-  const s = stats();
-
   return (
     <main style={pageStyle}>
       <section style={containerStyle}>
-        <a href="/contradictions" style={backStyle}>← Vissza az ellentmondásokhoz</a>
+        <a href="/contradictions" style={backStyle}>
+          ← Vissza az ellentmondásokhoz
+        </a>
 
         <header style={heroStyle}>
-          <div style={metaRowStyle}>
+          <div style={badgeRowStyle}>
             <span style={darkBadgeStyle}>{item.topic || "Nincs téma"}</span>
-            <span style={lightBadgeStyle}>{item.language?.toUpperCase() || "HU"}</span>
+            <span style={lightBadgeStyle}>
+              {(item.language || "hu").toUpperCase()}
+            </span>
           </div>
 
           <h1 style={titleStyle}>
-            {item.politician || "Ismeretlen"} – álláspont változás
+            {item.politician || "Ismeretlen"} – {item.topic || "téma"}
           </h1>
 
           <p style={leadStyle}>
-            Régi és új állítás összehasonlítása dátummal, forrással, AI elemzéssel és közösségi szavazással.
+            Régi és új állítás összehasonlítása dátummal, forrással,
+            AI-elemzéssel és közösségi szavazással.
           </p>
+
+          <button onClick={copyLink} style={shareButtonStyle}>
+            🔗 Link másolása
+          </button>
         </header>
 
-        <section style={timelineStyle}>
-          <div style={timeBoxStyle}>
-            <p style={labelStyle}>RÉGEN</p>
-            <h2 style={dateStyle}>{item.old_date || "Dátum nem ismert"}</h2>
-            <p style={statementStyle}>{item.old_statement || "Nincs régi állítás"}</p>
-            
+        <section style={compareGridStyle}>
+          <article style={oldCardStyle}>
+            <div style={kickerStyle}>RÉGEN</div>
+            <div style={dateStyle}>{item.old_date || "Dátum nem ismert"}</div>
+            <p style={statementStyle}>
+              {item.old_statement || "Nincs régi állítás"}
+            </p>
 
-          </div>
+            {item.old_source && (
+              <a href={item.old_source} target="_blank" style={sourceButtonStyle}>
+                Régi forrás megnyitása →
+              </a>
+            )}
+          </article>
 
-          <div style={arrowStyle}>→</div>
+          <article style={newCardStyle}>
+            <div style={kickerStyle}>MOST</div>
+            <div style={dateStyle}>{item.new_date || "Dátum nem ismert"}</div>
+            <p style={statementStyle}>
+              {item.new_statement || "Nincs új állítás"}
+            </p>
 
-          <div style={timeBoxStyle}>
-            <p style={labelStyle}>MOST</p>
-            <h2 style={dateStyle}>{item.new_date || "Dátum nem ismert"}</h2>
-            <p style={statementStyle}>{item.new_statement || "Nincs új állítás"}</p>
             {item.new_source && (
               <a href={item.new_source} target="_blank" style={sourceButtonStyle}>
                 Új forrás megnyitása →
               </a>
             )}
-          </div>
+          </article>
         </section>
 
-        <section style={analysisStyle}>
-          <p style={sectionKickerStyle}>AI ELEMZÉS</p>
-          <p style={summaryStyle}>
+        <section style={analysisCardStyle}>
+          <div style={kickerStyle}>AI ELEMZÉS</div>
+          <p style={analysisTextStyle}>
             {item.ai_summary || "Ehhez még nincs AI elemzés."}
           </p>
         </section>
 
-        <section style={sourcePanelStyle}>
-  <h2 style={smallTitleStyle}>Források</h2>
+        <section style={sourcesCardStyle}>
+          <h2 style={sectionTitleStyle}>Források</h2>
 
-  <div style={sourceGridStyle}>
-    <div style={sourceCardStyle}>
-      <strong>Régi állítás forrása</strong>
-      <p>
-        {item.old_source
-          ? "Elérhető külső linken."
-          : "Nincs megadott forrás."}
-      </p>
+          <div style={sourceGridStyle}>
+            <div style={sourceMiniCardStyle}>
+              <strong>Régi állítás forrása</strong>
+              <p style={mutedTextStyle}>
+                {item.old_source ? "Külső forrás elérhető." : "Nincs forrás megadva."}
+              </p>
 
-      {item.old_source && getYoutubeId(item.old_source) && (
-        <iframe
-          width="100%"
-          height="220"
-          src={`https://www.youtube.com/embed/${getYoutubeId(item.old_source)}`}
-          title="Régi forrás videó"
-          frameBorder="0"
-          allowFullScreen
-          style={{ marginTop: 12 }}
-        />
-      )}
+              {item.old_source && (
+                <a href={item.old_source} target="_blank" style={plainLinkStyle}>
+                  Megnyitás →
+                </a>
+              )}
+            </div>
 
-      {item.old_source && (
-        <a href={item.old_source} target="_blank" style={plainLinkStyle}>
-          Megnyitás →
-        </a>
-      )}
-    </div>
+            <div style={sourceMiniCardStyle}>
+              <strong>Új állítás forrása</strong>
+              <p style={mutedTextStyle}>
+                {item.new_source ? "Külső forrás elérhető." : "Nincs forrás megadva."}
+              </p>
 
-    <div style={sourceCardStyle}>
-      <strong>Új állítás forrása</strong>
-      <p>
-        {item.new_source
-          ? "Elérhető külső linken."
-          : "Nincs megadott forrás."}
-      </p>
+              {item.new_source && (
+                <a href={item.new_source} target="_blank" style={plainLinkStyle}>
+                  Megnyitás →
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
 
-      {item.new_source && getYoutubeId(item.new_source) && (
-        <iframe
-          width="100%"
-          height="220"
-          src={`https://www.youtube.com/embed/${getYoutubeId(item.new_source)}`}
-          title="Új forrás videó"
-          frameBorder="0"
-          allowFullScreen
-          style={{ marginTop: 12 }}
-        />
-      )}
-
-      {item.new_source && (
-        <a href={item.new_source} target="_blank" style={plainLinkStyle}>
-          Megnyitás →
-        </a>
-      )}
-    </div>
-  </div>
-</section>
-
-        <section style={votePanelStyle}>
-          <h2 style={smallTitleStyle}>Ez szerinted ellentmondás?</h2>
+        <section style={voteCardStyle}>
+          <h2 style={sectionTitleStyle}>Ez szerinted ellentmondás?</h2>
 
           <p style={voteTextStyle}>
-            👍 {s.yesPercent}% szerint igen · 👎 {s.noPercent}% szerint nem · összesen {s.total} szavazat
+            👍 {yesPercent}% igen · 👎 {noPercent}% nem · összesen {totalVotes} szavazat
           </p>
 
-          <div style={progressStyle}>
-            <div style={{ ...progressFillStyle, width: `${s.yesPercent}%` }} />
+          <div style={progressOuterStyle}>
+            <div style={{ ...progressInnerStyle, width: `${yesPercent}%` }} />
           </div>
 
           <div style={buttonRowStyle}>
-            <button disabled={voted} onClick={() => vote("yes")} style={voteButtonStyle}>
+            <button
+              disabled={voted}
+              onClick={() => vote("yes")}
+              style={voted ? disabledButtonStyle : voteYesButtonStyle}
+            >
               👍 Igen
             </button>
-            <button disabled={voted} onClick={() => vote("no")} style={voteButtonSecondaryStyle}>
+
+            <button
+              disabled={voted}
+              onClick={() => vote("no")}
+              style={voted ? disabledButtonStyle : voteNoButtonStyle}
+            >
               👎 Nem
             </button>
           </div>
 
-          {voted && <p style={thanksStyle}>Már szavaztál erre.</p>}
+          {voted && <p style={thanksStyle}>Köszönjük, erre már szavaztál.</p>}
         </section>
       </section>
     </main>
@@ -279,148 +268,162 @@ const isPreview = searchParams.get("preview") === "1";
 
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
-  background: "#f5f1e8",
-  padding: 32,
-  color: "#111827",
+  background: "#f3f4f6",
+  color: "#0f172a",
+  padding: "32px 18px",
 };
 
 const containerStyle: CSSProperties = {
-  maxWidth: 1100,
+  maxWidth: 1080,
   margin: "0 auto",
 };
 
 const backStyle: CSSProperties = {
   display: "inline-block",
   marginBottom: 22,
-  color: "#111827",
-  fontWeight: 900,
+  color: "#0f172a",
+  fontWeight: 800,
   textDecoration: "none",
 };
 
 const heroStyle: CSSProperties = {
-  borderTop: "1px solid #111827",
-  borderBottom: "5px solid #111827",
-  padding: "34px 0",
-  marginBottom: 30,
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 28,
+  marginBottom: 22,
+  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
 };
 
-const metaRowStyle: CSSProperties = {
+const badgeRowStyle: CSSProperties = {
   display: "flex",
   gap: 8,
+  marginBottom: 14,
   flexWrap: "wrap",
 };
 
 const darkBadgeStyle: CSSProperties = {
-  background: "#111827",
+  background: "#0f172a",
   color: "white",
   padding: "6px 10px",
-  fontWeight: 900,
-  fontSize: 12,
-  letterSpacing: 1,
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 800,
 };
 
 const lightBadgeStyle: CSSProperties = {
-  border: "1px solid #111827",
+  background: "#e2e8f0",
+  color: "#0f172a",
   padding: "6px 10px",
-  fontWeight: 900,
-  fontSize: 12,
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 800,
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 58,
-  lineHeight: 1,
-  margin: "18px 0 12px",
-  fontFamily: "serif",
+  fontSize: 46,
+  lineHeight: 1.05,
+  margin: "0 0 12px",
+  fontWeight: 900,
 };
 
 const leadStyle: CSSProperties = {
-  fontSize: 19,
-  color: "#374151",
-  maxWidth: 780,
+  fontSize: 18,
+  lineHeight: 1.55,
+  color: "#475569",
+  maxWidth: 820,
+  marginBottom: 16,
 };
 
-const timelineStyle: CSSProperties = {
+const shareButtonStyle: CSSProperties = {
+  padding: "10px 14px",
+  border: "1px solid #0f172a",
+  borderRadius: 10,
+  background: "white",
+  color: "#0f172a",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const compareGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "1fr auto 1fr",
+  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
   gap: 18,
-  alignItems: "stretch",
-  marginBottom: 26,
+  marginBottom: 22,
 };
 
-const timeBoxStyle: CSSProperties = {
-  background: "#fffdf7",
-  border: "1px solid #d6d3c7",
-  borderLeft: "5px solid #111827",
-  padding: 24,
+const oldCardStyle: CSSProperties = {
+  background: "#eef2ff",
+  border: "1px solid #c7d2fe",
+  borderRadius: 18,
+  padding: 22,
 };
 
-const arrowStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  fontSize: 38,
+const newCardStyle: CSSProperties = {
+  background: "#ecfdf5",
+  border: "1px solid #bbf7d0",
+  borderRadius: 18,
+  padding: 22,
+};
+
+const kickerStyle: CSSProperties = {
+  fontSize: 13,
+  letterSpacing: 1.5,
   fontWeight: 900,
-};
-
-const labelStyle: CSSProperties = {
-  margin: 0,
-  fontSize: 12,
-  fontWeight: 900,
-  letterSpacing: 2,
-  color: "#6b7280",
+  marginBottom: 10,
 };
 
 const dateStyle: CSSProperties = {
-  margin: "8px 0 14px",
-  fontSize: 20,
+  fontSize: 15,
+  color: "#475569",
+  fontWeight: 800,
+  marginBottom: 12,
 };
 
 const statementStyle: CSSProperties = {
-  fontFamily: "serif",
-  fontSize: 26,
-  lineHeight: 1.25,
+  fontSize: 23,
+  lineHeight: 1.35,
+  marginBottom: 18,
 };
 
 const sourceButtonStyle: CSSProperties = {
   display: "inline-block",
-  marginTop: 16,
   padding: "10px 13px",
-  background: "#111827",
+  background: "#0f172a",
   color: "white",
-  fontWeight: 900,
+  borderRadius: 10,
+  fontWeight: 800,
   textDecoration: "none",
 };
 
-const analysisStyle: CSSProperties = {
-  background: "#fffdf7",
-  border: "1px solid #d6d3c7",
-  borderLeft: "5px solid #991b1b",
-  padding: 26,
-  marginBottom: 26,
-};
-
-const sectionKickerStyle: CSSProperties = {
-  margin: 0,
-  fontSize: 13,
-  fontWeight: 900,
-  letterSpacing: 2,
-};
-
-const summaryStyle: CSSProperties = {
-  fontSize: 19,
-  lineHeight: 1.65,
-};
-
-const sourcePanelStyle: CSSProperties = {
-  background: "#fffaf0",
-  border: "1px solid #d6d3c7",
+const analysisCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderLeft: "6px solid #991b1b",
+  borderRadius: 18,
   padding: 24,
-  marginBottom: 26,
+  marginBottom: 22,
 };
 
-const smallTitleStyle: CSSProperties = {
+const analysisTextStyle: CSSProperties = {
+  fontSize: 18,
+  lineHeight: 1.7,
+  margin: 0,
+};
+
+const sourcesCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 24,
+  marginBottom: 22,
+};
+
+const sectionTitleStyle: CSSProperties = {
+  fontSize: 26,
   marginTop: 0,
-  fontFamily: "serif",
-  fontSize: 30,
+  marginBottom: 16,
+  fontWeight: 900,
 };
 
 const sourceGridStyle: CSSProperties = {
@@ -429,80 +432,93 @@ const sourceGridStyle: CSSProperties = {
   gap: 14,
 };
 
-const sourceCardStyle: CSSProperties = {
-  background: "#fffdf7",
-  border: "1px solid #d6d3c7",
-  padding: 18,
+const sourceMiniCardStyle: CSSProperties = {
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: 14,
+  padding: 16,
+};
+
+const mutedTextStyle: CSSProperties = {
+  color: "#64748b",
+  lineHeight: 1.5,
 };
 
 const plainLinkStyle: CSSProperties = {
-  color: "#111827",
+  color: "#0f172a",
   fontWeight: 900,
 };
 
-const votePanelStyle: CSSProperties = {
-  background: "#fffdf7",
-  border: "1px solid #d6d3c7",
+const voteCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
   padding: 24,
 };
 
 const voteTextStyle: CSSProperties = {
-  fontWeight: 900,
+  fontWeight: 800,
+  color: "#334155",
 };
 
-const progressStyle: CSSProperties = {
-  height: 10,
+const progressOuterStyle: CSSProperties = {
+  height: 12,
   background: "#e5e7eb",
-  marginBottom: 18,
+  borderRadius: 999,
+  overflow: "hidden",
+  marginBottom: 16,
 };
 
-const progressFillStyle: CSSProperties = {
+const progressInnerStyle: CSSProperties = {
   height: "100%",
   background: "#16a34a",
 };
 
 const buttonRowStyle: CSSProperties = {
   display: "flex",
-  gap: 12,
+  gap: 10,
   flexWrap: "wrap",
 };
 
-const voteButtonStyle: CSSProperties = {
-  padding: "12px 18px",
-  background: "#111827",
+const voteYesButtonStyle: CSSProperties = {
+  padding: "11px 16px",
+  border: "none",
+  borderRadius: 10,
+  background: "#16a34a",
   color: "white",
-  border: "1px solid #111827",
-  fontWeight: 900,
   cursor: "pointer",
+  fontWeight: 900,
 };
 
-const voteButtonSecondaryStyle: CSSProperties = {
-  padding: "12px 18px",
-  background: "#fffaf0",
-  color: "#111827",
-  border: "1px solid #111827",
-  fontWeight: 900,
+const voteNoButtonStyle: CSSProperties = {
+  padding: "11px 16px",
+  border: "1px solid #0f172a",
+  borderRadius: 10,
+  background: "white",
+  color: "#0f172a",
   cursor: "pointer",
+  fontWeight: 900,
+};
+
+const disabledButtonStyle: CSSProperties = {
+  padding: "11px 16px",
+  border: "1px solid #cbd5e1",
+  borderRadius: 10,
+  background: "#e5e7eb",
+  color: "#64748b",
+  cursor: "not-allowed",
+  fontWeight: 900,
 };
 
 const thanksStyle: CSSProperties = {
-  fontWeight: 900,
+  marginTop: 12,
   color: "#166534",
+  fontWeight: 800,
 };
 
-const buttonStyle: CSSProperties = {
-  display: "inline-block",
-  padding: "10px 14px",
-  background: "#111827",
-  color: "white",
-  textDecoration: "none",
-  fontWeight: 900,
-};
-const previewBannerStyle: CSSProperties = {
-  background: "#991b1b",
-  color: "white",
-  padding: "10px 16px",
-  fontWeight: 900,
-  textAlign: "center",
-  marginBottom: 16,
+const emptyCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 28,
 };

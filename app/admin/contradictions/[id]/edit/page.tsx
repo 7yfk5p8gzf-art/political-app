@@ -12,11 +12,11 @@ type Contradiction = {
   old_statement: string | null;
   old_date: string | null;
   old_source: string | null;
-  old_video_url: string | null;
+  
   new_statement: string | null;
   new_date: string | null;
   new_source: string | null;
-  new_video_url: string | null;
+  
   ai_summary: string | null;
   status: string | null;
 };

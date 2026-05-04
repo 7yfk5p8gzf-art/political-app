@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Source = {
@@ -11,6 +12,8 @@ type Source = {
   topic: string | null;
   source_date: string | null;
   language: string | null;
+  country: string | null;
+  status: string | null;
 };
 
 type Contradiction = {
@@ -19,7 +22,7 @@ type Contradiction = {
   new_source_id: string | null;
   slug: string | null;
   ai_summary: string | null;
-  status: string | null;
+  status: string | null
 };
 
 function makeSlug(text: string) {
@@ -36,11 +39,14 @@ export default function AdminContradictionsPage() {
   const [items, setItems] = useState<Contradiction[]>([]);
   const [oldSource, setOldSource] = useState("");
   const [newSource, setNewSource] = useState("");
-  const [authLoading, setAuthLoading] = useState(true);
+  const [oldSourceSearch, setOldSourceSearch] = useState("");
+const [newSourceSearch, setNewSourceSearch] = useState("");
   
+  const [search, setSearch] = useState("");
+  const [authLoading, setAuthLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [role, setRole] = useState<string>("editor");
 
-const [userEmail, setUserEmail] = useState<string | null>(null);
-const [role, setRole] = useState<string>("editor");
   useEffect(() => {
     checkAccess();
   }, []);
@@ -61,25 +67,24 @@ const [role, setRole] = useState<string>("editor");
       .eq("id", user.id)
       .maybeSingle();
 
-    const role = profile?.role ?? "editor";
-    
-setRole(role);
+    const userRole = profile?.role ?? "editor";
+    setRole(userRole);
 
     if (
-  role !== "editor" &&
-  role !== "reviewer" &&
-  role !== "admin" &&
-  role !== "superadmin"
-) {
-  alert("Nincs jogosultságod ehhez az oldalhoz");
-  window.location.href = "/";
-  return;
-}
+      userRole !== "editor" &&
+      userRole !== "reviewer" &&
+      userRole !== "admin" &&
+      userRole !== "superadmin"
+    ) {
+      alert("Nincs jogosultságod ehhez az oldalhoz");
+      window.location.href = "/";
+      return;
+    }
 
     setUserEmail(user.email || null);
     setAuthLoading(false);
-    loadSources();
-    loadContradictions();
+    await loadSources();
+    await loadContradictions();
   }
 
   async function logout() {
@@ -88,19 +93,30 @@ setRole(role);
   }
 
   async function loadSources() {
-    const { data } = await supabase
-      .from("sources")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+  .from("sources")
+  .select("*")
+  .eq("status", "published")
+  .order("source_date", { ascending: false });
+
+    if (error) {
+      alert("Sources betöltési hiba: " + error.message);
+      return;
+    }
 
     setSources(data || []);
   }
 
   async function loadContradictions() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("contradictions")
       .select("*")
       .order("id", { ascending: false });
+
+    if (error) {
+      alert("Contradictions betöltési hiba: " + error.message);
+      return;
+    }
 
     setItems(data || []);
   }
@@ -109,54 +125,122 @@ setRole(role);
     return sources.find((s) => s.id === id) || null;
   }
 
+  const filteredItems = useMemo(() => {
+  const q = search.toLowerCase().trim();
+  if (!q) return items;
+
+  return items.filter((item) => {
+    const oldS = getSource(item.old_source_id);
+    const newS = getSource(item.new_source_id);
+
+    return [
+      oldS?.title,
+      newS?.title,
+      oldS?.politician,
+      newS?.politician,
+      oldS?.topic,
+      newS?.topic,
+      oldS?.country,
+      newS?.country,
+      item.status,
+      item.slug,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+}, [items, sources, search]);
+const filteredOldSources = useMemo(() => {
+  const q = oldSourceSearch.toLowerCase().trim();
+  if (!q) return sources;
+
+  return sources.filter((s) =>
+    [s.title, s.politician, s.topic, s.country, s.source_date]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q)
+  );
+}, [sources, oldSourceSearch]);
+
+const filteredNewSources = useMemo(() => {
+  const q = newSourceSearch.toLowerCase().trim();
+  if (!q) return sources;
+
+  return sources.filter((s) =>
+    [s.title, s.politician, s.topic, s.country, s.source_date]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q)
+  );
+}, [sources, newSourceSearch]);
+
+  
+
+
+
   async function create() {
     if (!oldSource || !newSource) {
       alert("Válassz ki 2 source-t");
       return;
     }
 
-    if (oldSource === newSource) {
-      alert("A két source nem lehet ugyanaz");
-      return;
-    }
+    
 
     const oldS = getSource(oldSource);
     const newS = getSource(newSource);
+    const duplicate = items.find(
+  (item) =>
+    item.old_source_id === oldSource &&
+    item.new_source_id === newSource
+);
+
+if (duplicate) {
+  alert("Ez az OLD + NEW source páros már létezik.");
+  return;
+}
+
+    if (!oldS || !newS) {
+      alert("Nem találom a kiválasztott source-t");
+      return;
+    }
 
     const person =
-      oldS?.politician?.trim() || newS?.politician?.trim() || "ismeretlen";
+      oldS.politician?.trim() || newS.politician?.trim() || "ismeretlen";
 
-    const topic = oldS?.topic?.trim() || newS?.topic?.trim() || "tema";
+    const topic = oldS.topic?.trim() || newS.topic?.trim() || "tema";
 
     const slugBase = makeSlug(
-      `${person}-${topic}-${oldS?.source_date || "regen"}-vs-${
-        newS?.source_date || "most"
+      `${person}-${topic}-${oldS.source_date || "regen"}-vs-${
+        newS.source_date || "most"
       }`
     );
 
     const slug = `${slugBase}-${Date.now()}`;
 
-   const { error } = await supabase.from("contradictions").insert([
-  {
-    old_source_id: oldSource,
-    new_source_id: newSource,
-    politician: person,
-    topic,
-    slug,
-    language: oldS?.language || newS?.language || "hu",
+    const { error } = await supabase.from("contradictions").insert([
+      {
+        old_source_id: oldSource,
+        new_source_id: newSource,
+        politician: person,
+        topic,
+        slug,
+        language: oldS.language || newS.language || "hu",
 
-    old_statement: oldS?.title || null,
-    old_date: oldS?.source_date || null,
-    old_source: oldS?.url || null,
+        old_statement: oldS.title || null,
+        old_date: oldS.source_date || null,
+        old_source: oldS.url || null,
 
-    new_statement: newS?.title || null,
-    new_date: newS?.source_date || null,
-    new_source: newS?.url || null,
+        new_statement: newS.title || null,
+        new_date: newS.source_date || null,
+        new_source: newS.url || null,
 
-    ai_summary: "",
-    status: "draft",
-  },
-]);
+        ai_summary: "",
+        status: "draft",
+      },
+    ]);
 
     if (error) {
       alert("Mentési hiba: " + error.message);
@@ -170,11 +254,23 @@ setRole(role);
   }
 
   async function remove(id: string) {
-    await supabase.from("contradictions").delete().eq("id", id);
-    loadContradictions();
+    const ok = confirm("Biztos törlöd ezt az ellentmondást?");
+    if (!ok) return;
+
+    const { error } = await supabase.from("contradictions").delete().eq("id", id);
+
+    if (error) {
+      alert("Törlési hiba: " + error.message);
+      return;
+    }
+
+    await loadContradictions();
   }
 
-  async function updateStatus(id: string, status: "draft" | "review" | "published") {
+  async function updateStatus(
+    id: string,
+    status: "draft" | "review" | "published"
+  ) {
     const { error } = await supabase
       .from("contradictions")
       .update({ status })
@@ -229,7 +325,7 @@ ${data.topic || "Ismeretlen"}
       .eq("id", id);
 
     alert("AI kész");
-    loadContradictions();
+    await loadContradictions();
   }
 
   if (authLoading) {
@@ -238,126 +334,445 @@ ${data.topic || "Ismeretlen"}
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, padding: 20 }}>
-        <span>{userEmail}</span>
-        <button onClick={logout}>Kijelentkezés</button>
-      </div>
-
-      <main style={{ padding: 32 }}>
-        <h1>Contradictions Admin</h1>
-
-        <div style={{ marginTop: 20 }}>
-          <select value={oldSource} onChange={(e) => setOldSource(e.target.value)}>
-            <option value="">OLD source</option>
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-
-          <br />
-          <br />
-
-          <select value={newSource} onChange={(e) => setNewSource(e.target.value)}>
-            <option value="">NEW source</option>
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-
-          <br />
-          <br />
-
-          <button onClick={create}>Mentés draftként</button>
+      <div style={topBarStyle}>
+        <div>
+          <strong>Admin</strong>
+          <div style={{ fontSize: 13, color: "#64748b" }}>
+            {userEmail} · {role}
+          </div>
         </div>
 
-        <h2 style={{ marginTop: 40 }}>Lista</h2>
+        <button onClick={logout} style={smallButtonStyle}>
+          Kijelentkezés
+        </button>
+      </div>
 
-        {items.map((item) => {
-          const oldS = getSource(item.old_source_id);
-          const newS = getSource(item.new_source_id);
+      <main style={pageStyle}>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={titleStyle}>Contradictions Admin</h1>
+          <p style={subtitleStyle}>
+            Itt kapcsoljuk össze a régi és új source-okat. A publikus
+            ellentmondás oldal ezekből épül.
+          </p>
+        </div>
 
-          return (
-            <div
-              key={item.id}
-              style={{
-                marginBottom: 20,
-                padding: 16,
-                border: "1px solid #ccc",
-                borderRadius: 10,
-              }}
-            >
-              <p>
-                <strong>OLD:</strong> {oldS?.title}
-              </p>
-              <p>
-                <strong>NEW:</strong> {newS?.title}
-              </p>
-              <p>
-                <strong>Status:</strong> {item.status}
-              </p>
+        <section style={cardStyle}>
+          <h2 style={sectionTitleStyle}>Új contradiction létrehozása</h2>
 
-              <div style={{ marginTop: 10 }}>
-                <a
-                  href={`/admin/contradictions/${item.id}/edit`}
-                  style={{
-                    marginRight: 10,
-                    padding: "6px 10px",
-                    border: "1px solid black",
-                    textDecoration: "none",
-                  }}
-                >
-                  ✏️ Szerkesztés
-                </a>
+          <div style={compareGridStyle}>
+            <div style={selectBoxStyle}>
+              <h3 style={boxTitleStyle}>OLD source</h3>
+              <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+  Találatok: {filteredOldSources.length}
+</div>
+              <input
+  placeholder="Keresés régi source között..."
+  value={oldSourceSearch}
+  onChange={(e) => setOldSourceSearch(e.target.value)}
+  style={{ ...inputStyle, marginBottom: 10 }}
+/>
+              <select
+                value={oldSource}
+                onChange={(e) => setOldSource(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Válassz régi source-t</option>
+                {filteredOldSources.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.source_date || "nincs dátum"} · {s.politician || "?"} ·{" "}
+                    {s.title}
+                  </option>
+                ))}
+              </select>
 
-                {item.status === "draft" && (
-  <button onClick={() => updateStatus(item.id, "review")} style={{ marginLeft: 10 }}>
-    Review-ra küld
-  </button>
-)}
-
-{(role === "reviewer" || role === "admin" || role === "superadmin") &&
-  item.status === "review" && (
-    <>
-      <button onClick={() => updateStatus(item.id, "draft")} style={{ marginLeft: 10 }}>
-        Reject
-      </button>
-
-      <button onClick={() => updateStatus(item.id, "draft")} style={{ marginLeft: 10 }}>
-        Vissza draft
-      </button>
-    </>
-  )}
-
-{(role === "admin" || role === "superadmin") && item.status === "review" && (
-  <button onClick={() => updateStatus(item.id, "published")} style={{ marginLeft: 10 }}>
-    Publish
-  </button>
-)}
-
-{(role === "admin" || role === "superadmin") && item.status === "published" && (
-  <button onClick={() => updateStatus(item.id, "review")} style={{ marginLeft: 10 }}>
-    Vissza review
-  </button>
-)}
-
-{(role === "admin" || role === "superadmin") && (
-  <button onClick={() => remove(item.id)} style={{ marginLeft: 10 }}>
-    Törlés
-  </button>
-)}
-
-                <button onClick={() => generateAI(item.id)} style={{ marginLeft: 10 }}>
-                  🤖 AI
-                </button>
-              </div>
+              {oldSource && <SourcePreview source={getSource(oldSource)} />}
             </div>
-          );
-        })}
+
+            <div style={selectBoxStyle}>
+              <h3 style={boxTitleStyle}>NEW source</h3>
+              <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+  Találatok: {filteredNewSources.length}
+</div>
+              <input
+  placeholder="Keresés új source között..."
+  value={newSourceSearch}
+  onChange={(e) => setNewSourceSearch(e.target.value)}
+  style={{ ...inputStyle, marginBottom: 10 }}
+/>
+              <select
+                value={newSource}
+                onChange={(e) => setNewSource(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">Válassz új source-t</option>
+                {filteredNewSources.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.source_date || "nincs dátum"} · {s.politician || "?"} ·{" "}
+                    {s.title}
+                  </option>
+                ))}
+              </select>
+
+              {newSource && <SourcePreview source={getSource(newSource)} />}
+            </div>
+          </div>
+
+          <button onClick={create} style={buttonStyle}>
+            Mentés draftként
+          </button>
+        </section>
+
+        <section>
+          <div style={listHeaderStyle}>
+            <h2 style={sectionTitleStyle}>
+              Contradictions lista ({filteredItems.length})
+            </h2>
+
+            <input
+              placeholder="Keresés politikus, téma, ország, cím szerint..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ ...inputStyle, maxWidth: 420 }}
+            />
+          </div>
+
+          <div style={{ display: "grid", gap: 16 }}>
+            {filteredItems.map((item) => {
+              const oldS = getSource(item.old_source_id);
+              const newS = getSource(item.new_source_id);
+
+              return (
+                <article key={item.id} style={cardStyle}>
+                  <div style={itemHeaderStyle}>
+                    <div>
+                      <div style={statusLineStyle}>
+                        <strong>Status:</strong>{" "}
+                        <span style={badgeStyle}>{item.status || "draft"}</span>
+                      </div>
+
+                      <div style={miniTextStyle}>{item.slug}</div>
+                    </div>
+
+                    <a
+                    
+                      href={`/admin/contradictions/${item.id}/edit`}
+                      style={editLinkStyle}
+                    >
+                      Szerkesztés
+                    </a>
+                  </div>
+
+                  <div style={compareGridStyle}>
+                    <div style={oldBoxStyle}>
+                      <h3 style={boxTitleStyle}>OLD</h3>
+                      <SourcePreview source={oldS} />
+                    </div>
+
+                    <div style={newBoxStyle}>
+                      <h3 style={boxTitleStyle}>NEW</h3>
+                      <SourcePreview source={newS} />
+                    </div>
+                  </div>
+
+                  {item.ai_summary && (
+                    <p style={summaryStyle}>
+                      <strong>AI:</strong> {item.ai_summary}
+                    </p>
+                  )}
+
+                  <div style={actionRowStyle}>
+                    {item.status === "draft" && (
+                      <button
+                        onClick={() => updateStatus(item.id, "review")}
+                        style={secondaryButtonStyle}
+                      >
+                        Review-ra küld
+                      </button>
+                    )}
+
+                    {(role === "reviewer" ||
+                      role === "admin" ||
+                      role === "superadmin") &&
+                      item.status === "review" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "draft")}
+                          style={secondaryButtonStyle}
+                        >
+                          Vissza draft
+                        </button>
+                      )}
+
+                    {(role === "admin" || role === "superadmin") &&
+                      item.status === "review" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "published")}
+                          style={publishButtonStyle}
+                        >
+                          Publish
+                        </button>
+                      )}
+
+                    {(role === "admin" || role === "superadmin") &&
+                      item.status === "published" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "review")}
+                          style={secondaryButtonStyle}
+                        >
+                          Vissza review
+                        </button>
+                      )}
+
+                    <button
+                      onClick={() => generateAI(item.id)}
+                      style={secondaryButtonStyle}
+                    >
+                      AI
+                    </button>
+
+                    {(role === "admin" || role === "superadmin") && (
+                      <button
+                        onClick={() => remove(item.id)}
+                        style={deleteButtonStyle}
+                      >
+                        Törlés
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       </main>
     </>
   );
 }
+
+function SourcePreview({ source }: { source: Source | null }) {
+  if (!source) {
+    return <p style={{ color: "#777" }}>Nincs source kiválasztva.</p>;
+  }
+
+  return (
+    <div>
+      <h4 style={{ fontSize: 18, marginBottom: 8 }}>{source.title}</h4>
+
+      <div style={metaStyle}>
+        <strong>{source.politician || "Nincs személy"}</strong>
+        {" · "}
+        {source.topic || "Nincs téma"}
+        {" · "}
+        {source.country || "Nincs ország"}
+        {" · "}
+        {source.language || "nincs nyelv"}
+        {source.source_date ? ` · ${source.source_date}` : ""}
+      </div>
+
+      {source.url && (
+        <a href={source.url} target="_blank" rel="noreferrer">
+          Forrás megnyitása
+        </a>
+      )}
+    </div>
+  );
+}
+
+const pageStyle: CSSProperties = {
+  padding: 32,
+  maxWidth: 1180,
+  margin: "0 auto",
+};
+
+const topBarStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 10,
+  padding: "16px 32px",
+  borderBottom: "1px solid #e5e7eb",
+  background: "white",
+};
+
+const titleStyle: CSSProperties = {
+  fontSize: 34,
+  marginBottom: 8,
+  fontWeight: 800,
+};
+
+const subtitleStyle: CSSProperties = {
+  color: "#555",
+  marginBottom: 24,
+  lineHeight: 1.5,
+};
+
+const cardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #ddd",
+  borderRadius: 14,
+  padding: 22,
+  marginBottom: 24,
+  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+};
+
+const sectionTitleStyle: CSSProperties = {
+  fontSize: 22,
+  marginBottom: 16,
+  fontWeight: 800,
+};
+
+const compareGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 16,
+};
+
+const selectBoxStyle: CSSProperties = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 12,
+  padding: 16,
+  background: "#f8fafc",
+};
+
+const oldBoxStyle: CSSProperties = {
+  border: "1px solid #bfdbfe",
+  borderRadius: 12,
+  padding: 16,
+  background: "#eff6ff",
+};
+
+const newBoxStyle: CSSProperties = {
+  border: "1px solid #bbf7d0",
+  borderRadius: 12,
+  padding: 16,
+  background: "#f0fdf4",
+};
+
+const boxTitleStyle: CSSProperties = {
+  fontSize: 15,
+  marginBottom: 10,
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+};
+
+const inputStyle: CSSProperties = {
+  padding: 11,
+  border: "1px solid #cbd5e1",
+  borderRadius: 10,
+  width: "100%",
+  background: "white",
+};
+
+const buttonStyle: CSSProperties = {
+  marginTop: 16,
+  padding: "11px 18px",
+  border: "none",
+  borderRadius: 10,
+  background: "#111827",
+  color: "white",
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
+const smallButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #cbd5e1",
+  borderRadius: 9,
+  background: "white",
+  cursor: "pointer",
+};
+
+const listHeaderStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 16,
+  marginBottom: 16,
+};
+
+const itemHeaderStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  marginBottom: 16,
+};
+
+const statusLineStyle: CSSProperties = {
+  marginBottom: 6,
+};
+
+const badgeStyle: CSSProperties = {
+  display: "inline-block",
+  padding: "3px 8px",
+  borderRadius: 999,
+  background: "#e2e8f0",
+  fontSize: 13,
+  fontWeight: 700,
+};
+
+const miniTextStyle: CSSProperties = {
+  color: "#64748b",
+  fontSize: 13,
+};
+
+const metaStyle: CSSProperties = {
+  color: "#555",
+  marginBottom: 8,
+  lineHeight: 1.5,
+};
+
+const summaryStyle: CSSProperties = {
+  lineHeight: 1.55,
+  marginTop: 14,
+  padding: 14,
+  borderRadius: 10,
+  background: "#f8fafc",
+};
+
+const actionRowStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  marginTop: 18,
+};
+
+const editLinkStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #2563eb",
+  borderRadius: 8,
+  background: "white",
+  color: "#2563eb",
+  textDecoration: "none",
+  fontWeight: 700,
+  height: 38,
+};
+
+const secondaryButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #cbd5e1",
+  borderRadius: 8,
+  background: "white",
+  color: "#111827",
+  cursor: "pointer",
+  fontWeight: 600,
+};
+
+const publishButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #16a34a",
+  borderRadius: 8,
+  background: "#16a34a",
+  color: "white",
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
+const deleteButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #dc2626",
+  borderRadius: 8,
+  background: "white",
+  color: "#dc2626",
+  cursor: "pointer",
+  fontWeight: 600,
+};
