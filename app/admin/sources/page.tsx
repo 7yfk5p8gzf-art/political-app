@@ -41,6 +41,12 @@ export default function AdminSourcesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
+const [aiQuery, setAiQuery] = useState("");
+const [aiResult, setAiResult] = useState<any>(null);
+const [aiLoading, setAiLoading] = useState(false);
+const [title, setTitle] = useState("");
+const [url, setUrl] = useState("");
+const [summary, setSummary] = useState("");
   useEffect(() => {
     checkAccess();
   }, []);
@@ -203,6 +209,23 @@ export default function AdminSourcesPage() {
 
     loadSources();
   }
+  const handleAiSearch = async () => {
+  setAiLoading(true);
+  setAiResult(null);
+
+  const res = await fetch("/api/ai-search", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query: aiQuery }),
+  });
+
+  const data = await res.json();
+
+  setAiResult(data);
+  setAiLoading(false);
+};
 
   async function deleteSource(id: string) {
     const ok = confirm("Biztos törlöd ezt a source-t?");
@@ -238,6 +261,61 @@ export default function AdminSourcesPage() {
       <main style={pageStyle}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={titleStyle}>Sources Admin</h1>
+          <div style={{ marginBottom: 30, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
+  <h3>AI source kereső</h3>
+
+  <input
+    value={aiQuery}
+    onChange={(e) => setAiQuery(e.target.value)}
+    placeholder="Pl: migration Germany 2023"
+    style={{ padding: 8, width: "60%", marginRight: 10 }}
+  />
+
+  <button onClick={handleAiSearch} style={{ padding: "8px 16px" }}>
+    AI keresés
+  </button>
+
+  {aiLoading && <p>Keresés...</p>}
+
+  {aiResult && (
+    <div style={{ marginTop: 20 }}>
+      <h4>Összefoglaló</h4>
+      <p>{aiResult.summary}</p>
+
+      <h4>Cikkek</h4>
+      {aiResult.articles?.map((a: any) => (
+  <div key={a.title} style={{ marginBottom: 8 }}>
+    <a href={a.url} target="_blank">{a.title}</a>
+
+    <button
+      style={{ marginLeft: 10 }}
+      onClick={() => {
+        setForm((prev: any) => ({
+  ...prev,
+  title: a.title,
+  url: a.url || "",
+  summary: aiResult.summary || "",
+  politician: aiResult.politician || "",
+  topic: aiResult.topic || "",
+  country: aiResult.country || "",
+  source_date: aiResult.date || "",
+}));
+}}
+    >
+      ➕ Add
+    </button>
+  </div>
+))}
+
+      <h4>Videók</h4>
+      {aiResult.videos?.map((v: any) => (
+        <div key={v.url}>
+          <a href={v.url} target="_blank">{v.title}</a>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
           <p style={subtitleStyle}>
             Itt mentjük és minősítjük a forrásokat. A contradiction admin csak
             published source-okból építkezik.
