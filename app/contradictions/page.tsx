@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Item = {
@@ -14,12 +15,15 @@ type Item = {
   new_source: string | null;
   politician: string | null;
   topic: string | null;
+  country?: string | null;
+  language?: string | null;
   ai_summary: string | null;
   published_at: string | null;
 };
 
 export default function PublicContradictionsPage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     load();
@@ -30,91 +34,344 @@ export default function PublicContradictionsPage() {
       .from("contradictions")
       .select("*")
       .eq("status", "published")
-      .order("id", { ascending: false });
+      .order("published_at", { ascending: false });
 
     setItems(data || []);
   }
 
+  const filteredItems = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return items;
+
+    return items.filter((item) =>
+      [
+        item.politician,
+        item.topic,
+        item.country,
+        item.language,
+        item.old_statement,
+        item.new_statement,
+        item.ai_summary,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [items, search]);
+
   return (
-    <main style={{ maxWidth: 1000, margin: "0 auto", padding: 32 }}>
-      <h1 style={{ fontSize: 32, marginBottom: 20 }}>
-        Politikai ellentmondások
-      </h1>
+    <main style={pageStyle}>
+      <section style={heroStyle}>
+        <div style={badgeStyle}>Public beta</div>
 
-      {items.length === 0 && <p>Nincs még publikált tartalom.</p>}
+        <h1 style={titleStyle}>Politikai ellentmondások egy helyen</h1>
 
-      <div style={{ display: "grid", gap: 20 }}>
-        {items.map((item) => (
-          <article
-            key={item.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 20,
-              background: "white",
-            }}
-          >
-            <h2 style={{ marginBottom: 10 }}>
-              {item.politician || "Ismeretlen"} – {item.topic}
-            </h2>
+        <p style={leadStyle}>
+          Régi és új állítások összehasonlítása forrásokkal, dátumokkal,
+          AI-elemzéssel és közösségi szavazással.
+        </p>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 16,
-              }}
-            >
-              <div style={{ background: "#eef2ff", padding: 12, borderRadius: 8 }}>
-                <strong>RÉGEN</strong>
-                <p>{item.old_statement}</p>
-                <small>{item.old_date}</small>
-                <br />
-                {item.old_source && (
-                  <a href={item.old_source} target="_blank">
-                    Forrás
-                  </a>
-                )}
+        <div style={statsRowStyle}>
+          <div style={statBoxStyle}>
+            <strong>{items.length}</strong>
+            <span>publikált ügy</span>
+          </div>
+
+          <div style={statBoxStyle}>
+            <strong>{new Set(items.map((i) => i.politician).filter(Boolean)).size}</strong>
+            <span>politikus</span>
+          </div>
+
+          <div style={statBoxStyle}>
+            <strong>{new Set(items.map((i) => i.topic).filter(Boolean)).size}</strong>
+            <span>téma</span>
+          </div>
+        </div>
+
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Keresés politikus, téma, ország vagy állítás szerint..."
+          style={searchStyle}
+        />
+      </section>
+
+      <section style={sectionHeaderStyle}>
+        <h2 style={sectionTitleStyle}>Legfrissebb ellentmondások</h2>
+        <p style={mutedStyle}>{filteredItems.length} találat</p>
+      </section>
+
+      {filteredItems.length === 0 && (
+        <div style={emptyStyle}>Nincs még publikált tartalom vagy nincs találat.</div>
+      )}
+
+      <div style={gridStyle}>
+        {filteredItems.map((item) => (
+          <article key={item.id} style={cardStyle}>
+            <div style={cardTopStyle}>
+              <div>
+                <div style={tagRowStyle}>
+                  <span style={darkTagStyle}>{item.topic || "Nincs téma"}</span>
+                  {item.language && (
+                    <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
+                  )}
+                </div>
+
+                <h2 style={cardTitleStyle}>
+                  {item.politician || "Ismeretlen"} – {item.topic || "téma"}
+                </h2>
               </div>
 
-              <div style={{ background: "#ecfdf5", padding: 12, borderRadius: 8 }}>
+              <a href={`/contradictions/${item.slug}`} style={openButtonStyle}>
+                Megnyitás →
+              </a>
+            </div>
+
+            <div style={compareGridStyle}>
+              <div style={oldBoxStyle}>
+                <strong>RÉGEN</strong>
+                <p>{item.old_statement || "Nincs régi állítás"}</p>
+                <small>{item.old_date || "Dátum nem ismert"}</small>
+              </div>
+
+              <div style={newBoxStyle}>
                 <strong>MOST</strong>
-                <p>{item.new_statement}</p>
-                <small>{item.new_date}</small>
-                <br />
-                {item.new_source && (
-                  <a href={item.new_source} target="_blank">
-                    Forrás
-                  </a>
-                )}
+                <p>{item.new_statement || "Nincs új állítás"}</p>
+                <small>{item.new_date || "Dátum nem ismert"}</small>
               </div>
             </div>
 
             {item.ai_summary && (
-              <p
-                style={{
-                  marginTop: 14,
-                  background: "#f8fafc",
-                  padding: 12,
-                  borderRadius: 8,
-                }}
-              >
-                🤖 {item.ai_summary}
-              </p>
+              <p style={summaryStyle}>🤖 {item.ai_summary}</p>
             )}
 
-            <a
-              href={`/contradictions/${item.slug}`}
-              style={{ display: "block", marginTop: 10 }}
-            >
-              <p style={{ fontSize: 12, color: "#64748b" }}>
-  Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
-</p>
-              Megnyitás →
-            </a>
+            <div style={footerStyle}>
+              <span>
+                Publikálva:{" "}
+                {item.published_at ? item.published_at.slice(0, 10) : "-"}
+              </span>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                {item.old_source && (
+                  <a href={item.old_source} target="_blank" rel="noreferrer">
+                    Régi forrás
+                  </a>
+                )}
+                {item.new_source && (
+                  <a href={item.new_source} target="_blank" rel="noreferrer">
+                    Új forrás
+                  </a>
+                )}
+              </div>
+            </div>
           </article>
         ))}
       </div>
     </main>
   );
 }
+
+const pageStyle: CSSProperties = {
+  minHeight: "100vh",
+  background: "#f3f4f6",
+  padding: "34px 18px",
+  color: "#0f172a",
+};
+
+const heroStyle: CSSProperties = {
+  maxWidth: 1120,
+  margin: "0 auto 28px",
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 22,
+  padding: 32,
+  boxShadow: "0 16px 36px rgba(15, 23, 42, 0.07)",
+};
+
+const badgeStyle: CSSProperties = {
+  display: "inline-block",
+  background: "#0f172a",
+  color: "white",
+  padding: "6px 11px",
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 900,
+  marginBottom: 14,
+};
+
+const titleStyle: CSSProperties = {
+  fontSize: 48,
+  lineHeight: 1.05,
+  margin: "0 0 14px",
+  fontWeight: 950,
+};
+
+const leadStyle: CSSProperties = {
+  fontSize: 18,
+  color: "#475569",
+  lineHeight: 1.6,
+  maxWidth: 760,
+};
+
+const statsRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 12,
+  flexWrap: "wrap",
+  margin: "24px 0",
+};
+
+const statBoxStyle: CSSProperties = {
+  minWidth: 140,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: 16,
+  padding: 14,
+  display: "grid",
+  gap: 4,
+};
+
+const searchStyle: CSSProperties = {
+  width: "100%",
+  padding: 14,
+  border: "1px solid #cbd5e1",
+  borderRadius: 14,
+  fontSize: 16,
+};
+
+const sectionHeaderStyle: CSSProperties = {
+  maxWidth: 1120,
+  margin: "0 auto 16px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "end",
+  gap: 12,
+};
+
+const sectionTitleStyle: CSSProperties = {
+  fontSize: 28,
+  margin: 0,
+  fontWeight: 950,
+};
+
+const mutedStyle: CSSProperties = {
+  color: "#64748b",
+  fontWeight: 700,
+};
+
+const emptyStyle: CSSProperties = {
+  maxWidth: 1120,
+  margin: "0 auto",
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 24,
+};
+
+const gridStyle: CSSProperties = {
+  maxWidth: 1120,
+  margin: "0 auto",
+  display: "grid",
+  gap: 18,
+};
+
+const cardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 20,
+  padding: 22,
+  boxShadow: "0 10px 28px rgba(15, 23, 42, 0.05)",
+};
+
+const cardTopStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  alignItems: "flex-start",
+  marginBottom: 16,
+};
+
+const tagRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  marginBottom: 10,
+};
+
+const darkTagStyle: CSSProperties = {
+  background: "#0f172a",
+  color: "white",
+  padding: "5px 9px",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 900,
+};
+
+const lightTagStyle: CSSProperties = {
+  background: "#e2e8f0",
+  color: "#0f172a",
+  padding: "5px 9px",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 900,
+};
+
+const cardTitleStyle: CSSProperties = {
+  fontSize: 25,
+  margin: 0,
+  fontWeight: 950,
+};
+
+const openButtonStyle: CSSProperties = {
+  padding: "10px 13px",
+  background: "#0f172a",
+  color: "white",
+  borderRadius: 12,
+  textDecoration: "none",
+  fontWeight: 900,
+  whiteSpace: "nowrap",
+};
+
+const compareGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: 14,
+};
+
+const oldBoxStyle: CSSProperties = {
+  background: "#eef2ff",
+  border: "1px solid #c7d2fe",
+  borderRadius: 16,
+  padding: 16,
+  lineHeight: 1.5,
+};
+
+const newBoxStyle: CSSProperties = {
+  background: "#ecfdf5",
+  border: "1px solid #bbf7d0",
+  borderRadius: 16,
+  padding: 16,
+  lineHeight: 1.5,
+};
+
+const summaryStyle: CSSProperties = {
+  marginTop: 14,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  padding: 14,
+  borderRadius: 14,
+  lineHeight: 1.55,
+};
+
+const footerStyle: CSSProperties = {
+  marginTop: 14,
+  paddingTop: 12,
+  borderTop: "1px solid #e5e7eb",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  flexWrap: "wrap",
+  color: "#64748b",
+  fontSize: 13,
+  fontWeight: 700,
+};
