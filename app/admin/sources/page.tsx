@@ -6,12 +6,18 @@ import { supabase } from "@/lib/supabase";
 
 type Source = {
   id: string;
-  title: string;
-  url: string;
-  type: string;
+  created_at?: string;
+  title: string | null;
+  url?: string | null;
+  type?: string | null;
+  summary?: string | null;
+  source_type?: string | null;
+  article_url?: string | null;
+  video_url?: string | null;
+  quote_text?: string | null;
+  ai_summary?: string | null;
   source_date: string | null;
-  language: string;
-  summary: string | null;
+  language: string | null;
   politician: string | null;
   topic: string | null;
   country: string | null;
@@ -20,11 +26,13 @@ type Source = {
 
 const emptyForm = {
   title: "",
-  url: "",
-  type: "article",
+  article_url: "",
+  video_url: "",
+  source_type: "article",
   source_date: "",
   language: "hu",
-  summary: "",
+  quote_text: "",
+  ai_summary: "",
   politician: "",
   topic: "",
   country: "",
@@ -36,17 +44,16 @@ export default function AdminSourcesPage() {
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-const [aiQuery, setAiQuery] = useState("");
-const [aiResult, setAiResult] = useState<any>(null);
-const [aiLoading, setAiLoading] = useState(false);
-const [title, setTitle] = useState("");
-const [url, setUrl] = useState("");
-const [summary, setSummary] = useState("");
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResult, setAiResult] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
   useEffect(() => {
     checkAccess();
   }, []);
@@ -105,21 +112,28 @@ const [summary, setSummary] = useState("");
     const q = search.toLowerCase().trim();
 
     return items.filter((item) => {
-      const matchesStatus =
-        statusFilter === "all" || (item.status || "draft") === statusFilter;
+      const status = item.status || "draft";
+      const sourceType = item.source_type || item.type || "article";
+      const articleUrl = item.article_url || item.url || "";
+      const videoUrl = item.video_url || "";
+      const aiSummary = item.ai_summary || item.summary || "";
+
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
 
       const matchesSearch =
         !q ||
         [
           item.title,
-          item.url,
-          item.type,
+          articleUrl,
+          videoUrl,
+          sourceType,
           item.language,
-          item.summary,
+          aiSummary,
+          item.quote_text,
           item.politician,
           item.topic,
           item.country,
-          item.status,
+          status,
         ]
           .filter(Boolean)
           .join(" ")
@@ -131,18 +145,35 @@ const [summary, setSummary] = useState("");
   }, [items, search, statusFilter]);
 
   async function saveSource() {
-    if (!form.title.trim() || !form.url.trim()) {
-      alert("Cím és URL kötelező");
+    if (!form.title.trim()) {
+      alert("Cím kötelező");
       return;
     }
 
+    if (!form.article_url.trim() && !form.video_url.trim()) {
+      alert("Legalább egy cikk link vagy videó link kell");
+      return;
+    }
+
+    const primaryUrl = form.article_url.trim() || form.video_url.trim();
+
     const payload = {
       title: form.title.trim(),
-      url: form.url.trim(),
-      type: form.type,
+
+      // új mezők
+      article_url: form.article_url.trim() || null,
+      video_url: form.video_url.trim() || null,
+      source_type: form.source_type,
+      quote_text: form.quote_text.trim() || null,
+      ai_summary: form.ai_summary.trim() || null,
+
+      // régi kompatibilitás
+      url: primaryUrl,
+      type: form.source_type,
+      summary: form.ai_summary.trim() || null,
+
       source_date: form.source_date || null,
       language: form.language,
-      summary: form.summary.trim() || null,
       politician: form.politician.trim() || null,
       topic: form.topic.trim() || null,
       country: form.country.trim() || null,
@@ -175,13 +206,16 @@ const [summary, setSummary] = useState("");
 
   function startEdit(item: Source) {
     setEditingId(item.id);
+
     setForm({
       title: item.title || "",
-      url: item.url || "",
-      type: item.type || "article",
+      article_url: item.article_url || item.url || "",
+      video_url: item.video_url || "",
+      source_type: item.source_type || item.type || "article",
       source_date: item.source_date || "",
       language: item.language || "hu",
-      summary: item.summary || "",
+      quote_text: item.quote_text || "",
+      ai_summary: item.ai_summary || item.summary || "",
       politician: item.politician || "",
       topic: item.topic || "",
       country: item.country || "",
@@ -197,10 +231,7 @@ const [summary, setSummary] = useState("");
   }
 
   async function quickStatus(id: string, status: string) {
-    const { error } = await supabase
-      .from("sources")
-      .update({ status })
-      .eq("id", id);
+    const { error } = await supabase.from("sources").update({ status }).eq("id", id);
 
     if (error) {
       alert("Státusz hiba: " + error.message);
@@ -209,23 +240,65 @@ const [summary, setSummary] = useState("");
 
     loadSources();
   }
-  const handleAiSearch = async () => {
-  setAiLoading(true);
-  setAiResult(null);
 
-  const res = await fetch("/api/ai-search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: aiQuery }),
-  });
+  async function handleAiSearch() {
+    if (!aiQuery.trim()) {
+      alert("Írj be keresést");
+      return;
+    }
 
-  const data = await res.json();
+    setAiLoading(true);
+    setAiResult(null);
 
-  setAiResult(data);
-  setAiLoading(false);
-};
+    try {
+      const res = await fetch("/api/ai-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: aiQuery }),
+      });
+
+      const data = await res.json();
+      setAiResult(data);
+    } catch {
+      alert("AI keresési hiba");
+    }
+
+    setAiLoading(false);
+  }
+
+  function addArticleFromAi(a: any) {
+    setForm((prev) => ({
+      ...prev,
+      title: a.title || "",
+      article_url: a.url || "",
+      source_type: "article",
+      ai_summary: aiResult?.summary || "",
+      politician: aiResult?.politician || prev.politician,
+      topic: aiResult?.topic || prev.topic || "general",
+      country: aiResult?.country || prev.country || "EU",
+      status: "draft",
+    }));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function addVideoFromAi(v: any) {
+    setForm((prev) => ({
+      ...prev,
+      title: v.title || "",
+      video_url: v.url || "",
+      source_type: "video",
+      ai_summary: aiResult?.summary || "",
+      politician: aiResult?.politician || prev.politician,
+      topic: aiResult?.topic || prev.topic || "general",
+      country: aiResult?.country || prev.country || "EU",
+      status: "draft",
+    }));
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function deleteSource(id: string) {
     const ok = confirm("Biztos törlöd ezt a source-t?");
@@ -261,66 +334,78 @@ const [summary, setSummary] = useState("");
       <main style={pageStyle}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={titleStyle}>Sources Admin</h1>
-          <div style={{ marginBottom: 30, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
-  <h3>AI source kereső</h3>
-
-  <input
-    value={aiQuery}
-    onChange={(e) => setAiQuery(e.target.value)}
-    placeholder="Pl: migration Germany 2023"
-    style={{ padding: 8, width: "60%", marginRight: 10 }}
-  />
-
-  <button onClick={handleAiSearch} style={{ padding: "8px 16px" }}>
-    AI keresés
-  </button>
-
-  {aiLoading && <p>Keresés...</p>}
-
-  {aiResult && (
-    <div style={{ marginTop: 20 }}>
-      <h4>Összefoglaló</h4>
-      <p>{aiResult.summary}</p>
-
-      <h4>Cikkek</h4>
-      {aiResult.articles?.map((a: any) => (
-  <div key={a.title} style={{ marginBottom: 8 }}>
-    <a href={a.url} target="_blank">{a.title}</a>
-
-    <button
-      style={{ marginLeft: 10 }}
-      onClick={() => {
-        setForm((prev: any) => ({
-  ...prev,
-  title: a.title,
-  url: a.url || "",
-  summary: aiResult.summary || "",
-  politician: aiResult.politician || "",
-  topic: aiResult.topic || "",
-  country: aiResult.country || "",
-  source_date: aiResult.date || "",
-}));
-}}
-    >
-      ➕ Add
-    </button>
-  </div>
-))}
-
-      <h4>Videók</h4>
-      {aiResult.videos?.map((v: any) => (
-        <div key={v.url}>
-          <a href={v.url} target="_blank">{v.title}</a>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
           <p style={subtitleStyle}>
-            Itt mentjük és minősítjük a forrásokat. A contradiction admin csak
-            published source-okból építkezik.
+            Itt mentjük a cikkeket, videókat, idézeteket és AI összefoglalókat.
+            A contradiction oldal később ezekből választ.
           </p>
         </div>
+
+        <section style={cardStyle}>
+          <h2 style={sectionTitleStyle}>AI source kereső</h2>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              placeholder="Pl: Scholz migration Germany 2023"
+              style={{ ...inputStyle, maxWidth: 520 }}
+            />
+
+            <button onClick={handleAiSearch} style={buttonStyle}>
+              {aiLoading ? "Keresés..." : "AI keresés"}
+            </button>
+          </div>
+
+          {aiResult && (
+            <div style={{ marginTop: 20 }}>
+              {aiResult.summary && (
+                <>
+                  <h3 style={smallTitleStyle}>AI összefoglaló</h3>
+                  <p style={summaryStyle}>{aiResult.summary}</p>
+                </>
+              )}
+
+              <h3 style={smallTitleStyle}>Cikk találatok</h3>
+              <div style={{ display: "grid", gap: 8 }}>
+                {aiResult.articles?.map((a: any, index: number) => (
+                  <div key={`${a.title}-${index}`} style={resultRowStyle}>
+                    <a href={a.url} target="_blank" rel="noreferrer">
+                      {a.title}
+                    </a>
+
+                    <button onClick={() => addArticleFromAi(a)} style={smallButtonStyle}>
+                      ➕ Add cikk
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <h3 style={smallTitleStyle}>Videó találatok</h3>
+              <div style={{ display: "grid", gap: 8 }}>
+                {aiResult.videos?.map((v: any, index: number) => (
+                  <div key={`${v.title}-${index}`} style={resultRowStyle}>
+                    <a
+                      href={
+                        v.url ||
+                        `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                          v.title || aiQuery
+                        )}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {v.title}
+                    </a>
+
+                    <button onClick={() => addVideoFromAi(v)} style={smallButtonStyle}>
+                      ➕ Add videó
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
 
         <section style={cardStyle}>
           <h2 style={sectionTitleStyle}>
@@ -328,14 +413,60 @@ const [summary, setSummary] = useState("");
           </h2>
 
           <div style={gridStyle}>
-            <input placeholder="Cím" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={inputStyle} />
-            <input placeholder="URL" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} style={inputStyle} />
-            <input placeholder="Politikus / személy" value={form.politician} onChange={(e) => setForm({ ...form, politician: e.target.value })} style={inputStyle} />
-            <input placeholder="Téma pl. migráció, háború, gazdaság" value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} style={inputStyle} />
-            <input placeholder="Ország pl. HU, DE, CH, EU" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} style={inputStyle} />
-            <input type="date" value={form.source_date} onChange={(e) => setForm({ ...form, source_date: e.target.value })} style={inputStyle} />
+            <input
+              placeholder="Cím"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              style={inputStyle}
+            />
 
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} style={inputStyle}>
+            <input
+              placeholder="Cikk link"
+              value={form.article_url}
+              onChange={(e) => setForm({ ...form, article_url: e.target.value })}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Videó link"
+              value={form.video_url}
+              onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Politikus / személy"
+              value={form.politician}
+              onChange={(e) => setForm({ ...form, politician: e.target.value })}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Téma pl. migráció, háború"
+              value={form.topic}
+              onChange={(e) => setForm({ ...form, topic: e.target.value })}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Ország pl. HU, DE, CH, EU"
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value })}
+              style={inputStyle}
+            />
+
+            <input
+              type="date"
+              value={form.source_date}
+              onChange={(e) => setForm({ ...form, source_date: e.target.value })}
+              style={inputStyle}
+            />
+
+            <select
+              value={form.source_type}
+              onChange={(e) => setForm({ ...form, source_type: e.target.value })}
+              style={inputStyle}
+            >
               <option value="article">Cikk</option>
               <option value="video">Videó</option>
               <option value="speech">Beszéd</option>
@@ -345,7 +476,11 @@ const [summary, setSummary] = useState("");
               <option value="other">Egyéb</option>
             </select>
 
-            <select value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} style={inputStyle}>
+            <select
+              value={form.language}
+              onChange={(e) => setForm({ ...form, language: e.target.value })}
+              style={inputStyle}
+            >
               <option value="hu">Magyar</option>
               <option value="de">Német</option>
               <option value="en">Angol</option>
@@ -354,7 +489,11 @@ const [summary, setSummary] = useState("");
               <option value="other">Egyéb</option>
             </select>
 
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={inputStyle}>
+            <select
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              style={inputStyle}
+            >
               <option value="draft">Draft</option>
               <option value="review">Review</option>
               <option value="published">Published</option>
@@ -363,9 +502,16 @@ const [summary, setSummary] = useState("");
           </div>
 
           <textarea
-            placeholder="Rövid összefoglaló / idézet / miért fontos ez a source"
-            value={form.summary}
-            onChange={(e) => setForm({ ...form, summary: e.target.value })}
+            placeholder="Eredeti idézet / fontos részlet"
+            value={form.quote_text}
+            onChange={(e) => setForm({ ...form, quote_text: e.target.value })}
+            style={textareaStyle}
+          />
+
+          <textarea
+            placeholder="AI összefoglaló / rövid magyarázat"
+            value={form.ai_summary}
+            onChange={(e) => setForm({ ...form, ai_summary: e.target.value })}
             style={textareaStyle}
           />
 
@@ -408,55 +554,87 @@ const [summary, setSummary] = useState("");
             </select>
           </div>
 
-          {filteredItems.length === 0 && (
-            <p style={{ color: "#777" }}>Nincs találat.</p>
-          )}
+          {filteredItems.length === 0 && <p style={{ color: "#777" }}>Nincs találat.</p>}
 
           <div style={{ display: "grid", gap: 14 }}>
-            {filteredItems.map((item) => (
-              <article key={item.id} style={sourceCardStyle}>
-                <div style={sourceHeaderStyle}>
-                  <div>
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={getStatusStyle(item.status || "draft")}>
-                        {item.status || "draft"}
-                      </span>
+            {filteredItems.map((item) => {
+              const sourceType = item.source_type || item.type || "article";
+              const articleUrl = item.article_url || item.url || "";
+              const videoUrl = item.video_url || "";
+              const aiSummary = item.ai_summary || item.summary || "";
+
+              return (
+                <article key={item.id} style={sourceCardStyle}>
+                  <div style={sourceHeaderStyle}>
+                    <div>
+                      <div style={{ marginBottom: 8 }}>
+                        <span style={getStatusStyle(item.status || "draft")}>
+                          {item.status || "draft"}
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: 20, marginBottom: 6 }}>{item.title}</h3>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+  {articleUrl && <span style={typeBadgeStyle}>📰 Cikk</span>}
+  {videoUrl && <span style={typeBadgeStyle}>🎥 Videó</span>}
+  <span style={typeBadgeStyle}>{sourceType}</span>
+</div>
+
+                      <div style={metaStyle}>
+                        <strong>{item.politician || "Nincs személy"}</strong>
+                        {" · "}
+                        {item.topic || "Nincs téma"}
+                        {" · "}
+                        {item.country || "Nincs ország"}
+                        {" · "}
+                        {sourceType}
+                        {" · "}
+                        {item.language || "nincs nyelv"}
+                        {item.source_date ? ` · ${item.source_date}` : ""}
+                      </div>
                     </div>
 
-                    <h3 style={{ fontSize: 20, marginBottom: 6 }}>
-                      {item.title}
-                    </h3>
-
-                    <div style={metaStyle}>
-                      <strong>{item.politician || "Nincs személy"}</strong>
-                      {" · "}
-                      {item.topic || "Nincs téma"}
-                      {" · "}
-                      {item.country || "Nincs ország"}
-                      {" · "}
-                      {item.type}
-                      {" · "}
-                      {item.language}
-                      {item.source_date ? ` · ${item.source_date}` : ""}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button onClick={() => quickStatus(item.id, "draft")} style={smallButtonStyle}>
+                        Draft
+                      </button>
+                      <button onClick={() => quickStatus(item.id, "review")} style={smallButtonStyle}>
+                        Review
+                      </button>
+                      <button
+                        onClick={() => quickStatus(item.id, "published")}
+                        style={publishButtonStyle}
+                      >
+                        Publish
+                      </button>
+                      <button onClick={() => startEdit(item)} style={editButtonStyle}>
+                        Szerkesztés
+                      </button>
+                      <button onClick={() => deleteSource(item.id)} style={deleteButtonStyle}>
+                        Törlés
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button onClick={() => quickStatus(item.id, "draft")} style={smallButtonStyle}>Draft</button>
-                    <button onClick={() => quickStatus(item.id, "review")} style={smallButtonStyle}>Review</button>
-                    <button onClick={() => quickStatus(item.id, "published")} style={publishButtonStyle}>Publish</button>
-                    <button onClick={() => startEdit(item)} style={editButtonStyle}>Szerkesztés</button>
-                    <button onClick={() => deleteSource(item.id)} style={deleteButtonStyle}>Törlés</button>
+                  {item.quote_text && <p style={quoteStyle}>“{item.quote_text}”</p>}
+                  {aiSummary && <p style={summaryStyle}>{aiSummary}</p>}
+
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    {articleUrl && (
+                      <a href={articleUrl} target="_blank" rel="noreferrer">
+                        Cikk megnyitása
+                      </a>
+                    )}
+
+                    {videoUrl && (
+                      <a href={videoUrl} target="_blank" rel="noreferrer">
+                        Videó megnyitása
+                      </a>
+                    )}
                   </div>
-                </div>
-
-                {item.summary && <p style={summaryStyle}>{item.summary}</p>}
-
-                <a href={item.url} target="_blank" rel="noreferrer">
-                  Forrás megnyitása
-                </a>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </section>
       </main>
@@ -528,6 +706,13 @@ const cardStyle: CSSProperties = {
 const sectionTitleStyle: CSSProperties = {
   fontSize: 22,
   marginBottom: 16,
+  fontWeight: 800,
+};
+
+const smallTitleStyle: CSSProperties = {
+  fontSize: 17,
+  marginTop: 18,
+  marginBottom: 8,
   fontWeight: 800,
 };
 
@@ -625,6 +810,27 @@ const summaryStyle: CSSProperties = {
   color: "#334155",
 };
 
+const quoteStyle: CSSProperties = {
+  lineHeight: 1.55,
+  marginTop: 12,
+  marginBottom: 10,
+  color: "#111827",
+  background: "#f8fafc",
+  borderLeft: "4px solid #111827",
+  padding: "10px 12px",
+  borderRadius: 8,
+};
+
+const resultRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 12,
+  padding: 10,
+  border: "1px solid #e5e7eb",
+  borderRadius: 10,
+};
+
 const editButtonStyle: CSSProperties = {
   padding: "8px 12px",
   border: "1px solid #2563eb",
@@ -643,4 +849,13 @@ const deleteButtonStyle: CSSProperties = {
   color: "#dc2626",
   cursor: "pointer",
   fontWeight: 600,
+};
+const typeBadgeStyle: CSSProperties = {
+  display: "inline-block",
+  padding: "4px 9px",
+  borderRadius: 999,
+  background: "#f1f5f9",
+  color: "#334155",
+  fontSize: 13,
+  fontWeight: 800,
 };

@@ -3,38 +3,55 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const { query } = await req.json();
 
-  const prompt = `
-Keresd meg a legfontosabb forrásokat erről:
+  if (!query) {
+    return NextResponse.json(
+      { articles: [], videos: [], summary: "Nincs keresés megadva." },
+      { status: 400 }
+    );
+  }
+
+  const braveRes = await fetch(
+    `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
+      query
+    )}&count=5&freshness=pm&extra_snippets=true`,
+    {
+      headers: {
+        "X-Subscription-Token": process.env.BRAVE_API_KEY || "",
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const braveData = await braveRes.json();
+
+  const articles =
+    braveData.web?.results?.slice(0, 3).map((item: any) => ({
+      title: item.title || "",
+      url: item.url || "",
+      description: item.description || "",
+    })) || [];
+
+  const aiPrompt = `
+Elemezd ezt a keresést és a talált cikkeket.
+
+Keresés:
 "${query}"
 
-Adj vissza:
+Cikkek:
+${JSON.stringify(articles, null, 2)}
 
-- 3 cikk (title, url)
-- 2 videó (title, url)
-- rövid összefoglaló
-
-ÉS elemezd:
-
-- politikus (ha van)
-- téma (1 szó pl: migration, war, economy)
-- ország (pl: DE, HU, EU)
-- dátum (YYYY-MM-DD ha van)
-
-JSON formátumban:
+Adj vissza CSAK tiszta JSON-t:
 
 {
-  articles: [{title, url}],
-  videos: [{title, url}],
-  summary: "",
-  politician: "",
-  topic: "",
-  country: "",
-  date: ""
+  "summary": "rövid magyar összefoglaló",
+  "politician": "",
+  "topic": "",
+  "country": "",
+  "date": ""
 }
-
-Csak tiszta JSON-t adj vissza.
 `;
-    const res = await fetch("https://api.openai.com/v1/responses", {
+
+  const aiRes = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -42,7 +59,7 @@ Csak tiszta JSON-t adj vissza.
     },
     body: JSON.stringify({
       model: "gpt-5.3-chat-latest",
-      input: prompt,
+      input: aiPrompt,
       text: {
         format: {
           type: "json_object",
@@ -51,27 +68,42 @@ Csak tiszta JSON-t adj vissza.
     }),
   });
 
-  const data = await res.json();
-  console.log("OPENAI STATUS:", res.status);
-console.log("OPENAI RAW:", JSON.stringify(data, null, 2));
+  const aiData = await aiRes.json();
 
   const text =
-  data.output_text ||
-  data.output?.flatMap((o: any) => o.content || [])
-    ?.find((c: any) => c.text)?.text ||
-  "";
+    aiData.output_text ||
+    aiData.output?.flatMap((o: any) => o.content || [])
+      ?.find((c: any) => c.text)?.text ||
+    "{}";
 
-  let parsed = null;
+  let meta: any = {};
 
   try {
-    parsed = JSON.parse(text);
+    meta = JSON.parse(text);
   } catch {
-    parsed = {
-      articles: [],
-      videos: [],
-      summary: text,
-    };
+    meta = {};
   }
 
-  return NextResponse.json(parsed);
+  return NextResponse.json({
+    articles,
+    videos: [
+      {
+        title: `${query} interview`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent(
+          query + " interview"
+        )}`,
+      },
+      {
+        title: `${query} statement`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent(
+          query + " statement"
+        )}`,
+      },
+    ],
+    summary: meta.summary || "",
+    politician: meta.politician || "",
+    topic: meta.topic || "",
+    country: meta.country || "",
+    date: meta.date || "",
+  });
 }

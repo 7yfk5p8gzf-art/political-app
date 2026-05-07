@@ -6,8 +6,17 @@ import { supabase } from "@/lib/supabase";
 
 type Source = {
   id: string;
-  title: string;
-  url: string | null;
+  title: string | null;
+  url?: string | null;
+  type?: string | null;
+  summary?: string | null;
+
+  article_url?: string | null;
+  video_url?: string | null;
+  source_type?: string | null;
+  quote_text?: string | null;
+  ai_summary?: string | null;
+
   politician: string | null;
   topic: string | null;
   source_date: string | null;
@@ -22,9 +31,9 @@ type Contradiction = {
   new_source_id: string | null;
   slug: string | null;
   ai_summary: string | null;
-  status: string | null
+  status: string | null;
   created_at: string | null;
-published_at: string | null;
+  published_at: string | null;
 };
 
 function makeSlug(text: string) {
@@ -231,16 +240,19 @@ if (duplicate) {
         slug,
         language: oldS.language || newS.language || "hu",
 
-        old_statement: oldS.title || null,
-        old_date: oldS.source_date || null,
-        old_source: oldS.url || null,
+        old_statement: oldS.quote_text || oldS.title || null,
+old_date: oldS.source_date || null,
+old_source: oldS.article_url || oldS.video_url || oldS.url || null,
+old_video_url: oldS.video_url || null,
 
-        new_statement: newS.title || null,
-        new_date: newS.source_date || null,
-        new_source: newS.url || null,
+new_statement: newS.quote_text || newS.title || null,
+new_date: newS.source_date || null,
+new_source: newS.article_url || newS.video_url || newS.url || null,
+new_video_url: newS.video_url || null,
 
-        ai_summary: "",
-        status: "draft",
+ai_summary:
+  `Régi: ${oldS.ai_summary || oldS.summary || oldS.title || ""}\n\n` +
+  `Új: ${newS.ai_summary || newS.summary || newS.title || ""}`,
       },
     ]);
 
@@ -566,6 +578,11 @@ function SourcePreview({ source }: { source: Source | null }) {
     return <p style={{ color: "#777" }}>Nincs source kiválasztva.</p>;
   }
 
+  const articleUrl = source.article_url || source.url || "";
+  const videoUrl = source.video_url || "";
+  const sourceType = source.source_type || source.type || "source";
+  const summary = source.ai_summary || source.summary || "";
+
   return (
     <div>
       <h4 style={{ fontSize: 18, marginBottom: 8 }}>{source.title}</h4>
@@ -577,15 +594,33 @@ function SourcePreview({ source }: { source: Source | null }) {
         {" · "}
         {source.country || "Nincs ország"}
         {" · "}
+        {sourceType}
+        {" · "}
         {source.language || "nincs nyelv"}
         {source.source_date ? ` · ${source.source_date}` : ""}
       </div>
 
-      {source.url && (
-        <a href={source.url} target="_blank" rel="noreferrer">
-          Forrás megnyitása
-        </a>
+      {source.quote_text && (
+        <p style={quoteStyle}>“{source.quote_text}”</p>
       )}
+
+      {summary && (
+        <p style={previewSummaryStyle}>{summary}</p>
+      )}
+
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {articleUrl && (
+          <a href={articleUrl} target="_blank" rel="noreferrer">
+            Cikk megnyitása
+          </a>
+        )}
+
+        {videoUrl && (
+          <a href={videoUrl} target="_blank" rel="noreferrer">
+            Videó megnyitása
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -788,4 +823,24 @@ const deleteButtonStyle: CSSProperties = {
   color: "#dc2626",
   cursor: "pointer",
   fontWeight: 600,
+};
+const quoteStyle: CSSProperties = {
+  lineHeight: 1.55,
+  marginTop: 12,
+  marginBottom: 10,
+  color: "#111827",
+  background: "#f8fafc",
+  borderLeft: "4px solid #111827",
+  padding: "10px 12px",
+  borderRadius: 8,
+};
+
+const previewSummaryStyle: CSSProperties = {
+  lineHeight: 1.5,
+  color: "#334155",
+  background: "white",
+  padding: 10,
+  borderRadius: 8,
+  marginTop: 10,
+  marginBottom: 10,
 };

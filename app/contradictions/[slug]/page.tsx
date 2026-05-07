@@ -17,6 +17,8 @@ type Item = {
   new_date: string | null;
   old_source: string | null;
   new_source: string | null;
+  old_video_url: string | null;
+new_video_url: string | null;
   ai_summary: string | null;
   status: string | null;
 };
@@ -100,6 +102,30 @@ export default function ContradictionDetailPage() {
     navigator.clipboard.writeText(window.location.href);
     alert("Link kimásolva");
   }
+  function getYouTubeEmbedUrl(url: string | null) {
+  if (!url) return null;
+
+  try {
+    const u = new URL(url);
+
+    if (u.hostname.includes("youtube.com")) {
+      const v = u.searchParams.get("v");
+      return v ? `https://www.youtube.com/embed/${v}` : null;
+    }
+
+    if (u.hostname.includes("youtu.be")) {
+      const id = u.pathname.replace("/", "");
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const oldEmbedUrl = getYouTubeEmbedUrl(item?.old_video_url || null);
+const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
 
   const totalVotes = votes.length;
   const yesVotes = votes.filter((v) => v.vote_type === "yes").length;
@@ -174,6 +200,18 @@ export default function ContradictionDetailPage() {
                 Régi forrás megnyitása →
               </a>
             )}
+            {item.old_video_url && (
+  <a href={item.old_video_url} target="_blank" style={videoButtonStyle}>
+    Régi videó megnyitása →
+  </a>
+)}
+{oldEmbedUrl && (
+  <iframe
+    src={oldEmbedUrl}
+    style={videoFrameStyle}
+    allowFullScreen
+  />
+)}
           </article>
 
           <article style={newCardStyle}>
@@ -188,6 +226,18 @@ export default function ContradictionDetailPage() {
                 Új forrás megnyitása →
               </a>
             )}
+            {item.new_video_url && (
+  <a href={item.new_video_url} target="_blank" style={videoButtonStyle}>
+    Új videó megnyitása →
+  </a>
+)}
+{newEmbedUrl && (
+  <iframe
+    src={newEmbedUrl}
+    style={videoFrameStyle}
+    allowFullScreen
+  />
+)}
           </article>
         </section>
 
@@ -521,4 +571,16 @@ const emptyCardStyle: CSSProperties = {
   border: "1px solid #dbe0e6",
   borderRadius: 18,
   padding: 28,
+};
+const videoButtonStyle: CSSProperties = {
+  ...sourceButtonStyle,
+  marginLeft: 8,
+  background: "#7c3aed",
+};
+const videoFrameStyle: CSSProperties = {
+  width: "100%",
+  aspectRatio: "16 / 9",
+  border: "none",
+  borderRadius: 14,
+  marginTop: 14,
 };
