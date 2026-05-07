@@ -186,6 +186,31 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
             🔗 Link másolása
           </button>
         </header>
+        <section style={timelineCardStyle}>
+  <div style={timelineLineStyle} />
+
+  <div style={timelineItemStyle}>
+    <div style={timelineDotOldStyle}>1</div>
+    <div>
+      <div style={timelineLabelStyle}>RÉGEN</div>
+      <div style={timelineDateStyle}>{item.old_date || "Dátum nem ismert"}</div>
+      <p style={timelineTextStyle}>
+        {item.old_statement || "Nincs régi állítás"}
+      </p>
+    </div>
+  </div>
+
+  <div style={timelineItemStyle}>
+    <div style={timelineDotNewStyle}>2</div>
+    <div>
+      <div style={timelineLabelStyle}>MOST</div>
+      <div style={timelineDateStyle}>{item.new_date || "Dátum nem ismert"}</div>
+      <p style={timelineTextStyle}>
+        {item.new_statement || "Nincs új állítás"}
+      </p>
+    </div>
+  </div>
+</section>
 
         <section style={compareGridStyle}>
           <article style={oldCardStyle}>
@@ -583,4 +608,67 @@ const videoFrameStyle: CSSProperties = {
   border: "none",
   borderRadius: 14,
   marginTop: 14,
+};
+
+const timelineCardStyle: CSSProperties = {
+  position: "relative",
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 24,
+  marginBottom: 22,
+  overflow: "hidden",
+};
+
+const timelineLineStyle: CSSProperties = {
+  position: "absolute",
+  left: 38,
+  top: 34,
+  bottom: 34,
+  width: 3,
+  background: "#cbd5e1",
+};
+
+const timelineItemStyle: CSSProperties = {
+  position: "relative",
+  display: "grid",
+  gridTemplateColumns: "48px 1fr",
+  gap: 14,
+  marginBottom: 22,
+  zIndex: 1,
+};
+
+const timelineDotOldStyle: CSSProperties = {
+  width: 34,
+  height: 34,
+  borderRadius: "50%",
+  background: "#4f46e5",
+  color: "white",
+  display: "grid",
+  placeItems: "center",
+  fontWeight: 900,
+};
+
+const timelineDotNewStyle: CSSProperties = {
+  ...timelineDotOldStyle,
+  background: "#16a34a",
+};
+
+const timelineLabelStyle: CSSProperties = {
+  fontSize: 13,
+  fontWeight: 900,
+  letterSpacing: 1.2,
+};
+
+const timelineDateStyle: CSSProperties = {
+  color: "#64748b",
+  fontWeight: 800,
+  marginTop: 4,
+  marginBottom: 8,
+};
+
+const timelineTextStyle: CSSProperties = {
+  fontSize: 18,
+  lineHeight: 1.55,
+  margin: 0,
 };
