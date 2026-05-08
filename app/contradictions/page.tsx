@@ -21,8 +21,24 @@ type Item = {
   published_at: string | null;
 };
 
+type Vote = {
+  id: string;
+  contradiction_id: string;
+  vote_type: "yes" | "no";
+};
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export default function PublicContradictionsPage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -37,6 +53,24 @@ export default function PublicContradictionsPage() {
       .order("published_at", { ascending: false });
 
     setItems(data || []);
+
+    const { data: voteData } = await supabase
+      .from("contradiction_votes")
+      .select("*");
+
+    setVotes((voteData || []) as Vote[]);
+  }
+
+  function voteCount(id: string) {
+    return votes.filter((v) => v.contradiction_id === id).length;
+  }
+
+  function yesPercent(id: string) {
+    const itemVotes = votes.filter((v) => v.contradiction_id === id);
+    if (itemVotes.length === 0) return 0;
+
+    const yes = itemVotes.filter((v) => v.vote_type === "yes").length;
+    return Math.round((yes / itemVotes.length) * 100);
   }
 
   const filteredItems = useMemo(() => {
@@ -59,6 +93,13 @@ export default function PublicContradictionsPage() {
         .includes(q)
     );
   }, [items, search]);
+
+  const latestItems = filteredItems.slice(0, 4);
+
+  const topItems = [...filteredItems]
+    .sort((a, b) => voteCount(b.id) - voteCount(a.id))
+    .filter((item) => !latestItems.some((latest) => latest.id === item.id))
+    .slice(0, 4);
 
   return (
     <main style={pageStyle}>
@@ -87,6 +128,11 @@ export default function PublicContradictionsPage() {
             <strong>{new Set(items.map((i) => i.topic).filter(Boolean)).size}</strong>
             <span>téma</span>
           </div>
+
+          <div style={statBoxStyle}>
+            <strong>{votes.length}</strong>
+            <span>szavazat</span>
+          </div>
         </div>
 
         <input
@@ -97,78 +143,129 @@ export default function PublicContradictionsPage() {
         />
       </section>
 
-      <section style={sectionHeaderStyle}>
-        <h2 style={sectionTitleStyle}>Legfrissebb ellentmondások</h2>
-        <p style={mutedStyle}>{filteredItems.length} találat</p>
-      </section>
-
       {filteredItems.length === 0 && (
         <div style={emptyStyle}>Nincs még publikált tartalom vagy nincs találat.</div>
       )}
 
-      <div style={gridStyle}>
-        {filteredItems.map((item) => (
-          <article key={item.id} style={cardStyle}>
-            <div style={cardTopStyle}>
-              <div>
-                <div style={tagRowStyle}>
-                  <span style={darkTagStyle}>{item.topic || "Nincs téma"}</span>
-                  {item.language && (
-                    <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
-                  )}
-                </div>
+      {latestItems.length > 0 && (
+        <>
+          <section style={sectionHeaderStyle}>
+            <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
+            <p style={mutedStyle}>{filteredItems.length} találat</p>
+          </section>
 
-                <h2 style={cardTitleStyle}>
-                  {item.politician || "Ismeretlen"} – {item.topic || "téma"}
-                </h2>
-              </div>
+          <div style={gridStyle}>
+            {latestItems.map((item) => (
+              <ContradictionCard
+                key={item.id}
+                item={item}
+                voteCount={voteCount(item.id)}
+                yesPercent={yesPercent(item.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
-              <a href={`/contradictions/${item.slug}`} style={openButtonStyle}>
-                Megnyitás →
-              </a>
-            </div>
+      {topItems.length > 0 && (
+        <>
+          <section style={{ ...sectionHeaderStyle, marginTop: 30 }}>
+            <h2 style={sectionTitleStyle}>🔥 Legnagyobb ellentmondások</h2>
+            <p style={mutedStyle}>legtöbb szavazat alapján</p>
+          </section>
 
-            <div style={compareGridStyle}>
-              <div style={oldBoxStyle}>
-                <strong>RÉGEN</strong>
-                <p>{item.old_statement || "Nincs régi állítás"}</p>
-                <small>{item.old_date || "Dátum nem ismert"}</small>
-              </div>
-
-              <div style={newBoxStyle}>
-                <strong>MOST</strong>
-                <p>{item.new_statement || "Nincs új állítás"}</p>
-                <small>{item.new_date || "Dátum nem ismert"}</small>
-              </div>
-            </div>
-
-            {item.ai_summary && (
-              <p style={summaryStyle}>🤖 {item.ai_summary}</p>
-            )}
-
-            <div style={footerStyle}>
-              <span>
-                Publikálva:{" "}
-                {item.published_at ? item.published_at.slice(0, 10) : "-"}
-              </span>
-
-              <div style={{ display: "flex", gap: 10 }}>
-                {item.old_source && (
-                  <a href={item.old_source} target="_blank" rel="noreferrer">
-                    Régi forrás
-                  </a>
-                )}
-                {item.new_source && (
-                  <a href={item.new_source} target="_blank" rel="noreferrer">
-                    Új forrás
-                  </a>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+          <div style={gridStyle}>
+            {topItems.map((item) => (
+              <ContradictionCard
+                key={item.id}
+                item={item}
+                voteCount={voteCount(item.id)}
+                yesPercent={yesPercent(item.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </main>
+  );
+}
+
+function ContradictionCard({
+  item,
+  voteCount,
+  yesPercent,
+}: {
+  item: Item;
+  voteCount: number;
+  yesPercent: number;
+}) {
+  return (
+    <article style={cardStyle}>
+      <div style={cardTopStyle}>
+        <div>
+          <div style={tagRowStyle}>
+            <span style={darkTagStyle}>{item.topic || "Nincs téma"}</span>
+            {item.language && (
+              <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
+            )}
+            <span style={voteTagStyle}>👍 {yesPercent}% · {voteCount} vote</span>
+          </div>
+
+          <h2 style={cardTitleStyle}>
+            {item.politician ? (
+              <a
+                href={`/politicians/${slugify(item.politician)}`}
+                style={politicianLinkStyle}
+              >
+                {item.politician}
+              </a>
+            ) : (
+              "Ismeretlen"
+            )}{" "}
+            – {item.topic || "téma"}
+          </h2>
+        </div>
+
+        <a href={`/contradictions/${item.slug}`} style={openButtonStyle}>
+          Megnyitás →
+        </a>
+      </div>
+
+      <div style={compareGridStyle}>
+        <div style={oldBoxStyle}>
+          <strong>RÉGEN</strong>
+          <p>{item.old_statement || "Nincs régi állítás"}</p>
+          <small>{item.old_date || "Dátum nem ismert"}</small>
+        </div>
+
+        <div style={newBoxStyle}>
+          <strong>MOST</strong>
+          <p>{item.new_statement || "Nincs új állítás"}</p>
+          <small>{item.new_date || "Dátum nem ismert"}</small>
+        </div>
+      </div>
+
+      {item.ai_summary && <p style={summaryStyle}>🤖 {item.ai_summary}</p>}
+
+      <div style={footerStyle}>
+        <span>
+          Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+        </span>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          {item.old_source && (
+            <a href={item.old_source} target="_blank" rel="noreferrer">
+              Régi forrás
+            </a>
+          )}
+          {item.new_source && (
+            <a href={item.new_source} target="_blank" rel="noreferrer">
+              Új forrás
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -316,6 +413,15 @@ const lightTagStyle: CSSProperties = {
   fontWeight: 900,
 };
 
+const voteTagStyle: CSSProperties = {
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "5px 9px",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 900,
+};
+
 const cardTitleStyle: CSSProperties = {
   fontSize: 25,
   margin: 0,
@@ -374,4 +480,12 @@ const footerStyle: CSSProperties = {
   color: "#64748b",
   fontSize: 13,
   fontWeight: 700,
+};
+
+const politicianLinkStyle: CSSProperties = {
+  color: "#0f172a",
+  textDecoration: "none",
+  borderBottom: "2px solid #0f172a",
+  cursor: "pointer",
+  transition: "0.2s",
 };
