@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -13,6 +13,7 @@ type Contradiction = {
   old_statement: string | null;
   new_statement: string | null;
   status: string | null;
+  published_at: string | null;
 };
 
 type Vote = {
@@ -21,12 +22,19 @@ type Vote = {
   vote_type: "yes" | "no";
 };
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export default function HomePage() {
   const [items, setItems] = useState<Contradiction[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
-  const [activeTopic, setActiveTopic] = useState("all");
-  const [activeLang, setActiveLang] = useState("all");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
@@ -49,19 +57,21 @@ export default function HomePage() {
     setIsLoggedIn(true);
 
     const { data: profile } = await supabase
-  .from("profiles")
-  .select("role")
-  .eq("id", user.id)
-  .single();
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-setShowAdmin(!!profile && ["admin", "editor"].includes(profile.role));
+    setShowAdmin(
+      !!profile &&
+        ["admin", "superadmin", "editor", "reviewer"].includes(profile.role)
+    );
   }
 
   async function logout() {
     await supabase.auth.signOut();
     setIsLoggedIn(false);
     setShowAdmin(false);
-    alert("Kijelentkeztél.");
   }
 
   async function load() {
@@ -69,21 +79,18 @@ setShowAdmin(!!profile && ["admin", "editor"].includes(profile.role));
       .from("contradictions")
       .select("*")
       .eq("status", "published")
-      .order("id", { ascending: false });
+      .order("published_at", { ascending: false });
 
     const { data: vData } = await supabase
       .from("contradiction_votes")
       .select("*");
 
     setItems(cData || []);
-    setVotes(vData || []);
+    setVotes((vData || []) as Vote[]);
   }
 
   function getStats(id: string) {
-    const related = votes.filter(
-      (v) => String(v.contradiction_id) === String(id)
-    );
-
+    const related = votes.filter((v) => v.contradiction_id === id);
     const total = related.length;
     const yes = related.filter((v) => v.vote_type === "yes").length;
     const percent = total > 0 ? Math.round((yes / total) * 100) : 0;
@@ -91,77 +98,73 @@ setShowAdmin(!!profile && ["admin", "editor"].includes(profile.role));
     return { total, percent };
   }
 
-  function langLabel(lang: string | null) {
-    if (lang === "hu") return "HU";
-    if (lang === "en") return "EN";
-    if (lang === "de") return "DE";
-    return "Nincs nyelv";
-  }
+  const filteredItems = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return items;
 
-  const topics = Array.from(
-    new Set(
-      items
-        .map((i) => i.topic?.trim())
-        .filter((t): t is string => Boolean(t))
-    )
-  );
+    return items.filter((item) =>
+      [
+        item.politician,
+        item.topic,
+        item.language,
+        item.old_statement,
+        item.new_statement,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [items, search]);
 
-  const filteredItems = items.filter((item) => {
-    const text = `${item.politician || ""} ${item.topic || ""} ${
-      item.old_statement || ""
-    } ${item.new_statement || ""}`.toLowerCase();
-
-    const matchesSearch = text.includes(search.toLowerCase());
-    const matchesTopic =
-      activeTopic === "all" || item.topic?.trim() === activeTopic;
-    const matchesLang =
-      activeLang === "all" || item.language?.trim() === activeLang;
-
-    return matchesSearch && matchesTopic && matchesLang;
-  });
-
-  const latestItems = [...filteredItems].slice(0, 5);
+  const latestItems = filteredItems.slice(0, 3);
 
   const topItems = [...filteredItems]
-    .sort((a, b) => {
-      const aStats = getStats(a.id);
-      const bStats = getStats(b.id);
-
-      if (bStats.total !== aStats.total) {
-        return bStats.total - aStats.total;
-      }
-
-      return bStats.percent - aStats.percent;
-    })
-    .slice(0, 5);
+    .sort((a, b) => getStats(b.id).total - getStats(a.id).total)
+    .filter((item) => !latestItems.some((latest) => latest.id === item.id))
+    .slice(0, 3);
 
   return (
     <main style={pageStyle}>
       <section style={containerStyle}>
-        <div style={userBarStyle}>
-          {isLoggedIn ? (
-            <>
-              <span>Bejelentkezve</span>
-              <button onClick={logout} style={smallButtonStyle}>
-                Kijelentkezés
-              </button>
-            </>
-          ) : (
-            <a href="/login" style={smallLinkStyle}>
-              Belépés
+        <div style={topBarStyle}>
+          <a href="/" style={brandStyle}>
+            Political Compare
+          </a>
+
+          <div style={navStyle}>
+            <a href="/contradictions" style={navLinkStyle}>
+              Ellentmondások
             </a>
-          )}
+
+            {showAdmin && (
+              <a href="/admin" style={navLinkStyle}>
+                Admin
+              </a>
+            )}
+
+            {isLoggedIn ? (
+              <button onClick={logout} style={smallButtonStyle}>
+                Kilépés
+              </button>
+            ) : (
+              <a href="/login" style={smallButtonStyle}>
+                Belépés
+              </a>
+            )}
+          </div>
         </div>
 
         <header style={heroStyle}>
-          <p style={kickerStyle}>POLITIKAI ÖSSZEHASONLÍTÓ</p>
+          <div style={heroBadgeStyle}>Public beta</div>
 
           <h1 style={titleStyle}>
-            Nézd meg, ki mit mondott régen — és mit mond most.
+            Ki mit mondott régen — és mit mond most?
           </h1>
 
           <p style={leadStyle}>
-            Forrásalapú összehasonlítások, AI magyarázat és közösségi szavazás.
+            Forrásalapú politikai összehasonlítások dátumokkal, AI-elemzéssel,
+            videókkal és közösségi szavazással.
           </p>
 
           <div style={buttonRowStyle}>
@@ -169,228 +172,221 @@ setShowAdmin(!!profile && ["admin", "editor"].includes(profile.role));
               Ellentmondások megnyitása →
             </a>
 
-            {showAdmin && (
-              <a href="/admin/contradictions" style={secondaryButtonStyle}>
-                Admin →
-              </a>
-            )}
+            <a href="#latest" style={secondaryButtonStyle}>
+              Legfrissebbek ↓
+            </a>
           </div>
-        </header>
 
-        <div style={filterBoxStyle}>
+          <div style={statsRowStyle}>
+            <div style={statBoxStyle}>
+              <strong>{items.length}</strong>
+              <span>publikált ügy</span>
+            </div>
+
+            <div style={statBoxStyle}>
+              <strong>
+                {new Set(items.map((i) => i.politician).filter(Boolean)).size}
+              </strong>
+              <span>politikus</span>
+            </div>
+
+            <div style={statBoxStyle}>
+              <strong>
+                {new Set(items.map((i) => i.topic).filter(Boolean)).size}
+              </strong>
+              <span>téma</span>
+            </div>
+
+            <div style={statBoxStyle}>
+              <strong>{votes.length}</strong>
+              <span>szavazat</span>
+            </div>
+          </div>
+
           <input
-            placeholder="Keresés politikusra, témára..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            placeholder="Keresés politikus, téma vagy állítás szerint..."
             style={searchStyle}
           />
+        </header>
 
-          <div style={filterGroupStyle}>
-            <button
-              onClick={() => setActiveLang("all")}
-              style={activeLang === "all" ? activeFilterStyle : filterButtonStyle}
-            >
-              Összes nyelv
-            </button>
-            <button
-              onClick={() => setActiveLang("hu")}
-              style={activeLang === "hu" ? activeFilterStyle : filterButtonStyle}
-            >
-              HU
-            </button>
-            <button
-              onClick={() => setActiveLang("en")}
-              style={activeLang === "en" ? activeFilterStyle : filterButtonStyle}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setActiveLang("de")}
-              style={activeLang === "de" ? activeFilterStyle : filterButtonStyle}
-            >
-              DE
-            </button>
-          </div>
+        {filteredItems.length === 0 && (
+          <div style={emptyStyle}>Nincs publikált tartalom vagy nincs találat.</div>
+        )}
 
-          <div style={filterGroupStyle}>
-            <button
-              onClick={() => setActiveTopic("all")}
-              style={
-                activeTopic === "all" ? activeFilterStyle : filterButtonStyle
-              }
-            >
-              Összes téma
-            </button>
+        {latestItems.length > 0 && (
+          <section id="latest" style={sectionStyle}>
+            <div style={sectionHeaderStyle}>
+              <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
+              <a href="/contradictions" style={sectionLinkStyle}>
+                Összes megnyitása →
+              </a>
+            </div>
 
-            {topics.map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTopic(t)}
-                style={activeTopic === t ? activeFilterStyle : filterButtonStyle}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+            <div style={gridStyle}>
+              {latestItems.map((item) => (
+                <HomeCard key={item.id} item={item} stats={getStats(item.id)} />
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section style={topSectionStyle}>
-          <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
+        {topItems.length > 0 && (
+          <section style={sectionStyle}>
+            <div style={sectionHeaderStyle}>
+              <h2 style={sectionTitleStyle}>🔥 Legnagyobb ellentmondások</h2>
+              <p style={mutedStyle}>legtöbb szavazat alapján</p>
+            </div>
 
-          {latestItems.length === 0 && (
-            <p>Még nincs publikált ellentmondás.</p>
-          )}
-
-          <div style={gridStyle}>
-            {latestItems.map((item) => (
-              <article key={item.id} style={cardStyle}>
-                <div style={badgeRowStyle}>
-                  <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
-                  <p style={langBadgeStyle}>{langLabel(item.language)}</p>
-                </div>
-
-                <h3 style={headlineStyle}>
-                  {item.politician || "Ismeretlen"}: régen mást mondott, mint
-                  most?
-                </h3>
-
-                <div style={miniGridStyle}>
-                  <div style={miniBoxStyle}>
-                    <strong>RÉGEN</strong>
-                    <p>{item.old_statement || "Nincs régi állítás"}</p>
-                  </div>
-
-                  <div style={miniBoxStyle}>
-                    <strong>MOST</strong>
-                    <p>{item.new_statement || "Nincs új állítás"}</p>
-                  </div>
-                </div>
-
-                <a href="/contradictions" style={openStyle}>
-                  Megnyitás →
-                </a>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section style={topSectionStyle}>
-          <h2 style={sectionTitleStyle}>🔥 Legnagyobb ellentmondások</h2>
-
-          {topItems.length === 0 && (
-            <p>Még nincs publikált ellentmondás vagy szavazat.</p>
-          )}
-
-          <div style={gridStyle}>
-            {topItems.map((item, index) => {
-              const stats = getStats(item.id);
-
-              return (
-                <article key={item.id} style={cardStyle}>
-                  <p style={rankStyle}>#{index + 1}</p>
-
-                  <div style={badgeRowStyle}>
-                    <p style={badgeStyle}>{item.topic || "Nincs téma"}</p>
-                    <p style={langBadgeStyle}>{langLabel(item.language)}</p>
-                  </div>
-
-                  <h3 style={headlineStyle}>
-                    {item.politician || "Ismeretlen"}: régen mást mondott, mint
-                    most?
-                  </h3>
-
-                  <div style={miniGridStyle}>
-                    <div style={miniBoxStyle}>
-                      <strong>RÉGEN</strong>
-                      <p>{item.old_statement || "Nincs régi állítás"}</p>
-                    </div>
-
-                    <div style={miniBoxStyle}>
-                      <strong>MOST</strong>
-                      <p>{item.new_statement || "Nincs új állítás"}</p>
-                    </div>
-                  </div>
-
-                  <p style={statStyle}>
-                    👍 {stats.percent}% szerint ellentmondás ({stats.total}{" "}
-                    szavazat)
-                  </p>
-
-                  <a href="/contradictions" style={openStyle}>
-                    Megnyitás →
-                  </a>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+            <div style={gridStyle}>
+              {topItems.map((item) => (
+                <HomeCard key={item.id} item={item} stats={getStats(item.id)} />
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     </main>
   );
 }
 
+function HomeCard({
+  item,
+  stats,
+}: {
+  item: Contradiction;
+  stats: { total: number; percent: number };
+}) {
+  return (
+    <article style={cardStyle}>
+      <div style={tagRowStyle}>
+        <span style={darkTagStyle}>{item.topic || "Nincs téma"}</span>
+        {item.language && (
+          <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
+        )}
+        <span style={voteTagStyle}>
+          👍 {stats.percent}% · {stats.total} vote
+        </span>
+      </div>
+
+      <h3 style={headlineStyle}>
+        {item.politician ? (
+          <a
+            href={`/politicians/${slugify(item.politician)}`}
+            style={politicianLinkStyle}
+          >
+            {item.politician}
+          </a>
+        ) : (
+          "Ismeretlen"
+        )}{" "}
+        – {item.topic || "téma"}
+      </h3>
+
+      <div style={miniGridStyle}>
+        <div style={oldBoxStyle}>
+          <strong>RÉGEN</strong>
+          <p>{item.old_statement || "Nincs régi állítás"}</p>
+        </div>
+
+        <div style={newBoxStyle}>
+          <strong>MOST</strong>
+          <p>{item.new_statement || "Nincs új állítás"}</p>
+        </div>
+      </div>
+
+      <a href={`/contradictions/${item.slug}`} style={openStyle}>
+        Megnyitás →
+      </a>
+    </article>
+  );
+}
+
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
-  background: "#f5f1e8",
-  padding: 32,
-  color: "#111827",
+  background: "#f3f4f6",
+  padding: "26px 18px 42px",
+  color: "#0f172a",
 };
 
 const containerStyle: CSSProperties = {
-  maxWidth: 1180,
+  maxWidth: 1120,
   margin: "0 auto",
 };
 
-const userBarStyle: CSSProperties = {
+const topBarStyle: CSSProperties = {
   display: "flex",
-  justifyContent: "flex-end",
+  justifyContent: "space-between",
   alignItems: "center",
-  gap: 12,
+  gap: 16,
   marginBottom: 18,
-  fontWeight: 700,
+  flexWrap: "wrap",
 };
 
-const smallButtonStyle: CSSProperties = {
-  padding: "7px 10px",
-  border: "1px solid #111827",
-  background: "#fffaf0",
-  cursor: "pointer",
+const brandStyle: CSSProperties = {
+  color: "#0f172a",
+  textDecoration: "none",
+  fontSize: 20,
+  fontWeight: 950,
+};
+
+const navStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  flexWrap: "wrap",
+};
+
+const navLinkStyle: CSSProperties = {
+  color: "#0f172a",
+  textDecoration: "none",
   fontWeight: 800,
 };
 
-const smallLinkStyle: CSSProperties = {
-  padding: "7px 10px",
-  border: "1px solid #111827",
-  color: "#111827",
+const smallButtonStyle: CSSProperties = {
+  padding: "9px 12px",
+  border: "1px solid #cbd5e1",
+  background: "white",
+  borderRadius: 10,
+  cursor: "pointer",
+  color: "#0f172a",
   textDecoration: "none",
   fontWeight: 800,
 };
 
 const heroStyle: CSSProperties = {
-  borderTop: "1px solid #111827",
-  borderBottom: "4px solid #111827",
-  padding: "34px 0",
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 24,
+  padding: 34,
   marginBottom: 30,
+  boxShadow: "0 16px 36px rgba(15, 23, 42, 0.07)",
 };
 
-const kickerStyle: CSSProperties = {
-  fontWeight: 900,
-  letterSpacing: 3,
+const heroBadgeStyle: CSSProperties = {
+  display: "inline-block",
+  background: "#0f172a",
+  color: "white",
+  padding: "6px 11px",
+  borderRadius: 999,
   fontSize: 13,
-  margin: 0,
+  fontWeight: 900,
+  marginBottom: 14,
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 54,
-  lineHeight: 1.05,
-  margin: "12px 0",
-  fontFamily: "serif",
+  fontSize: 56,
+  lineHeight: 1.04,
+  margin: "0 0 14px",
+  fontWeight: 950,
   maxWidth: 900,
 };
 
 const leadStyle: CSSProperties = {
-  fontSize: 19,
-  color: "#374151",
+  fontSize: 18,
+  color: "#475569",
+  lineHeight: 1.6,
   maxWidth: 760,
 };
 
@@ -404,8 +400,9 @@ const buttonRowStyle: CSSProperties = {
 const primaryButtonStyle: CSSProperties = {
   display: "inline-block",
   padding: "12px 16px",
-  background: "#111827",
+  background: "#0f172a",
   color: "white",
+  borderRadius: 12,
   textDecoration: "none",
   fontWeight: 900,
 };
@@ -413,59 +410,74 @@ const primaryButtonStyle: CSSProperties = {
 const secondaryButtonStyle: CSSProperties = {
   display: "inline-block",
   padding: "12px 16px",
-  border: "1px solid #111827",
-  color: "#111827",
+  background: "white",
+  color: "#0f172a",
+  border: "1px solid #0f172a",
+  borderRadius: 12,
   textDecoration: "none",
   fontWeight: 900,
 };
 
-const filterBoxStyle: CSSProperties = {
-  marginBottom: 24,
-  padding: 16,
-  border: "1px solid #d6d3c7",
-  background: "#fffaf0",
+const statsRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 12,
+  flexWrap: "wrap",
+  margin: "26px 0",
+};
+
+const statBoxStyle: CSSProperties = {
+  minWidth: 140,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: 16,
+  padding: 14,
+  display: "grid",
+  gap: 4,
 };
 
 const searchStyle: CSSProperties = {
-  padding: "10px 12px",
   width: "100%",
-  maxWidth: 400,
-  border: "1px solid #ccc",
-  marginBottom: 12,
+  padding: 14,
+  border: "1px solid #cbd5e1",
+  borderRadius: 14,
+  fontSize: 16,
 };
 
-const filterGroupStyle: CSSProperties = {
+const sectionStyle: CSSProperties = {
+  marginTop: 28,
+};
+
+const sectionHeaderStyle: CSSProperties = {
   display: "flex",
-  gap: 8,
+  justifyContent: "space-between",
+  alignItems: "end",
+  gap: 12,
+  marginBottom: 16,
   flexWrap: "wrap",
-  marginTop: 10,
-};
-
-const filterButtonStyle: CSSProperties = {
-  padding: "8px 10px",
-  border: "1px solid #111827",
-  background: "#fffaf0",
-  cursor: "pointer",
-  fontWeight: 700,
-};
-
-const activeFilterStyle: CSSProperties = {
-  padding: "8px 10px",
-  border: "1px solid #111827",
-  background: "#111827",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
-const topSectionStyle: CSSProperties = {
-  marginTop: 20,
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontFamily: "serif",
-  fontSize: 34,
-  marginBottom: 18,
+  fontSize: 28,
+  margin: 0,
+  fontWeight: 950,
+};
+
+const sectionLinkStyle: CSSProperties = {
+  color: "#0f172a",
+  fontWeight: 900,
+};
+
+const mutedStyle: CSSProperties = {
+  color: "#64748b",
+  fontWeight: 700,
+  margin: 0,
+};
+
+const emptyStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 24,
 };
 
 const gridStyle: CSSProperties = {
@@ -475,81 +487,89 @@ const gridStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  background: "#fffdf7",
-  border: "1px solid #d6d3c7",
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 20,
   padding: 22,
-  position: "relative",
+  boxShadow: "0 10px 28px rgba(15, 23, 42, 0.05)",
 };
 
-const rankStyle: CSSProperties = {
-  position: "absolute",
-  top: 14,
-  right: 16,
-  fontWeight: 900,
-  fontSize: 22,
-  color: "#9ca3af",
-};
-
-const badgeRowStyle: CSSProperties = {
+const tagRowStyle: CSSProperties = {
   display: "flex",
   gap: 8,
   flexWrap: "wrap",
-  alignItems: "center",
+  marginBottom: 12,
 };
 
-const badgeStyle: CSSProperties = {
-  display: "inline-block",
-  padding: "5px 10px",
-  background: "#111827",
+const darkTagStyle: CSSProperties = {
+  background: "#0f172a",
   color: "white",
+  padding: "5px 9px",
+  borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
-  letterSpacing: 1,
-  margin: 0,
 };
 
-const langBadgeStyle: CSSProperties = {
-  display: "inline-block",
-  padding: "5px 10px",
-  border: "1px solid #111827",
-  color: "#111827",
+const lightTagStyle: CSSProperties = {
+  background: "#e2e8f0",
+  color: "#0f172a",
+  padding: "5px 9px",
+  borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
-  letterSpacing: 1,
-  margin: 0,
+};
+
+const voteTagStyle: CSSProperties = {
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "5px 9px",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 900,
 };
 
 const headlineStyle: CSSProperties = {
-  fontFamily: "serif",
-  fontSize: 28,
-  lineHeight: 1.15,
-  margin: "14px 0",
+  fontSize: 24,
+  lineHeight: 1.18,
+  margin: "0 0 14px",
+  fontWeight: 950,
+};
+
+const politicianLinkStyle: CSSProperties = {
+  color: "#0f172a",
+  textDecoration: "none",
+  borderBottom: "2px solid #0f172a",
 };
 
 const miniGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: 12,
-  marginTop: 12,
 };
 
-const miniBoxStyle: CSSProperties = {
-  background: "#f8f4ea",
-  borderLeft: "4px solid #111827",
+const oldBoxStyle: CSSProperties = {
+  background: "#eef2ff",
+  border: "1px solid #c7d2fe",
+  borderRadius: 16,
   padding: 14,
+  lineHeight: 1.5,
 };
 
-const statStyle: CSSProperties = {
-  marginTop: 14,
-  fontWeight: 900,
+const newBoxStyle: CSSProperties = {
+  background: "#ecfdf5",
+  border: "1px solid #bbf7d0",
+  borderRadius: 16,
+  padding: 14,
+  lineHeight: 1.5,
 };
 
 const openStyle: CSSProperties = {
   display: "inline-block",
-  marginTop: 10,
-  padding: "9px 12px",
-  background: "#111827",
+  marginTop: 14,
+  padding: "10px 13px",
+  background: "#0f172a",
   color: "white",
+  borderRadius: 12,
   textDecoration: "none",
   fontWeight: 900,
 };
