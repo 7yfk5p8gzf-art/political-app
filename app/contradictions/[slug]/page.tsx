@@ -98,10 +98,34 @@ export default function ContradictionDetailPage() {
     await load();
   }
 
+  
   function copyLink() {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link kimásolva");
-  }
+  navigator.clipboard.writeText(window.location.href);
+  alert("Link kimásolva");
+}
+
+function getShareText() {
+  return `${item?.politician || "Politikus"} – ${
+    item?.topic || "ellentmondás"
+  }: régen mást mondott, mint most?`;
+}
+
+function shareUrl(
+  platform: "x" | "facebook" | "whatsapp" | "telegram" | "reddit"
+) {
+  const url = encodeURIComponent(window.location.href);
+  const text = encodeURIComponent(getShareText());
+
+  const links = {
+    x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+    whatsapp: `https://api.whatsapp.com/send?text=${text}%20${url}`,
+    telegram: `https://t.me/share/url?url=${url}&text=${text}`,
+    reddit: `https://www.reddit.com/submit?url=${url}&title=${text}`,
+  };
+
+  window.open(links[platform], "_blank", "noopener,noreferrer");
+}
   function getYouTubeEmbedUrl(url: string | null) {
   if (!url) return null;
 
@@ -182,9 +206,31 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
             AI-elemzéssel és közösségi szavazással.
           </p>
 
-          <button onClick={copyLink} style={shareButtonStyle}>
-            🔗 Link másolása
-          </button>
+          <div style={shareRowStyle}>
+  <button onClick={copyLink} style={shareButtonStyle}>
+    🔗 Link másolása
+  </button>
+
+  <button onClick={() => shareUrl("x")} style={shareButtonStyle}>
+    X
+  </button>
+
+  <button onClick={() => shareUrl("facebook")} style={shareButtonStyle}>
+    Facebook
+  </button>
+
+  <button onClick={() => shareUrl("whatsapp")} style={shareButtonStyle}>
+    WhatsApp
+  </button>
+
+  <button onClick={() => shareUrl("telegram")} style={shareButtonStyle}>
+    Telegram
+  </button>
+
+  <button onClick={() => shareUrl("reddit")} style={shareButtonStyle}>
+    Reddit
+  </button>
+</div>
         </header>
         <section style={timelineCardStyle}>
   <div style={timelineLineStyle} />
@@ -671,4 +717,10 @@ const timelineTextStyle: CSSProperties = {
   fontSize: 18,
   lineHeight: 1.55,
   margin: 0,
+};
+const shareRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  marginTop: 16,
 };
