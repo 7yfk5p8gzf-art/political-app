@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
+import { detectBrowserLang, t, type Lang } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -37,8 +38,10 @@ export default function ContradictionDetailPage() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
   const [voted, setVoted] = useState(false);
+  const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
+     setLang(detectBrowserLang());
     load();
   }, [slug]);
 
@@ -208,7 +211,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
 
           <div style={shareRowStyle}>
   <button onClick={copyLink} style={shareButtonStyle}>
-    🔗 Link másolása
+    🔗 {t[lang].copyLink}
   </button>
 
   <button onClick={() => shareUrl("x")} style={shareButtonStyle}>
@@ -260,7 +263,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
 
         <section style={compareGridStyle}>
           <article style={oldCardStyle}>
-            <div style={kickerStyle}>RÉGEN</div>
+            <div style={kickerStyle}>{t[lang].old}</div>
             <div style={dateStyle}>{item.old_date || "Dátum nem ismert"}</div>
             <p style={statementStyle}>
               {item.old_statement || "Nincs régi állítás"}
@@ -286,7 +289,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
           </article>
 
           <article style={newCardStyle}>
-            <div style={kickerStyle}>MOST</div>
+            <div style={kickerStyle}>{t[lang].now}</div>
             <div style={dateStyle}>{item.new_date || "Dátum nem ismert"}</div>
             <p style={statementStyle}>
               {item.new_statement || "Nincs új állítás"}

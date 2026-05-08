@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
+import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 
 type Contradiction = {
   id: string;
@@ -37,8 +38,10 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
+    setLang(detectBrowserLang());
     load();
     loadUser();
   }, []);
@@ -126,6 +129,24 @@ export default function HomePage() {
 
   return (
     <main style={pageStyle}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+  {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+    <button
+      key={l}
+      onClick={() => {
+        setLang(l);
+        saveLang(l);
+      }}
+      style={
+        lang === l
+          ? activeLangButtonStyle
+          : langButtonStyle
+      }
+    >
+      {l.toUpperCase()}
+    </button>
+  ))}
+</div>
       <section style={containerStyle}>
         <div style={topBarStyle}>
           <a href="/" style={brandStyle}>
@@ -134,7 +155,7 @@ export default function HomePage() {
 
           <div style={navStyle}>
             <a href="/contradictions" style={navLinkStyle}>
-              Ellentmondások
+              {t[lang].menuContradictions}
             </a>
 
             {showAdmin && (
@@ -145,7 +166,7 @@ export default function HomePage() {
 
             {isLoggedIn ? (
               <button onClick={logout} style={smallButtonStyle}>
-                Kilépés
+                {t[lang].logoutButton}
               </button>
             ) : (
               <a href="/login" style={smallButtonStyle}>
@@ -156,57 +177,56 @@ export default function HomePage() {
         </div>
 
         <header style={heroStyle}>
-          <div style={heroBadgeStyle}>Public beta</div>
+          <div style={heroBadgeStyle}>{t[lang].publicBeta}</div>
 
           <h1 style={titleStyle}>
-            Ki mit mondott régen — és mit mond most?
+            {t[lang].heroTitle}
           </h1>
 
           <p style={leadStyle}>
-            Forrásalapú politikai összehasonlítások dátumokkal, AI-elemzéssel,
-            videókkal és közösségi szavazással.
+            {t[lang].heroLead}
           </p>
 
           <div style={buttonRowStyle}>
             <a href="/contradictions" style={primaryButtonStyle}>
-              Ellentmondások megnyitása →
+              {t[lang].contradictions} →
             </a>
 
             <a href="#latest" style={secondaryButtonStyle}>
-              Legfrissebbek ↓
+              {t[lang].latest} ↓
             </a>
           </div>
 
           <div style={statsRowStyle}>
             <div style={statBoxStyle}>
               <strong>{items.length}</strong>
-              <span>publikált ügy</span>
+              <span>{t[lang].publishedCases}</span>
             </div>
 
             <div style={statBoxStyle}>
               <strong>
                 {new Set(items.map((i) => i.politician).filter(Boolean)).size}
               </strong>
-              <span>politikus</span>
+              <span>{t[lang].politicians}</span>
             </div>
 
             <div style={statBoxStyle}>
               <strong>
                 {new Set(items.map((i) => i.topic).filter(Boolean)).size}
               </strong>
-              <span>téma</span>
+              <span>{t[lang].topics}</span>
             </div>
 
             <div style={statBoxStyle}>
               <strong>{votes.length}</strong>
-              <span>szavazat</span>
+              <span>{t[lang].votes}</span>
             </div>
           </div>
 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Keresés politikus, téma vagy állítás szerint..."
+            placeholder={t[lang].search}
             style={searchStyle}
           />
         </header>
@@ -572,4 +592,17 @@ const openStyle: CSSProperties = {
   borderRadius: 12,
   textDecoration: "none",
   fontWeight: 900,
+};
+const langButtonStyle: CSSProperties = {
+  padding: "6px 10px",
+  border: "1px solid #111827",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const activeLangButtonStyle: CSSProperties = {
+  ...langButtonStyle,
+  background: "#111827",
+  color: "white",
 };

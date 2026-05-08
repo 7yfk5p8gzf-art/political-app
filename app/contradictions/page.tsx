@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
+import { detectBrowserLang, t, type Lang } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -40,10 +41,12 @@ export default function PublicContradictionsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
+  const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
-    load();
-  }, []);
+  setLang(detectBrowserLang());
+  load();
+}, []);
 
   async function load() {
     const { data } = await supabase
@@ -138,7 +141,7 @@ export default function PublicContradictionsPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Keresés politikus, téma, ország vagy állítás szerint..."
+          placeholder={t[lang].search}
           style={searchStyle}
         />
       </section>
@@ -150,7 +153,7 @@ export default function PublicContradictionsPage() {
       {latestItems.length > 0 && (
         <>
           <section style={sectionHeaderStyle}>
-            <h2 style={sectionTitleStyle}>🆕 Legfrissebb ellentmondások</h2>
+            <h2 style={sectionTitleStyle}>🆕 {t[lang].latest}</h2>
             <p style={mutedStyle}>{filteredItems.length} találat</p>
           </section>
 
@@ -161,6 +164,7 @@ export default function PublicContradictionsPage() {
                 item={item}
                 voteCount={voteCount(item.id)}
                 yesPercent={yesPercent(item.id)}
+                lang={lang}
               />
             ))}
           </div>
@@ -170,7 +174,7 @@ export default function PublicContradictionsPage() {
       {topItems.length > 0 && (
         <>
           <section style={{ ...sectionHeaderStyle, marginTop: 30 }}>
-            <h2 style={sectionTitleStyle}>🔥 Legnagyobb ellentmondások</h2>
+            <h2 style={sectionTitleStyle}>🔥 {t[lang].top}</h2>
             <p style={mutedStyle}>legtöbb szavazat alapján</p>
           </section>
 
@@ -181,6 +185,7 @@ export default function PublicContradictionsPage() {
                 item={item}
                 voteCount={voteCount(item.id)}
                 yesPercent={yesPercent(item.id)}
+                lang={lang}
               />
             ))}
           </div>
@@ -194,10 +199,12 @@ function ContradictionCard({
   item,
   voteCount,
   yesPercent,
+  lang,
 }: {
   item: Item;
   voteCount: number;
   yesPercent: number;
+  lang: Lang;
 }) {
   return (
     <article style={cardStyle}>
@@ -227,19 +234,19 @@ function ContradictionCard({
         </div>
 
         <a href={`/contradictions/${item.slug}`} style={openButtonStyle}>
-          Megnyitás →
+        {t[lang].open} →
         </a>
       </div>
 
       <div style={compareGridStyle}>
         <div style={oldBoxStyle}>
-          <strong>RÉGEN</strong>
+          <strong>{t[lang as keyof typeof t].old}</strong>
           <p>{item.old_statement || "Nincs régi állítás"}</p>
           <small>{item.old_date || "Dátum nem ismert"}</small>
         </div>
 
         <div style={newBoxStyle}>
-          <strong>MOST</strong>
+          <strong>{t[lang].now}</strong>
           <p>{item.new_statement || "Nincs új állítás"}</p>
           <small>{item.new_date || "Dátum nem ismert"}</small>
         </div>
