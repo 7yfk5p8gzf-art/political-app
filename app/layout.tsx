@@ -29,12 +29,12 @@ export const metadata: Metadata = {
   },
 
   twitter: {
-    card: "summary_large_image",
-    title: "Political Compare",
-    description:
-      "Régi és új politikai állítások összehasonlítása AI elemzéssel, forrásokkal és közösségi szavazással.",
-    images: ["/og-image.jpg"],
-  },
+  card: "summary_large_image",
+  title: "Political Compare",
+  description:
+    "Régi és új politikai állítások összehasonlítása AI elemzéssel, forrásokkal és közösségi szavazással.",
+  images: ["https://political-app-six.vercel.app/og-image.jpg"],
+},
 };
 
 export default function RootLayout({
