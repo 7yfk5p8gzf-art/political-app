@@ -116,7 +116,8 @@ function getShareText() {
 function shareUrl(
   platform: "x" | "facebook" | "whatsapp" | "telegram" | "reddit"
 ) {
-  const url = encodeURIComponent(window.location.href);
+  const publicUrl = `https://political-app-six.vercel.app/contradictions/${slug}`;
+const url = encodeURIComponent(publicUrl);
   const text = encodeURIComponent(getShareText());
 
   const links = {
