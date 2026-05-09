@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-import { detectBrowserLang, t, type Lang } from "@/lib/i18n";
+import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -19,8 +19,12 @@ type Item = {
   old_source: string | null;
   new_source: string | null;
   old_video_url: string | null;
-new_video_url: string | null;
+  new_video_url: string | null;
   ai_summary: string | null;
+  ai_summary_hu: string | null;
+ai_summary_de: string | null;
+ai_summary_en: string | null;
+ai_summary_fr: string | null;
   status: string | null;
 };
 
@@ -28,6 +32,85 @@ type Vote = {
   id: string;
   contradiction_id: string;
   vote_type: "yes" | "no";
+};
+
+const labels = {
+  hu: {
+    back: "Vissza",
+    noTopic: "Nincs téma",
+    unknown: "Ismeretlen",
+    topic: "téma",
+    lead: "Régi és új állítás összehasonlítása dátummal, forrással, videóval, AI-elemzéssel és közösségi szavazással.",
+    oldTimeline: "RÉGEN",
+    newTimeline: "MOST",
+    noOldStatement: "Nincs régi állítás",
+    noNewStatement: "Nincs új állítás",
+    noAi: "Ehhez még nincs AI elemzés.",
+    noSource: "Nincs forrás megadva.",
+    notFoundText: "Lehet, hogy még draft/review státuszban van, vagy törölve lett.",
+    voteError: "Szavazási hiba: ",
+    copied: "Link kimásolva",
+    shareTextFallbackPolitician: "Politikus",
+    shareTextFallbackTopic: "ellentmondás",
+    shareText: "régen mást mondott, mint most?",
+  },
+  de: {
+    back: "Zurück",
+    noTopic: "Kein Thema",
+    unknown: "Unbekannt",
+    topic: "Thema",
+    lead: "Vergleich früherer und aktueller Aussagen mit Datum, Quelle, Video, KI-Analyse und Community-Abstimmung.",
+    oldTimeline: "FRÜHER",
+    newTimeline: "JETZT",
+    noOldStatement: "Keine frühere Aussage",
+    noNewStatement: "Keine neue Aussage",
+    noAi: "Dazu gibt es noch keine KI-Analyse.",
+    noSource: "Keine Quelle angegeben.",
+    notFoundText: "Möglicherweise ist der Beitrag noch im Draft/Review-Status oder wurde gelöscht.",
+    voteError: "Fehler bei der Abstimmung: ",
+    copied: "Link kopiert",
+    shareTextFallbackPolitician: "Politiker",
+    shareTextFallbackTopic: "Widerspruch",
+    shareText: "hat früher etwas anderes gesagt als heute?",
+  },
+  en: {
+    back: "Back",
+    noTopic: "No topic",
+    unknown: "Unknown",
+    topic: "topic",
+    lead: "Comparison of old and new statements with dates, sources, video, AI analysis and community voting.",
+    oldTimeline: "BEFORE",
+    newTimeline: "NOW",
+    noOldStatement: "No old statement",
+    noNewStatement: "No new statement",
+    noAi: "There is no AI analysis for this yet.",
+    noSource: "No source provided.",
+    notFoundText: "It may still be in draft/review status or it may have been deleted.",
+    voteError: "Voting error: ",
+    copied: "Link copied",
+    shareTextFallbackPolitician: "Politician",
+    shareTextFallbackTopic: "contradiction",
+    shareText: "did they say something different before than now?",
+  },
+  fr: {
+    back: "Retour",
+    noTopic: "Aucun sujet",
+    unknown: "Inconnu",
+    topic: "sujet",
+    lead: "Comparaison des anciennes et nouvelles déclarations avec date, source, vidéo, analyse IA et vote communautaire.",
+    oldTimeline: "AVANT",
+    newTimeline: "MAINTENANT",
+    noOldStatement: "Aucune ancienne déclaration",
+    noNewStatement: "Aucune nouvelle déclaration",
+    noAi: "Il n’y a pas encore d’analyse IA pour ce cas.",
+    noSource: "Aucune source indiquée.",
+    notFoundText: "Le contenu est peut-être encore en brouillon/revue ou a été supprimé.",
+    voteError: "Erreur de vote : ",
+    copied: "Lien copié",
+    shareTextFallbackPolitician: "Politicien",
+    shareTextFallbackTopic: "contradiction",
+    shareText: "a-t-il dit autre chose avant que maintenant ?",
+  },
 };
 
 export default function ContradictionDetailPage() {
@@ -41,7 +124,7 @@ export default function ContradictionDetailPage() {
   const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
-     setLang(detectBrowserLang());
+    setLang(detectBrowserLang());
     load();
   }, [slug]);
 
@@ -55,14 +138,8 @@ export default function ContradictionDetailPage() {
       .eq("status", "published")
       .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       console.error(error);
-      setItem(null);
-      setLoading(false);
-      return;
-    }
-
-    if (!data) {
       setItem(null);
       setLoading(false);
       return;
@@ -92,7 +169,7 @@ export default function ContradictionDetailPage() {
     });
 
     if (error) {
-      alert("Szavazási hiba: " + error.message);
+      alert(labels[lang].voteError + error.message);
       return;
     }
 
@@ -101,59 +178,66 @@ export default function ContradictionDetailPage() {
     await load();
   }
 
-  
   function copyLink() {
-  navigator.clipboard.writeText(window.location.href);
-  alert("Link kimásolva");
-}
-
-function getShareText() {
-  return `${item?.politician || "Politikus"} – ${
-    item?.topic || "ellentmondás"
-  }: régen mást mondott, mint most?`;
-}
-
-function shareUrl(
-  platform: "x" | "facebook" | "whatsapp" | "telegram" | "reddit"
-) {
-  const publicUrl = `https://political-app-six.vercel.app/contradictions/${slug}`;
-const url = encodeURIComponent(publicUrl);
-  const text = encodeURIComponent(getShareText());
-
-  const links = {
-    x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
-    whatsapp: `https://api.whatsapp.com/send?text=${text}%20${url}`,
-    telegram: `https://t.me/share/url?url=${url}&text=${text}`,
-    reddit: `https://www.reddit.com/submit?url=${url}&title=${text}`,
-  };
-
-  window.open(links[platform], "_blank", "noopener,noreferrer");
-}
-  function getYouTubeEmbedUrl(url: string | null) {
-  if (!url) return null;
-
-  try {
-    const u = new URL(url);
-
-    if (u.hostname.includes("youtube.com")) {
-      const v = u.searchParams.get("v");
-      return v ? `https://www.youtube.com/embed/${v}` : null;
-    }
-
-    if (u.hostname.includes("youtu.be")) {
-      const id = u.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-
-    return null;
-  } catch {
-    return null;
+    navigator.clipboard.writeText(window.location.href);
+    alert(labels[lang].copied);
   }
+
+  function getShareText() {
+    return `${item?.politician || labels[lang].shareTextFallbackPolitician} – ${
+      item?.topic || labels[lang].shareTextFallbackTopic
+    }: ${labels[lang].shareText}`;
+  }
+
+  function shareUrl(
+    platform: "x" | "facebook" | "whatsapp" | "telegram" | "reddit"
+  ) {
+    const publicUrl = `https://political-app-six.vercel.app/contradictions/${slug}`;
+    const url = encodeURIComponent(publicUrl);
+    const text = encodeURIComponent(getShareText());
+
+    const links = {
+      x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      whatsapp: `https://api.whatsapp.com/send?text=${text}%20${url}`,
+      telegram: `https://t.me/share/url?url=${url}&text=${text}`,
+      reddit: `https://www.reddit.com/submit?url=${url}&title=${text}`,
+    };
+
+    window.open(links[platform], "_blank", "noopener,noreferrer");
+  }
+
+  function getYouTubeEmbedUrl(url: string | null) {
+    if (!url) return null;
+
+    try {
+      const u = new URL(url);
+
+      if (u.hostname.includes("youtube.com")) {
+        const v = u.searchParams.get("v");
+        return v ? `https://www.youtube.com/embed/${v}` : null;
+      }
+
+      if (u.hostname.includes("youtu.be")) {
+        const id = u.pathname.replace("/", "");
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  function getAiSummary(item: Item, lang: Lang) {
+  if (lang === "de") return item.ai_summary_de || item.ai_summary;
+  if (lang === "en") return item.ai_summary_en || item.ai_summary;
+  if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
+
+  return item.ai_summary_hu || item.ai_summary;
 }
 
-const oldEmbedUrl = getYouTubeEmbedUrl(item?.old_video_url || null);
-const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
+  const oldEmbedUrl = getYouTubeEmbedUrl(item?.old_video_url || null);
+  const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
 
   const totalVotes = votes.length;
   const yesVotes = votes.filter((v) => v.vote_type === "yes").length;
@@ -174,12 +258,12 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
       <main style={pageStyle}>
         <section style={containerStyle}>
           <a href="/contradictions" style={backStyle}>
-            ← Vissza
+            ← {labels[lang].back}
           </a>
 
           <div style={emptyCardStyle}>
             <h1>{t[lang].notFound}</h1>
-            <p>Lehet, hogy még draft/review státuszban van, vagy törölve lett.</p>
+            <p>{labels[lang].notFoundText}</p>
           </div>
         </section>
       </main>
@@ -189,87 +273,105 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
   return (
     <main style={pageStyle}>
       <section style={containerStyle}>
-        <a href="/contradictions" style={backStyle}>
-          ← ← {t[lang].back}
-        </a>
+        <div style={topRowStyle}>
+          <a href="/contradictions" style={backStyle}>
+            ← {labels[lang].back}
+          </a>
+
+          <div style={langSwitcherStyle}>
+            {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+              <button
+                key={l}
+                onClick={() => {
+                  setLang(l);
+                  saveLang(l);
+                }}
+                style={lang === l ? activeLangButtonStyle : langButtonStyle}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <header style={heroStyle}>
           <div style={badgeRowStyle}>
-            <span style={darkBadgeStyle}>{item.topic || "Nincs téma"}</span>
+            <span style={darkBadgeStyle}>{item.topic || labels[lang].noTopic}</span>
             <span style={lightBadgeStyle}>
-              {(item.language || "hu").toUpperCase()}
+              {(item.language || lang).toUpperCase()}
             </span>
           </div>
 
           <h1 style={titleStyle}>
-            {item.politician || "Ismeretlen"} – {item.topic || "téma"}
+            {item.politician || labels[lang].unknown} –{" "}
+            {item.topic || labels[lang].topic}
           </h1>
 
-          <p style={leadStyle}>
-            Régi és új állítás összehasonlítása dátummal, forrással,
-            AI-elemzéssel és közösségi szavazással.
-          </p>
+          <p style={leadStyle}>{labels[lang].lead}</p>
 
           <div style={shareRowStyle}>
-  <button onClick={copyLink} style={shareButtonStyle}>
-    🔗 {t[lang].copyLink}
-  </button>
+            <button onClick={copyLink} style={shareButtonStyle}>
+              🔗 {t[lang].copyLink}
+            </button>
 
-  <button onClick={() => shareUrl("x")} style={shareButtonStyle}>
-    X
-  </button>
+            <button onClick={() => shareUrl("x")} style={shareButtonStyle}>
+              X
+            </button>
 
-  <button onClick={() => shareUrl("facebook")} style={shareButtonStyle}>
-    Facebook
-  </button>
+            <button onClick={() => shareUrl("facebook")} style={shareButtonStyle}>
+              Facebook
+            </button>
 
-  <button onClick={() => shareUrl("whatsapp")} style={shareButtonStyle}>
-    WhatsApp
-  </button>
+            <button onClick={() => shareUrl("whatsapp")} style={shareButtonStyle}>
+              WhatsApp
+            </button>
 
-  <button onClick={() => shareUrl("telegram")} style={shareButtonStyle}>
-    Telegram
-  </button>
+            <button onClick={() => shareUrl("telegram")} style={shareButtonStyle}>
+              Telegram
+            </button>
 
-  <button onClick={() => shareUrl("reddit")} style={shareButtonStyle}>
-    Reddit
-  </button>
-</div>
+            <button onClick={() => shareUrl("reddit")} style={shareButtonStyle}>
+              Reddit
+            </button>
+          </div>
         </header>
+
         <section style={timelineCardStyle}>
-  <div style={timelineLineStyle} />
+          <div style={timelineLineStyle} />
 
-  <div style={timelineItemStyle}>
-    <div style={timelineDotOldStyle}>1</div>
-    <div>
-      <div style={timelineLabelStyle}>RÉGEN</div>
-      <div style={timelineDateStyle}>{item.old_date || t[lang].unknownDate}</div>
-      <p style={timelineTextStyle}>
-        {item.old_statement || "Nincs régi állítás"}
-      </p>
-    </div>
-  </div>
+          <div style={timelineItemStyle}>
+            <div style={timelineDotOldStyle}>1</div>
+            <div>
+              <div style={timelineLabelStyle}>{labels[lang].oldTimeline}</div>
+              <div style={timelineDateStyle}>
+                {item.old_date || t[lang].unknownDate}
+              </div>
+              <p style={timelineTextStyle}>
+                {item.old_statement || labels[lang].noOldStatement}
+              </p>
+            </div>
+          </div>
 
-  <div style={timelineItemStyle}>
-    <div style={timelineDotNewStyle}>2</div>
-    <div>
-      <div style={timelineLabelStyle}>MOST</div>
-     <div style={timelineDateStyle}>
-  {item.new_date || t[lang].unknownDate}
-</div> 
-      <p style={timelineTextStyle}>
-        {item.new_statement || "Nincs új állítás"}
-      </p>
-    </div>
-  </div>
-</section>
+          <div style={timelineItemStyle}>
+            <div style={timelineDotNewStyle}>2</div>
+            <div>
+              <div style={timelineLabelStyle}>{labels[lang].newTimeline}</div>
+              <div style={timelineDateStyle}>
+                {item.new_date || t[lang].unknownDate}
+              </div>
+              <p style={timelineTextStyle}>
+                {item.new_statement || labels[lang].noNewStatement}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <section style={compareGridStyle}>
           <article style={oldCardStyle}>
             <div style={kickerStyle}>{t[lang].old}</div>
-            <div style={dateStyle}>{item.old_date || "{item.old_date || t[lang].unknownDate}"}</div>
+            <div style={dateStyle}>{item.old_date || t[lang].unknownDate}</div>
             <p style={statementStyle}>
-              {item.old_statement || "{t[lang].noOldStatement}"}
+              {item.old_statement || labels[lang].noOldStatement}
             </p>
 
             {item.old_source && (
@@ -277,25 +379,27 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
                 {t[lang].openOldSource} →
               </a>
             )}
+
             {item.old_video_url && (
-  <a href={item.old_video_url} target="_blank" style={videoButtonStyle}>
-    {t[lang].openOldVideo} →
-  </a>
-)}
-{oldEmbedUrl && (
-  <iframe
-    src={oldEmbedUrl}
-    style={videoFrameStyle}
-    allowFullScreen
-  />
-)}
+              <a href={item.old_video_url} target="_blank" style={videoButtonStyle}>
+                {t[lang].openOldVideo} →
+              </a>
+            )}
+
+            {oldEmbedUrl && (
+              <iframe
+                src={oldEmbedUrl}
+                style={videoFrameStyle}
+                allowFullScreen
+              />
+            )}
           </article>
 
           <article style={newCardStyle}>
             <div style={kickerStyle}>{t[lang].now}</div>
-            <div style={dateStyle}>{item.new_date || "{item.new_date || t[lang].unknownDate}"}</div>
+            <div style={dateStyle}>{item.new_date || t[lang].unknownDate}</div>
             <p style={statementStyle}>
-              {item.new_statement || "{t[lang].noNewStatement}"}
+              {item.new_statement || labels[lang].noNewStatement}
             </p>
 
             {item.new_source && (
@@ -303,26 +407,28 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
                 {t[lang].openNewSource} →
               </a>
             )}
+
             {item.new_video_url && (
-  <a href={item.new_video_url} target="_blank" style={videoButtonStyle}>
-    {t[lang].openNewVideo} →
-  </a>
-)}
-{newEmbedUrl && (
-  <iframe
-    src={newEmbedUrl}
-    style={videoFrameStyle}
-    allowFullScreen
-  />
-)}
+              <a href={item.new_video_url} target="_blank" style={videoButtonStyle}>
+                {t[lang].openNewVideo} →
+              </a>
+            )}
+
+            {newEmbedUrl && (
+              <iframe
+                src={newEmbedUrl}
+                style={videoFrameStyle}
+                allowFullScreen
+              />
+            )}
           </article>
         </section>
 
         <section style={analysisCardStyle}>
           <div style={kickerStyle}>{t[lang].aiAnalysis.toUpperCase()}</div>
           <p style={analysisTextStyle}>
-            {item.ai_summary || "Ehhez még nincs AI elemzés."}
-          </p>
+  {getAiSummary(item, lang) || labels[lang].noAi}
+</p>
         </section>
 
         <section style={sourcesCardStyle}>
@@ -333,9 +439,8 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
               <strong>{t[lang].oldStatementSource}</strong>
               <p style={mutedTextStyle}>
                 {item.old_source
-  ? t[lang].externalSourceAvailable
-  : "Nincs forrás megadva."
-}
+                  ? t[lang].externalSourceAvailable
+                  : labels[lang].noSource}
               </p>
 
               {item.old_source && (
@@ -349,9 +454,8 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
               <strong>{t[lang].newStatementSource}</strong>
               <p style={mutedTextStyle}>
                 {item.new_source
-  ? t[lang].externalSourceAvailable
-  : "Nincs forrás megadva."
-}
+                  ? t[lang].externalSourceAvailable
+                  : labels[lang].noSource}
               </p>
 
               {item.new_source && (
@@ -367,7 +471,8 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
           <h2 style={sectionTitleStyle}>{t[lang].voteQuestion}</h2>
 
           <p style={voteTextStyle}>
-            👍 {yesPercent}% {t[lang].yes} · 👎 {noPercent}% {t[lang].no} · {t[lang].total} {totalVotes} {t[lang].votes}
+            👍 {yesPercent}% {t[lang].yes} · 👎 {noPercent}% {t[lang].no} ·{" "}
+            {t[lang].total} {totalVotes} {t[lang].votes}
           </p>
 
           <div style={progressOuterStyle}>
@@ -411,12 +516,38 @@ const containerStyle: CSSProperties = {
   margin: "0 auto",
 };
 
-const backStyle: CSSProperties = {
-  display: "inline-block",
+const topRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "center",
   marginBottom: 22,
+  flexWrap: "wrap",
+};
+
+const backStyle: CSSProperties = {
   color: "#0f172a",
   fontWeight: 800,
   textDecoration: "none",
+};
+
+const langSwitcherStyle: CSSProperties = {
+  display: "flex",
+  gap: 6,
+};
+
+const langButtonStyle: CSSProperties = {
+  padding: "6px 10px",
+  border: "1px solid #111827",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const activeLangButtonStyle: CSSProperties = {
+  ...langButtonStyle,
+  background: "#111827",
+  color: "white",
 };
 
 const heroStyle: CSSProperties = {
@@ -466,6 +597,13 @@ const leadStyle: CSSProperties = {
   color: "#475569",
   maxWidth: 820,
   marginBottom: 16,
+};
+
+const shareRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  marginTop: 16,
 };
 
 const shareButtonStyle: CSSProperties = {
@@ -527,6 +665,20 @@ const sourceButtonStyle: CSSProperties = {
   borderRadius: 10,
   fontWeight: 800,
   textDecoration: "none",
+  marginRight: 8,
+};
+
+const videoButtonStyle: CSSProperties = {
+  ...sourceButtonStyle,
+  background: "#7c3aed",
+};
+
+const videoFrameStyle: CSSProperties = {
+  width: "100%",
+  aspectRatio: "16 / 9",
+  border: "none",
+  borderRadius: 14,
+  marginTop: 14,
 };
 
 const analysisCardStyle: CSSProperties = {
@@ -655,18 +807,6 @@ const emptyCardStyle: CSSProperties = {
   borderRadius: 18,
   padding: 28,
 };
-const videoButtonStyle: CSSProperties = {
-  ...sourceButtonStyle,
-  marginLeft: 8,
-  background: "#7c3aed",
-};
-const videoFrameStyle: CSSProperties = {
-  width: "100%",
-  aspectRatio: "16 / 9",
-  border: "none",
-  borderRadius: 14,
-  marginTop: 14,
-};
 
 const timelineCardStyle: CSSProperties = {
   position: "relative",
@@ -729,10 +869,4 @@ const timelineTextStyle: CSSProperties = {
   fontSize: 18,
   lineHeight: 1.55,
   margin: 0,
-};
-const shareRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  marginTop: 16,
 };

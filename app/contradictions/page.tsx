@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 
 type Item = {
   id: string;
-  slug: string;
+  slug: string | null;
   old_statement: string | null;
   new_statement: string | null;
   old_date: string | null;
@@ -17,9 +16,19 @@ type Item = {
   new_source: string | null;
   politician: string | null;
   topic: string | null;
+
+  topic_hu?: string | null;
+  topic_de?: string | null;
+  topic_en?: string | null;
+  topic_fr?: string | null;
+
   country?: string | null;
   language?: string | null;
   ai_summary: string | null;
+    ai_summary_hu?: string | null;
+  ai_summary_de?: string | null;
+  ai_summary_en?: string | null;
+  ai_summary_fr?: string | null;
   published_at: string | null;
 };
 
@@ -27,6 +36,61 @@ type Vote = {
   id: string;
   contradiction_id: string;
   vote_type: "yes" | "no";
+};
+
+const labels = {
+  hu: {
+    noContent: "Nincs még publikált tartalom vagy nincs találat.",
+    basedOnVotes: "legtöbb szavazat alapján",
+    noTopic: "Nincs téma",
+    unknown: "Ismeretlen",
+    topic: "téma",
+    vote: "szavazat",
+    noOldStatement: "Nincs régi állítás",
+    noNewStatement: "Nincs új állítás",
+    unknownDate: "Ismeretlen dátum",
+    oldSource: "Régi forrás",
+    newSource: "Új forrás",
+  },
+  de: {
+    noContent: "Noch keine veröffentlichten Inhalte oder keine Treffer.",
+    basedOnVotes: "basierend auf den meisten Stimmen",
+    noTopic: "Kein Thema",
+    unknown: "Unbekannt",
+    topic: "Thema",
+    vote: "Stimmen",
+    noOldStatement: "Keine frühere Aussage",
+    noNewStatement: "Keine neue Aussage",
+    unknownDate: "Unbekanntes Datum",
+    oldSource: "Frühere Quelle",
+    newSource: "Neue Quelle",
+  },
+  en: {
+    noContent: "No published content yet or no results found.",
+    basedOnVotes: "based on most votes",
+    noTopic: "No topic",
+    unknown: "Unknown",
+    topic: "topic",
+    vote: "votes",
+    noOldStatement: "No old statement",
+    noNewStatement: "No new statement",
+    unknownDate: "Unknown date",
+    oldSource: "Old source",
+    newSource: "New source",
+  },
+  fr: {
+    noContent: "Aucun contenu publié ou aucun résultat trouvé.",
+    basedOnVotes: "basé sur le plus grand nombre de votes",
+    noTopic: "Aucun sujet",
+    unknown: "Inconnu",
+    topic: "sujet",
+    vote: "votes",
+    noOldStatement: "Aucune ancienne déclaration",
+    noNewStatement: "Aucune nouvelle déclaration",
+    unknownDate: "Date inconnue",
+    oldSource: "Ancienne source",
+    newSource: "Nouvelle source",
+  },
 };
 
 function slugify(text: string) {
@@ -38,6 +102,21 @@ function slugify(text: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function getTopic(item: Item, lang: Lang) {
+  if (lang === "de") return item.topic_de || item.topic;
+  if (lang === "en") return item.topic_en || item.topic;
+  if (lang === "fr") return item.topic_fr || item.topic;
+
+  return item.topic_hu || item.topic;}
+  function getAiSummary(item: Item, lang: Lang) {
+  if (lang === "de") return item.ai_summary_de || item.ai_summary;
+  if (lang === "en") return item.ai_summary_en || item.ai_summary;
+  if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
+
+  return item.ai_summary_hu || item.ai_summary;
+}
+
+
 export default function PublicContradictionsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
@@ -45,9 +124,9 @@ export default function PublicContradictionsPage() {
   const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
-  setLang(detectBrowserLang());
-  load();
-}, []);
+    setLang(detectBrowserLang());
+    load();
+  }, []);
 
   async function load() {
     const { data } = await supabase
@@ -71,20 +150,23 @@ export default function PublicContradictionsPage() {
 
   function yesPercent(id: string) {
     const itemVotes = votes.filter((v) => v.contradiction_id === id);
+
     if (itemVotes.length === 0) return 0;
 
     const yes = itemVotes.filter((v) => v.vote_type === "yes").length;
+
     return Math.round((yes / itemVotes.length) * 100);
   }
 
   const filteredItems = useMemo(() => {
     const q = search.toLowerCase().trim();
+
     if (!q) return items;
 
     return items.filter((item) =>
       [
         item.politician,
-        item.topic,
+        getTopic(item, lang),
         item.country,
         item.language,
         item.old_statement,
@@ -96,7 +178,7 @@ export default function PublicContradictionsPage() {
         .toLowerCase()
         .includes(q)
     );
-  }, [items, search]);
+  }, [items, search, lang]);
 
   const latestItems = filteredItems.slice(0, 4);
 
@@ -107,33 +189,27 @@ export default function PublicContradictionsPage() {
 
   return (
     <main style={pageStyle}>
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-  {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
-    <button
-      key={l}
-      onClick={() => {
-        setLang(l);
-        saveLang(l);
-      }}
-      style={
-        lang === l
-          ? activeLangButtonStyle
-          : langButtonStyle
-      }
-    >
-      {l.toUpperCase()}
-    </button>
-  ))}
-</div>
+      <div style={langSwitcherStyle}>
+        {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+          <button
+            key={l}
+            onClick={() => {
+              setLang(l);
+              saveLang(l);
+            }}
+            style={lang === l ? activeLangButtonStyle : langButtonStyle}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       <section style={heroStyle}>
         <div style={badgeStyle}>{t[lang].publicBeta}</div>
 
         <h1 style={titleStyle}>{t[lang].contradictionsTitle}</h1>
 
-        <p style={leadStyle}>
-          {t[lang].heroLead}
-      
-        </p>
+        <p style={leadStyle}>{t[lang].heroLead}</p>
 
         <div style={statsRowStyle}>
           <div style={statBoxStyle}>
@@ -142,12 +218,16 @@ export default function PublicContradictionsPage() {
           </div>
 
           <div style={statBoxStyle}>
-            <strong>{new Set(items.map((i) => i.politician).filter(Boolean)).size}</strong>
+            <strong>
+              {new Set(items.map((i) => i.politician).filter(Boolean)).size}
+            </strong>
             <span>{t[lang].politicians}</span>
           </div>
 
           <div style={statBoxStyle}>
-            <strong>{new Set(items.map((i) => i.topic).filter(Boolean)).size}</strong>
+            <strong>
+              {new Set(items.map((i) => getTopic(i, lang)).filter(Boolean)).size}
+            </strong>
             <span>{t[lang].topics}</span>
           </div>
 
@@ -166,14 +246,17 @@ export default function PublicContradictionsPage() {
       </section>
 
       {filteredItems.length === 0 && (
-        <div style={emptyStyle}>Nincs még publikált tartalom vagy nincs találat.</div>
+        <div style={emptyStyle}>{labels[lang].noContent}</div>
       )}
 
       {latestItems.length > 0 && (
         <>
           <section style={sectionHeaderStyle}>
             <h2 style={sectionTitleStyle}>🆕 {t[lang].latest}</h2>
-            <p style={mutedStyle}>{filteredItems.length} {t[lang].results}</p>
+
+            <p style={mutedStyle}>
+              {filteredItems.length} {t[lang].results}
+            </p>
           </section>
 
           <div style={gridStyle}>
@@ -194,7 +277,8 @@ export default function PublicContradictionsPage() {
         <>
           <section style={{ ...sectionHeaderStyle, marginTop: 30 }}>
             <h2 style={sectionTitleStyle}>🔥 {t[lang].top}</h2>
-            <p style={mutedStyle}>legtöbb szavazat alapján</p>
+
+            <p style={mutedStyle}>{labels[lang].basedOnVotes}</p>
           </section>
 
           <div style={gridStyle}>
@@ -225,16 +309,31 @@ function ContradictionCard({
   yesPercent: number;
   lang: Lang;
 }) {
+  const cardSlug =
+    item.slug ||
+    slugify(`${item.politician || "case"}-${item.topic || "topic"}`);
+
   return (
     <article style={cardStyle}>
       <div style={cardTopStyle}>
         <div>
           <div style={tagRowStyle}>
-            <span style={darkTagStyle}>{item.topic || "Nincs téma"}</span>
+            <span style={darkTagStyle}>
+              {getTopic(item, lang) || labels[lang].noTopic}
+            </span>
+
             {item.language && (
-              <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
+              <span style={lightTagStyle}>
+                {item.language.toUpperCase()}
+              </span>
             )}
-            <span style={voteTagStyle}>👍 {yesPercent}% · {voteCount} vote</span>
+
+            <span style={voteTagStyle}>
+              👍 {yesPercent}% · {voteCount}{" "}
+              {lang === "de" && voteCount === 1
+                ? "Stimme"
+                : labels[lang].vote}
+            </span>
           </div>
 
           <h2 style={cardTitleStyle}>
@@ -246,47 +345,57 @@ function ContradictionCard({
                 {item.politician}
               </a>
             ) : (
-              "Ismeretlen"
+              labels[lang].unknown
             )}{" "}
-            – {item.topic || "téma"}
+            – {getTopic(item, lang) || labels[lang].topic}
           </h2>
         </div>
 
-        <a href={`/contradictions/${item.slug}`} style={openButtonStyle}>
-        {t[lang].open} →
+        <a href={`/contradictions/${cardSlug}`} style={openButtonStyle}>
+          {t[lang].open} →
         </a>
       </div>
 
       <div style={compareGridStyle}>
         <div style={oldBoxStyle}>
-          <strong>{t[lang as keyof typeof t].old}</strong>
-          <p>{item.old_statement || "Nincs régi állítás"}</p>
-          <small>{item.old_date || "{t[lang].unknownDate}"}</small>
+          <strong>{t[lang].old}</strong>
+
+          <p>{item.old_statement || labels[lang].noOldStatement}</p>
+
+          <small>{item.old_date || labels[lang].unknownDate}</small>
         </div>
 
         <div style={newBoxStyle}>
           <strong>{t[lang].now}</strong>
-          <p>{item.new_statement || "Nincs új állítás"}</p>
-          <small>{item.new_date || "{t[lang].unknownDate}"}</small>
+
+          <p>{item.new_statement || labels[lang].noNewStatement}</p>
+
+          <small>{item.new_date || labels[lang].unknownDate}</small>
         </div>
       </div>
 
-      {item.ai_summary && <p style={summaryStyle}>🤖 {item.ai_summary}</p>}
+      {getAiSummary(item, lang) && (
+  <p style={summaryStyle}>
+    🤖 {getAiSummary(item, lang)}
+  </p>
+)}
 
       <div style={footerStyle}>
         <span>
-          {t[lang].published}: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+          {t[lang].published}:{" "}
+          {item.published_at ? item.published_at.slice(0, 10) : "-"}
         </span>
 
         <div style={{ display: "flex", gap: 10 }}>
           {item.old_source && (
             <a href={item.old_source} target="_blank" rel="noreferrer">
-              Régi forrás
+              {labels[lang].oldSource}
             </a>
           )}
+
           {item.new_source && (
             <a href={item.new_source} target="_blank" rel="noreferrer">
-              Új forrás
+              {labels[lang].newSource}
             </a>
           )}
         </div>
@@ -300,6 +409,13 @@ const pageStyle: CSSProperties = {
   background: "#f3f4f6",
   padding: "34px 18px",
   color: "#0f172a",
+};
+
+const langSwitcherStyle: CSSProperties = {
+  maxWidth: 1120,
+  margin: "0 auto 20px",
+  display: "flex",
+  gap: 6,
 };
 
 const heroStyle: CSSProperties = {
@@ -513,8 +629,8 @@ const politicianLinkStyle: CSSProperties = {
   textDecoration: "none",
   borderBottom: "2px solid #0f172a",
   cursor: "pointer",
-  transition: "0.2s",
 };
+
 const langButtonStyle: CSSProperties = {
   padding: "6px 10px",
   border: "1px solid #111827",

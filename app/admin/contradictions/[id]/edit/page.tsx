@@ -8,16 +8,22 @@ type Contradiction = {
   id: string;
   politician: string | null;
   topic: string | null;
+  topic_hu: string | null;
+  topic_de: string | null;
+  topic_en: string | null;
+  topic_fr: string | null;
   slug: string | null;
   old_statement: string | null;
   old_date: string | null;
   old_source: string | null;
-  
   new_statement: string | null;
   new_date: string | null;
   new_source: string | null;
-  
   ai_summary: string | null;
+    ai_summary_hu: string | null;
+  ai_summary_de: string | null;
+  ai_summary_en: string | null;
+  ai_summary_fr: string | null;
   status: string | null;
 };
 
@@ -57,16 +63,22 @@ export default function EditContradictionPage() {
       .update({
         politician: item.politician,
         topic: item.topic,
+        topic_hu: item.topic_hu,
+        topic_de: item.topic_de,
+        topic_en: item.topic_en,
+        topic_fr: item.topic_fr,
         slug: item.slug,
         old_statement: item.old_statement,
         old_date: item.old_date,
         old_source: item.old_source,
-        
         new_statement: item.new_statement,
         new_date: item.new_date,
         new_source: item.new_source,
-        
         ai_summary: item.ai_summary,
+        ai_summary_hu: item.ai_summary_hu,
+ai_summary_de: item.ai_summary_de,
+ai_summary_en: item.ai_summary_en,
+ai_summary_fr: item.ai_summary_fr,
         status: item.status,
       })
       .eq("id", id);
@@ -96,12 +108,66 @@ export default function EditContradictionPage() {
         onChange={(e) => setItem({ ...item, politician: e.target.value })}
       />
 
-      <label style={labelStyle}>Téma</label>
+      <label style={labelStyle}>Régi topic mező / fallback</label>
       <input
         style={inputStyle}
         value={item.topic || ""}
         onChange={(e) => setItem({ ...item, topic: e.target.value })}
       />
+
+      <section style={languageBoxStyle}>
+        <h2 style={sectionTitleStyle}>Multilingual topic mezők</h2>
+
+        <div style={topicGridStyle}>
+          <div>
+            <label style={labelStyle}>Topic HU</label>
+            <input
+              style={inputStyle}
+              value={item.topic_hu || ""}
+              onChange={(e) =>
+                setItem({ ...item, topic_hu: e.target.value })
+              }
+              placeholder="pl. migrációs politika"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Topic DE</label>
+            <input
+              style={inputStyle}
+              value={item.topic_de || ""}
+              onChange={(e) =>
+                setItem({ ...item, topic_de: e.target.value })
+              }
+              placeholder="pl. Migrationspolitik"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Topic EN</label>
+            <input
+              style={inputStyle}
+              value={item.topic_en || ""}
+              onChange={(e) =>
+                setItem({ ...item, topic_en: e.target.value })
+              }
+              placeholder="pl. Migration policy"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Topic FR</label>
+            <input
+              style={inputStyle}
+              value={item.topic_fr || ""}
+              onChange={(e) =>
+                setItem({ ...item, topic_fr: e.target.value })
+              }
+              placeholder="pl. Politique migratoire"
+            />
+          </div>
+        </div>
+      </section>
 
       <label style={labelStyle}>Slug</label>
       <input
@@ -117,6 +183,7 @@ export default function EditContradictionPage() {
         onChange={(e) => setItem({ ...item, status: e.target.value })}
       >
         <option value="draft">draft</option>
+        <option value="review">review</option>
         <option value="published">published</option>
       </select>
 
@@ -146,8 +213,6 @@ export default function EditContradictionPage() {
             value={item.old_source || ""}
             onChange={(e) => setItem({ ...item, old_source: e.target.value })}
           />
-
-          
         </section>
 
         <section style={boxStyle}>
@@ -175,17 +240,47 @@ export default function EditContradictionPage() {
             value={item.new_source || ""}
             onChange={(e) => setItem({ ...item, new_source: e.target.value })}
           />
-
-          
         </section>
       </div>
 
-      <label style={labelStyle}>AI összefoglaló</label>
-      <textarea
-        style={{ ...textareaStyle, minHeight: 140 }}
-        value={item.ai_summary || ""}
-        onChange={(e) => setItem({ ...item, ai_summary: e.target.value })}
-      />
+      <label style={labelStyle}>AI összefoglaló / régi fallback</label>
+<textarea
+  style={{ ...textareaStyle, minHeight: 120 }}
+  value={item.ai_summary || ""}
+  onChange={(e) => setItem({ ...item, ai_summary: e.target.value })}
+/>
+
+<section style={languageBoxStyle}>
+  <h2 style={sectionTitleStyle}>Multilingual AI összefoglaló</h2>
+
+  <label style={labelStyle}>AI summary HU</label>
+  <textarea
+    style={{ ...textareaStyle, minHeight: 110 }}
+    value={item.ai_summary_hu || ""}
+    onChange={(e) => setItem({ ...item, ai_summary_hu: e.target.value })}
+  />
+
+  <label style={labelStyle}>AI summary DE</label>
+  <textarea
+    style={{ ...textareaStyle, minHeight: 110 }}
+    value={item.ai_summary_de || ""}
+    onChange={(e) => setItem({ ...item, ai_summary_de: e.target.value })}
+  />
+
+  <label style={labelStyle}>AI summary EN</label>
+  <textarea
+    style={{ ...textareaStyle, minHeight: 110 }}
+    value={item.ai_summary_en || ""}
+    onChange={(e) => setItem({ ...item, ai_summary_en: e.target.value })}
+  />
+
+  <label style={labelStyle}>AI summary FR</label>
+  <textarea
+    style={{ ...textareaStyle, minHeight: 110 }}
+    value={item.ai_summary_fr || ""}
+    onChange={(e) => setItem({ ...item, ai_summary_fr: e.target.value })}
+  />
+</section>
 
       <div style={buttonRowStyle}>
         <button onClick={save} disabled={saving} style={saveButtonStyle}>
@@ -217,6 +312,12 @@ const titleStyle: React.CSSProperties = {
   marginBottom: 24,
 };
 
+const sectionTitleStyle: React.CSSProperties = {
+  marginTop: 0,
+  marginBottom: 12,
+  fontSize: 20,
+};
+
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontWeight: 800,
@@ -239,6 +340,21 @@ const textareaStyle: React.CSSProperties = {
   border: "1px solid #cbd5e1",
   borderRadius: 8,
   marginBottom: 8,
+};
+
+const languageBoxStyle: React.CSSProperties = {
+  border: "1px solid #cbd5e1",
+  background: "#f8fafc",
+  borderRadius: 12,
+  padding: 18,
+  marginTop: 16,
+  marginBottom: 16,
+};
+
+const topicGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 14,
 };
 
 const gridStyle: React.CSSProperties = {

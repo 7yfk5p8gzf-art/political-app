@@ -34,6 +34,10 @@ type Contradiction = {
   status: string | null;
   created_at: string | null;
   published_at: string | null;
+    topic_hu: string | null;
+  topic_de: string | null;
+  topic_en: string | null;
+  topic_fr: string | null;
 };
 
 function makeSlug(text: string) {
@@ -236,9 +240,13 @@ if (duplicate) {
         old_source_id: oldSource,
         new_source_id: newSource,
         politician: person,
-        topic,
-        slug,
-        language: oldS.language || newS.language || "hu",
+topic,
+topic_hu: topic,
+topic_de: null,
+topic_en: null,
+topic_fr: null,
+slug,
+language: oldS.language || newS.language || "hu",
 
         old_statement: oldS.quote_text || oldS.title || null,
 old_date: oldS.source_date || null,
