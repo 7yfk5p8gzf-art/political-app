@@ -164,7 +164,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
   if (loading) {
     return (
       <main style={pageStyle}>
-        <section style={containerStyle}>Betöltés...</section>
+        <section style={containerStyle}>{t[lang].loading}</section>
       </main>
     );
   }
@@ -178,7 +178,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
           </a>
 
           <div style={emptyCardStyle}>
-            <h1>Nincs ilyen publikált ellentmondás.</h1>
+            <h1>{t[lang].notFound}</h1>
             <p>Lehet, hogy még draft/review státuszban van, vagy törölve lett.</p>
           </div>
         </section>
@@ -190,7 +190,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
     <main style={pageStyle}>
       <section style={containerStyle}>
         <a href="/contradictions" style={backStyle}>
-          ← Vissza az ellentmondásokhoz
+          ← ← {t[lang].back}
         </a>
 
         <header style={heroStyle}>
@@ -243,7 +243,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
     <div style={timelineDotOldStyle}>1</div>
     <div>
       <div style={timelineLabelStyle}>RÉGEN</div>
-      <div style={timelineDateStyle}>{item.old_date || "Dátum nem ismert"}</div>
+      <div style={timelineDateStyle}>{item.old_date || t[lang].unknownDate}</div>
       <p style={timelineTextStyle}>
         {item.old_statement || "Nincs régi állítás"}
       </p>
@@ -254,7 +254,9 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
     <div style={timelineDotNewStyle}>2</div>
     <div>
       <div style={timelineLabelStyle}>MOST</div>
-      <div style={timelineDateStyle}>{item.new_date || "Dátum nem ismert"}</div>
+     <div style={timelineDateStyle}>
+  {item.new_date || t[lang].unknownDate}
+</div> 
       <p style={timelineTextStyle}>
         {item.new_statement || "Nincs új állítás"}
       </p>
@@ -265,19 +267,19 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
         <section style={compareGridStyle}>
           <article style={oldCardStyle}>
             <div style={kickerStyle}>{t[lang].old}</div>
-            <div style={dateStyle}>{item.old_date || "Dátum nem ismert"}</div>
+            <div style={dateStyle}>{item.old_date || "{item.old_date || t[lang].unknownDate}"}</div>
             <p style={statementStyle}>
-              {item.old_statement || "Nincs régi állítás"}
+              {item.old_statement || "{t[lang].noOldStatement}"}
             </p>
 
             {item.old_source && (
               <a href={item.old_source} target="_blank" style={sourceButtonStyle}>
-                Régi forrás megnyitása →
+                {t[lang].openOldSource} →
               </a>
             )}
             {item.old_video_url && (
   <a href={item.old_video_url} target="_blank" style={videoButtonStyle}>
-    Régi videó megnyitása →
+    {t[lang].openOldVideo} →
   </a>
 )}
 {oldEmbedUrl && (
@@ -291,19 +293,19 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
 
           <article style={newCardStyle}>
             <div style={kickerStyle}>{t[lang].now}</div>
-            <div style={dateStyle}>{item.new_date || "Dátum nem ismert"}</div>
+            <div style={dateStyle}>{item.new_date || "{item.new_date || t[lang].unknownDate}"}</div>
             <p style={statementStyle}>
-              {item.new_statement || "Nincs új állítás"}
+              {item.new_statement || "{t[lang].noNewStatement}"}
             </p>
 
             {item.new_source && (
               <a href={item.new_source} target="_blank" style={sourceButtonStyle}>
-                Új forrás megnyitása →
+                {t[lang].openNewSource} →
               </a>
             )}
             {item.new_video_url && (
   <a href={item.new_video_url} target="_blank" style={videoButtonStyle}>
-    Új videó megnyitása →
+    {t[lang].openNewVideo} →
   </a>
 )}
 {newEmbedUrl && (
@@ -317,38 +319,44 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
         </section>
 
         <section style={analysisCardStyle}>
-          <div style={kickerStyle}>AI ELEMZÉS</div>
+          <div style={kickerStyle}>{t[lang].aiAnalysis.toUpperCase()}</div>
           <p style={analysisTextStyle}>
             {item.ai_summary || "Ehhez még nincs AI elemzés."}
           </p>
         </section>
 
         <section style={sourcesCardStyle}>
-          <h2 style={sectionTitleStyle}>Források</h2>
+          <h2 style={sectionTitleStyle}>{t[lang].sources}</h2>
 
           <div style={sourceGridStyle}>
             <div style={sourceMiniCardStyle}>
-              <strong>Régi állítás forrása</strong>
+              <strong>{t[lang].oldStatementSource}</strong>
               <p style={mutedTextStyle}>
-                {item.old_source ? "Külső forrás elérhető." : "Nincs forrás megadva."}
+                {item.old_source
+  ? t[lang].externalSourceAvailable
+  : "Nincs forrás megadva."
+}
               </p>
 
               {item.old_source && (
                 <a href={item.old_source} target="_blank" style={plainLinkStyle}>
-                  Megnyitás →
+                  {t[lang].openButton} →
                 </a>
               )}
             </div>
 
             <div style={sourceMiniCardStyle}>
-              <strong>Új állítás forrása</strong>
+              <strong>{t[lang].newStatementSource}</strong>
               <p style={mutedTextStyle}>
-                {item.new_source ? "Külső forrás elérhető." : "Nincs forrás megadva."}
+                {item.new_source
+  ? t[lang].externalSourceAvailable
+  : "Nincs forrás megadva."
+}
               </p>
 
               {item.new_source && (
                 <a href={item.new_source} target="_blank" style={plainLinkStyle}>
-                  Megnyitás →
+                  {t[lang].openButton} →
                 </a>
               )}
             </div>
@@ -356,10 +364,10 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
         </section>
 
         <section style={voteCardStyle}>
-          <h2 style={sectionTitleStyle}>Ez szerinted ellentmondás?</h2>
+          <h2 style={sectionTitleStyle}>{t[lang].voteQuestion}</h2>
 
           <p style={voteTextStyle}>
-            👍 {yesPercent}% igen · 👎 {noPercent}% nem · összesen {totalVotes} szavazat
+            👍 {yesPercent}% {t[lang].yes} · 👎 {noPercent}% {t[lang].no} · {t[lang].total} {totalVotes} {t[lang].votes}
           </p>
 
           <div style={progressOuterStyle}>
@@ -372,7 +380,7 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
               onClick={() => vote("yes")}
               style={voted ? disabledButtonStyle : voteYesButtonStyle}
             >
-              👍 Igen
+              👍 {t[lang].yes}
             </button>
 
             <button
@@ -380,11 +388,11 @@ const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
               onClick={() => vote("no")}
               style={voted ? disabledButtonStyle : voteNoButtonStyle}
             >
-              👎 Nem
+              👎 {t[lang].no}
             </button>
           </div>
 
-          {voted && <p style={thanksStyle}>Köszönjük, erre már szavaztál.</p>}
+          {voted && <p style={thanksStyle}>{t[lang].alreadyVoted}</p>}
         </section>
       </section>
     </main>

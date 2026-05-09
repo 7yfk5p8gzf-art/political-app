@@ -474,7 +474,7 @@ ${data.topic || "Ismeretlen"}
                       <div style={miniTextStyle}>
   Létrehozva: {item.created_at ? item.created_at.slice(0, 10) : "-"}
   {" · "}
-  Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+ Publikálva : {item.published_at ? item.published_at.slice(0, 10) : "-"}
 </div>
                     </div>
 

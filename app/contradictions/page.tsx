@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-import { detectBrowserLang, t, type Lang } from "@/lib/i18n";
+
+import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -106,35 +107,53 @@ export default function PublicContradictionsPage() {
 
   return (
     <main style={pageStyle}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+  {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+    <button
+      key={l}
+      onClick={() => {
+        setLang(l);
+        saveLang(l);
+      }}
+      style={
+        lang === l
+          ? activeLangButtonStyle
+          : langButtonStyle
+      }
+    >
+      {l.toUpperCase()}
+    </button>
+  ))}
+</div>
       <section style={heroStyle}>
-        <div style={badgeStyle}>Public beta</div>
+        <div style={badgeStyle}>{t[lang].publicBeta}</div>
 
-        <h1 style={titleStyle}>Politikai ellentmondások egy helyen</h1>
+        <h1 style={titleStyle}>{t[lang].contradictionsTitle}</h1>
 
         <p style={leadStyle}>
-          Régi és új állítások összehasonlítása forrásokkal, dátumokkal,
-          AI-elemzéssel és közösségi szavazással.
+          {t[lang].heroLead}
+      
         </p>
 
         <div style={statsRowStyle}>
           <div style={statBoxStyle}>
             <strong>{items.length}</strong>
-            <span>publikált ügy</span>
+            <span>{t[lang].publishedCases}</span>
           </div>
 
           <div style={statBoxStyle}>
             <strong>{new Set(items.map((i) => i.politician).filter(Boolean)).size}</strong>
-            <span>politikus</span>
+            <span>{t[lang].politicians}</span>
           </div>
 
           <div style={statBoxStyle}>
             <strong>{new Set(items.map((i) => i.topic).filter(Boolean)).size}</strong>
-            <span>téma</span>
+            <span>{t[lang].topics}</span>
           </div>
 
           <div style={statBoxStyle}>
             <strong>{votes.length}</strong>
-            <span>szavazat</span>
+            <span>{t[lang].votes}</span>
           </div>
         </div>
 
@@ -154,7 +173,7 @@ export default function PublicContradictionsPage() {
         <>
           <section style={sectionHeaderStyle}>
             <h2 style={sectionTitleStyle}>🆕 {t[lang].latest}</h2>
-            <p style={mutedStyle}>{filteredItems.length} találat</p>
+            <p style={mutedStyle}>{filteredItems.length} {t[lang].results}</p>
           </section>
 
           <div style={gridStyle}>
@@ -242,13 +261,13 @@ function ContradictionCard({
         <div style={oldBoxStyle}>
           <strong>{t[lang as keyof typeof t].old}</strong>
           <p>{item.old_statement || "Nincs régi állítás"}</p>
-          <small>{item.old_date || "Dátum nem ismert"}</small>
+          <small>{item.old_date || "{t[lang].unknownDate}"}</small>
         </div>
 
         <div style={newBoxStyle}>
           <strong>{t[lang].now}</strong>
           <p>{item.new_statement || "Nincs új állítás"}</p>
-          <small>{item.new_date || "Dátum nem ismert"}</small>
+          <small>{item.new_date || "{t[lang].unknownDate}"}</small>
         </div>
       </div>
 
@@ -256,7 +275,7 @@ function ContradictionCard({
 
       <div style={footerStyle}>
         <span>
-          Publikálva: {item.published_at ? item.published_at.slice(0, 10) : "-"}
+          {t[lang].published}: {item.published_at ? item.published_at.slice(0, 10) : "-"}
         </span>
 
         <div style={{ display: "flex", gap: 10 }}>
@@ -495,4 +514,17 @@ const politicianLinkStyle: CSSProperties = {
   borderBottom: "2px solid #0f172a",
   cursor: "pointer",
   transition: "0.2s",
+};
+const langButtonStyle: CSSProperties = {
+  padding: "6px 10px",
+  border: "1px solid #111827",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const activeLangButtonStyle: CSSProperties = {
+  ...langButtonStyle,
+  background: "#111827",
+  color: "white",
 };
