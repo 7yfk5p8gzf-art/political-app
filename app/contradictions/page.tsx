@@ -168,6 +168,7 @@ export default function PublicContradictionsPage() {
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState<Lang>("hu");
   const [mode, setMode] = useState<"latest" | "top">("latest");
+  const [activeCountry, setActiveCountry] = useState("all");
 
   useEffect(() => {
     setLang(detectBrowserLang());
@@ -202,10 +203,11 @@ export default function PublicContradictionsPage() {
   }
 
   const filteredItems = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return items;
+  const q = search.toLowerCase().trim();
 
-    return items.filter((item) =>
+  return items.filter((item) => {
+    const matchesSearch =
+      !q ||
       [
         item.politician,
         getTopic(item, lang),
@@ -218,14 +220,77 @@ export default function PublicContradictionsPage() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(q)
-    );
-  }, [items, search, lang]);
+        .includes(q);
+
+    const matchesCountry =
+      activeCountry === "all" ||
+      String(item.country || "").toLowerCase() === activeCountry.toLowerCase();
+
+    return matchesSearch && matchesCountry;
+  });
+}, [items, search, lang, activeCountry]);
 
   const visibleItems =
-    mode === "latest"
-      ? filteredItems
-      : [...filteredItems].sort((a, b) => voteCount(b.id) - voteCount(a.id));
+  mode === "latest"
+    ? filteredItems
+    : [...filteredItems].sort((a, b) => voteCount(b.id) - voteCount(a.id));
+
+const trendingTopics = useMemo(() => {
+  const map = new Map<string, { name: string; slug: string; count: number }>();
+
+  items.forEach((item) => {
+    const topicName = getTopic(item, lang);
+    if (!topicName) return;
+
+    const topicSlug = slugify(topicName);
+    const current = map.get(topicSlug) || {
+      name: topicName,
+      slug: topicSlug,
+      count: 0,
+    };
+
+    current.count += 1;
+    map.set(topicSlug, current);
+  });
+
+  return Array.from(map.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+}, [items, lang]);
+
+const trendingPoliticians = (() => {
+  const map = new Map<
+    string,
+    {
+      name: string;
+      slug: string;
+      votes: number;
+    }
+  >();
+
+  items.forEach((item) => {
+    if (!item.politician) return;
+
+    const slug = slugify(item.politician);
+
+    const current = map.get(slug) || {
+      name: item.politician,
+      slug,
+      votes: 0,
+    };
+
+    current.votes += voteCount(item.id);
+    map.set(slug, current);
+  });
+
+  return Array.from(map.values())
+    .sort((a, b) => b.votes - a.votes)
+    .slice(0, 6);
+})();
+
+const mostVotedItems = [...items]
+  .sort((a, b) => voteCount(b.id) - voteCount(a.id))
+  .slice(0, 3);
 
   const countries = new Set(items.map((i) => i.country).filter(Boolean)).size;
   const spotlightItem = [...items].sort(
@@ -257,6 +322,20 @@ export default function PublicContradictionsPage() {
     <main style={pageStyle}>
       <div style={topBarStyle}>
         <div style={brandStyle}>Political App</div>
+        <div style={navStyle}>
+  <a href="/contradictions" style={navLinkStyle}>
+    Contradictions
+  </a>
+
+  <a href="/topics" style={navLinkStyle}>
+    Topics
+  </a>
+  <a href="/politicians" style={navLinkStyle}>
+  Politicians
+</a>
+
+  
+</div>
 
         <div style={langSwitcherStyle}>
           {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
@@ -279,13 +358,29 @@ export default function PublicContradictionsPage() {
           <div style={badgeStyle}>{labels[lang].eyebrow}</div>
           <h1 style={titleStyle}>{labels[lang].headline}</h1>
           <p style={leadStyle}>{labels[lang].lead}</p>
+<input
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  placeholder={labels[lang].search}
+  style={searchStyle}
+/>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={labels[lang].search}
-            style={searchStyle}
-          />
+<div style={countryFilterStyle}>
+  {["all", "HU", "DE", "FR", "EU"].map((country) => (
+    <button
+      key={country}
+      onClick={() => setActiveCountry(country)}
+      style={
+        activeCountry === country
+          ? activeCountryButtonStyle
+          : countryButtonStyle
+      }
+    >
+      {country}
+    </button>
+  ))}
+</div>
+          
         </div>
 
         <div style={heroPanelStyle}>
@@ -393,6 +488,23 @@ export default function PublicContradictionsPage() {
           </div>
         </section>
       )}
+      <section style={sectionStyle}>
+  <div style={sectionHeaderStyle}>
+    <h2 style={sectionTitleStyle}>🔥 Trending Topics</h2>
+  </div>
+
+  <div style={trendingRowStyle}>
+    {trendingTopics.map((topic) => (
+      <a
+        key={topic.slug}
+        href={`/topics/${topic.slug}`}
+        style={trendingTopicStyle}
+      >
+        #{topic.name}
+      </a>
+    ))}
+  </div>
+</section>
 
       <section style={sectionStyle}>
         <div style={sectionHeaderStyle}>
@@ -420,6 +532,39 @@ export default function PublicContradictionsPage() {
         {visibleItems.length === 0 && (
           <div style={emptyStyle}>{labels[lang].noContent}</div>
         )}
+        <section style={sectionStyle}>
+  <div style={sectionHeaderStyle}>
+    <h2 style={sectionTitleStyle}>🏆 Most Voted</h2>
+  </div>
+
+  <div style={gridStyle}>
+    {mostVotedItems.map((item) => (
+      <a
+        key={item.id}
+        href={`/contradictions/${item.slug}`}
+        style={cardStyle}
+      >
+        <div style={tagRowStyle}>
+          <span style={darkTagStyle}>
+            {getTopic(item, lang) || labels[lang].noTopic}
+          </span>
+
+          <span style={voteTagStyle}>
+            👍 {voteCount(item.id)} {labels[lang].vote}
+          </span>
+        </div>
+
+        <h3 style={{ fontSize: 24, marginTop: 10 }}>
+          {item.politician}
+        </h3>
+
+        <p style={{ color: "#475569", marginTop: 8 }}>
+          {item.old_statement?.slice(0, 120)}...
+        </p>
+      </a>
+    ))}
+  </div>
+</section>
 
         <div style={gridStyle}>
           {visibleItems.map((item) => (
@@ -459,9 +604,16 @@ function ContradictionCard({
       <div style={cardTopStyle}>
         <div>
           <div style={tagRowStyle}>
-            <span style={darkTagStyle}>
-              {getTopic(item, lang) || labels[lang].noTopic}
-            </span>
+            <a
+  href={`/topics/${slugify(getTopic(item, lang) || item.topic || "")}`}
+  style={{
+    ...darkTagLinkStyle,
+    border: "1px solid rgba(255,255,255,0.15)",
+  }}
+  title="Open topic page"
+>
+  {getTopic(item, lang) || labels[lang].noTopic} →
+</a>
 
             {item.language && (
               <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
@@ -878,4 +1030,60 @@ const spotlightFooterStyle: CSSProperties = {
   gap: 12,
   flexWrap: "wrap",
   fontWeight: 900,
+};
+const darkTagLinkStyle: CSSProperties = {
+  ...darkTagStyle,
+  textDecoration: "none",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  boxShadow: "0 0 0 rgba(0,0,0,0)",
+};
+const navStyle: CSSProperties = {
+  display: "flex",
+  gap: 16,
+  alignItems: "center",
+};
+
+const navLinkStyle: CSSProperties = {
+  color: "#0f172a",
+  textDecoration: "none",
+  fontWeight: 800,
+  fontSize: 15,
+};
+const countryFilterStyle: CSSProperties = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  marginTop: 16,
+};
+
+const countryButtonStyle: CSSProperties = {
+  padding: "8px 14px",
+  borderRadius: 999,
+  border: "1px solid #cbd5e1",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 900,
+};
+
+const activeCountryButtonStyle: CSSProperties = {
+  ...countryButtonStyle,
+  background: "#0f172a",
+  color: "white",
+  borderColor: "#0f172a",
+};
+const trendingRowStyle: CSSProperties = {
+  display: "flex",
+  gap: 12,
+  flexWrap: "wrap",
+};
+
+const trendingTopicStyle: CSSProperties = {
+  padding: "10px 16px",
+  borderRadius: 999,
+  background: "#0f172a",
+  color: "white",
+  textDecoration: "none",
+  fontWeight: 900,
+  boxShadow: "0 10px 24px rgba(15,23,42,0.12)",
 };
