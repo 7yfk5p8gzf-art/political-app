@@ -26,6 +26,7 @@ ai_summary_de: string | null;
 ai_summary_en: string | null;
 ai_summary_fr: string | null;
   status: string | null;
+  views?: number | null;
 };
 
 type Vote = {
@@ -150,6 +151,12 @@ export default function ContradictionDetailPage() {
     }
 
     setItem(data);
+    await supabase
+  .from("contradictions")
+  .update({
+    views: (data.views || 0) + 1,
+  })
+  .eq("id", data.id);
 
     const { data: voteData } = await supabase
       .from("contradiction_votes")
@@ -327,6 +334,9 @@ export default function ContradictionDetailPage() {
           </h1>
 
           <p style={leadStyle}>{labels[lang].lead}</p>
+          <div style={viewCounterStyle}>
+  👀 {item.views || 0} megtekintés
+</div>
 
           <div style={shareRowStyle}>
             <button onClick={copyLink} style={shareButtonStyle}>
@@ -907,4 +917,9 @@ const videoLabelStyle: CSSProperties = {
   fontWeight: 900,
   color: "#334155",
   fontSize: 14,
+};
+const viewCounterStyle: CSSProperties = {
+  marginTop: 10,
+  fontWeight: 800,
+  color: "#475569",
 };
