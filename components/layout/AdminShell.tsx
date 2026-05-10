@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const allowedRoles = ['admin', 'editor'];
+const allowedRoles = ['superadmin', 'admin', 'reviewer', 'editor'];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();

@@ -61,12 +61,12 @@ export default function AdminContradictionsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string>("editor");
 
-  const canPublish = role === "main_admin" || role === "admin";
+  const canPublish = role === "superadmin" || role === "admin";
 
   const canReview =
-    role === "main_admin" || role === "admin" || role === "reviewer";
+    role === "superadmin" || role === "admin" || role === "reviewer";
 
-  const canDelete = role === "main_admin" || role === "admin";
+  const canDelete = role === "superadmin" || role === "admin";
 
   useEffect(() => {
     checkAccess();
@@ -118,7 +118,7 @@ export default function AdminContradictionsPage() {
       userRole !== "editor" &&
       userRole !== "reviewer" &&
       userRole !== "admin" &&
-      userRole !== "main_admin"
+      userRole !== "superadmin"
     ) {
       alert("Nincs jogosultságod ehhez az oldalhoz");
       window.location.href = "/";
@@ -342,7 +342,7 @@ export default function AdminContradictionsPage() {
   ) {
     if (status === "published" && !canPublish) {
       alert(
-        "Nincs jogosultságod publikálni. Csak main_admin vagy admin publikálhat."
+        "Nincs jogosultságod publikálni. Csak superadmin vagy admin publikálhat."
       );
       return;
     }
@@ -628,7 +628,7 @@ ${data.topic || "Ismeretlen"}
                         title={
                           canPublish
                             ? "Publikálás"
-                            : "Csak main_admin vagy admin publikálhat"
+                            : "Csak superadmin vagy admin publikálhat"
                         }
                       >
                         Publish

@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
       .maybeSingle();
 
     const role = profile?.role ?? "editor";
-    const allowedRoles = ["main_admin", "admin", "reviewer", "editor"];
+    const allowedRoles = ["superadmin", "admin", "reviewer", "editor"];
 
     if (!allowedRoles.includes(role)) {
       alert("Nincs jogosultságod az adminhoz");
@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
 
     if (profiles) {
       setUsersCount(profiles.length);
-      setMainAdminsCount(profiles.filter((p) => p.role === "main_admin").length);
+      setMainAdminsCount(profiles.filter((p) => p.role === "superadmin").length);
       setAdminsCount(profiles.filter((p) => p.role === "admin").length);
       setReviewersCount(profiles.filter((p) => p.role === "reviewer").length);
       setEditorsCount(profiles.filter((p) => p.role === "editor").length);

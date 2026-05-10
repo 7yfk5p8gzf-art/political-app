@@ -18,64 +18,37 @@ function getActionInfo(log: AuditLog) {
   const text = `${log.action} ${log.details || ""}`.toLowerCase();
 
   if (text.includes("published") || text.includes("publish")) {
-    return {
-      icon: "✅",
-      label: "Publish",
-      style: publishBadgeStyle,
-    };
+    return { icon: "✅", label: "Publish", style: publishBadgeStyle };
   }
 
   if (text.includes("delete") || text.includes("töröl")) {
-    return {
-      icon: "🗑️",
-      label: "Delete",
-      style: deleteBadgeStyle,
-    };
+    return { icon: "🗑️", label: "Delete", style: deleteBadgeStyle };
   }
 
   if (text.includes("generate_ai") || text.includes("ai")) {
-    return {
-      icon: "✨",
-      label: "AI",
-      style: aiBadgeStyle,
-    };
+    return { icon: "✨", label: "AI", style: aiBadgeStyle };
   }
 
   if (text.includes("review")) {
-    return {
-      icon: "🔎",
-      label: "Review",
-      style: reviewBadgeStyle,
-    };
+    return { icon: "🔎", label: "Review", style: reviewBadgeStyle };
   }
 
   if (text.includes("draft")) {
-    return {
-      icon: "📝",
-      label: "Draft",
-      style: draftBadgeStyle,
-    };
+    return { icon: "📝", label: "Draft", style: draftBadgeStyle };
   }
 
   if (text.includes("create") || text.includes("létrehoz")) {
-    return {
-      icon: "➕",
-      label: "Create",
-      style: createBadgeStyle,
-    };
+    return { icon: "➕", label: "Create", style: createBadgeStyle };
   }
 
-  return {
-    icon: "📌",
-    label: log.action,
-    style: defaultBadgeStyle,
-  };
+  return { icon: "📌", label: log.action, style: defaultBadgeStyle };
 }
 
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
     loadLogs();
@@ -99,7 +72,7 @@ export default function AdminLogsPage() {
   const filteredLogs = logs.filter((log) => {
     const q = search.toLowerCase();
 
-    return [
+    const matchesSearch = [
       log.user_email,
       log.user_role,
       log.action,
@@ -110,6 +83,36 @@ export default function AdminLogsPage() {
       .join(" ")
       .toLowerCase()
       .includes(q);
+
+    if (activeFilter === "all") return matchesSearch;
+
+    const text = `${log.action} ${log.details || ""}`.toLowerCase();
+
+    if (activeFilter === "publish") {
+      return matchesSearch && (text.includes("publish") || text.includes("published"));
+    }
+
+    if (activeFilter === "review") {
+      return matchesSearch && text.includes("review");
+    }
+
+    if (activeFilter === "draft") {
+      return matchesSearch && text.includes("draft");
+    }
+
+    if (activeFilter === "delete") {
+      return matchesSearch && (text.includes("delete") || text.includes("töröl"));
+    }
+
+    if (activeFilter === "ai") {
+      return matchesSearch && text.includes("ai");
+    }
+
+    if (activeFilter === "create") {
+      return matchesSearch && (text.includes("create") || text.includes("létrehoz"));
+    }
+
+    return matchesSearch;
   });
 
   if (loading) {
@@ -130,6 +133,29 @@ export default function AdminLogsPage() {
       </div>
 
       <div style={{ marginBottom: 20 }}>
+        <div style={filtersRowStyle}>
+          {[
+            ["all", "Összes"],
+            ["publish", "Publish"],
+            ["review", "Review"],
+            ["draft", "Draft"],
+            ["delete", "Delete"],
+            ["ai", "AI"],
+            ["create", "Create"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setActiveFilter(value)}
+              style={{
+                ...filterButtonStyle,
+                ...(activeFilter === value ? activeFilterButtonStyle : {}),
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <input
           placeholder="Keresés email, role, action szerint..."
           value={search}
@@ -146,7 +172,14 @@ export default function AdminLogsPage() {
             <article key={log.id} style={cardStyle}>
               <div style={rowStyle}>
                 <div>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <span style={{ ...badgeBaseStyle, ...actionInfo.style }}>
                       {actionInfo.icon} {actionInfo.label}
                     </span>
@@ -305,4 +338,26 @@ const createBadgeStyle: CSSProperties = {
 const defaultBadgeStyle: CSSProperties = {
   background: "#e2e8f0",
   color: "#334155",
+};
+
+const filtersRowStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 10,
+  marginBottom: 14,
+};
+
+const filterButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 999,
+  border: "1px solid #cbd5e1",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
+const activeFilterButtonStyle: CSSProperties = {
+  background: "#0f172a",
+  color: "white",
+  border: "1px solid #0f172a",
 };
