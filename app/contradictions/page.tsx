@@ -28,6 +28,7 @@ type Item = {
   ai_summary_en?: string | null;
   ai_summary_fr?: string | null;
   published_at: string | null;
+  views?: number | null;
 };
 
 type Vote = {
@@ -332,6 +333,9 @@ const mostVotedItems = [...items]
   </a>
   <a href="/politicians" style={navLinkStyle}>
   Politicians
+</a>
+<a href="/login" style={navLinkStyle}>
+  Login / Register
 </a>
 
   
@@ -665,9 +669,11 @@ function ContradictionCard({
 
       <div style={footerStyle}>
         <span>
-          {labels[lang].published}:{" "}
-          {item.published_at ? item.published_at.slice(0, 10) : "-"}
-        </span>
+  {labels[lang].published}:{" "}
+  {item.published_at ? item.published_at.slice(0, 10) : "-"}
+</span>
+
+<span>👀 {item.views || 0}</span>
 
         <div style={{ display: "flex", gap: 10 }}>
           {item.old_source && (

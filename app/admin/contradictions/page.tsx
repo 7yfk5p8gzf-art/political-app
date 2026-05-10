@@ -10,13 +10,11 @@ type Source = {
   url?: string | null;
   type?: string | null;
   summary?: string | null;
-
   article_url?: string | null;
   video_url?: string | null;
   source_type?: string | null;
   quote_text?: string | null;
   ai_summary?: string | null;
-
   politician: string | null;
   topic: string | null;
   source_date: string | null;
@@ -34,7 +32,7 @@ type Contradiction = {
   status: string | null;
   created_at: string | null;
   published_at: string | null;
-    topic_hu: string | null;
+  topic_hu: string | null;
   topic_de: string | null;
   topic_en: string | null;
   topic_fr: string | null;
@@ -55,16 +53,46 @@ export default function AdminContradictionsPage() {
   const [oldSource, setOldSource] = useState("");
   const [newSource, setNewSource] = useState("");
   const [oldSourceSearch, setOldSourceSearch] = useState("");
-const [newSourceSearch, setNewSourceSearch] = useState("");
-  
+  const [newSourceSearch, setNewSourceSearch] = useState("");
+
   const [search, setSearch] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string>("editor");
+
+  const canPublish = role === "main_admin" || role === "admin";
+
+  const canReview =
+    role === "main_admin" || role === "admin" || role === "reviewer";
+
+  const canDelete = role === "main_admin" || role === "admin";
 
   useEffect(() => {
     checkAccess();
   }, []);
+
+  async function logAction(
+    action: string,
+    recordId: string | null,
+    details: string
+  ) {
+    const { error } = await supabase.from("audit_logs").insert([
+      {
+        user_id: userId,
+        user_email: userEmail,
+        user_role: role,
+        action,
+        table_name: "contradictions",
+        record_id: recordId,
+        details,
+      },
+    ]);
+
+    if (error) {
+      console.error("Audit log hiba:", error.message);
+    }
+  }
 
   async function checkAccess() {
     const {
@@ -83,13 +111,14 @@ const [newSourceSearch, setNewSourceSearch] = useState("");
       .maybeSingle();
 
     const userRole = profile?.role ?? "editor";
+    setUserId(user.id);
     setRole(userRole);
 
     if (
       userRole !== "editor" &&
       userRole !== "reviewer" &&
       userRole !== "admin" &&
-      userRole !== "superadmin"
+      userRole !== "main_admin"
     ) {
       alert("Nincs jogosultságod ehhez az oldalhoz");
       window.location.href = "/";
@@ -109,10 +138,10 @@ const [newSourceSearch, setNewSourceSearch] = useState("");
 
   async function loadSources() {
     const { data, error } = await supabase
-  .from("sources")
-  .select("*")
-  .eq("status", "published")
-  .order("source_date", { ascending: false });
+      .from("sources")
+      .select("*")
+      .eq("status", "published")
+      .order("source_date", { ascending: false });
 
     if (error) {
       alert("Sources betöltési hiba: " + error.message);
@@ -141,60 +170,57 @@ const [newSourceSearch, setNewSourceSearch] = useState("");
   }
 
   const filteredItems = useMemo(() => {
-  const q = search.toLowerCase().trim();
-  if (!q) return items;
+    const q = search.toLowerCase().trim();
+    if (!q) return items;
 
-  return items.filter((item) => {
-    const oldS = getSource(item.old_source_id);
-    const newS = getSource(item.new_source_id);
+    return items.filter((item) => {
+      const oldS = getSource(item.old_source_id);
+      const newS = getSource(item.new_source_id);
 
-    return [
-      oldS?.title,
-      newS?.title,
-      oldS?.politician,
-      newS?.politician,
-      oldS?.topic,
-      newS?.topic,
-      oldS?.country,
-      newS?.country,
-      item.status,
-      item.slug,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(q);
-  });
-}, [items, sources, search]);
-const filteredOldSources = useMemo(() => {
-  const q = oldSourceSearch.toLowerCase().trim();
-  if (!q) return sources;
+      return [
+        oldS?.title,
+        newS?.title,
+        oldS?.politician,
+        newS?.politician,
+        oldS?.topic,
+        newS?.topic,
+        oldS?.country,
+        newS?.country,
+        item.status,
+        item.slug,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [items, sources, search]);
 
-  return sources.filter((s) =>
-    [s.title, s.politician, s.topic, s.country, s.source_date]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(q)
-  );
-}, [sources, oldSourceSearch]);
+  const filteredOldSources = useMemo(() => {
+    const q = oldSourceSearch.toLowerCase().trim();
+    if (!q) return sources;
 
-const filteredNewSources = useMemo(() => {
-  const q = newSourceSearch.toLowerCase().trim();
-  if (!q) return sources;
+    return sources.filter((s) =>
+      [s.title, s.politician, s.topic, s.country, s.source_date]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [sources, oldSourceSearch]);
 
-  return sources.filter((s) =>
-    [s.title, s.politician, s.topic, s.country, s.source_date]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(q)
-  );
-}, [sources, newSourceSearch]);
+  const filteredNewSources = useMemo(() => {
+    const q = newSourceSearch.toLowerCase().trim();
+    if (!q) return sources;
 
-  
-
-
+    return sources.filter((s) =>
+      [s.title, s.politician, s.topic, s.country, s.source_date]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [sources, newSourceSearch]);
 
   async function create() {
     if (!oldSource || !newSource) {
@@ -202,20 +228,18 @@ const filteredNewSources = useMemo(() => {
       return;
     }
 
-    
-
     const oldS = getSource(oldSource);
     const newS = getSource(newSource);
-    const duplicate = items.find(
-  (item) =>
-    item.old_source_id === oldSource &&
-    item.new_source_id === newSource
-);
 
-if (duplicate) {
-  alert("Ez az OLD + NEW source páros már létezik.");
-  return;
-}
+    const duplicate = items.find(
+      (item) =>
+        item.old_source_id === oldSource && item.new_source_id === newSource
+    );
+
+    if (duplicate) {
+      alert("Ez az OLD + NEW source páros már létezik.");
+      return;
+    }
 
     if (!oldS || !newS) {
       alert("Nem találom a kiválasztott source-t");
@@ -235,39 +259,49 @@ if (duplicate) {
 
     const slug = `${slugBase}-${Date.now()}`;
 
-    const { error } = await supabase.from("contradictions").insert([
-      {
-        old_source_id: oldSource,
-        new_source_id: newSource,
-        politician: person,
-topic,
-topic_hu: topic,
-topic_de: null,
-topic_en: null,
-topic_fr: null,
-slug,
-language: oldS.language || newS.language || "hu",
+    const { data, error } = await supabase
+      .from("contradictions")
+      .insert([
+        {
+          old_source_id: oldSource,
+          new_source_id: newSource,
+          politician: person,
+          topic,
+          topic_hu: topic,
+          topic_de: null,
+          topic_en: null,
+          topic_fr: null,
+          slug,
+          language: oldS.language || newS.language || "hu",
 
-        old_statement: oldS.quote_text || oldS.title || null,
-old_date: oldS.source_date || null,
-old_source: oldS.article_url || oldS.video_url || oldS.url || null,
-old_video_url: oldS.video_url || null,
+          old_statement: oldS.quote_text || oldS.title || null,
+          old_date: oldS.source_date || null,
+          old_source: oldS.article_url || oldS.video_url || oldS.url || null,
+          old_video_url: oldS.video_url || null,
 
-new_statement: newS.quote_text || newS.title || null,
-new_date: newS.source_date || null,
-new_source: newS.article_url || newS.video_url || newS.url || null,
-new_video_url: newS.video_url || null,
+          new_statement: newS.quote_text || newS.title || null,
+          new_date: newS.source_date || null,
+          new_source: newS.article_url || newS.video_url || newS.url || null,
+          new_video_url: newS.video_url || null,
 
-ai_summary:
-  `Régi: ${oldS.ai_summary || oldS.summary || oldS.title || ""}\n\n` +
-  `Új: ${newS.ai_summary || newS.summary || newS.title || ""}`,
-      },
-    ]);
+          ai_summary:
+            `Régi: ${oldS.ai_summary || oldS.summary || oldS.title || ""}\n\n` +
+            `Új: ${newS.ai_summary || newS.summary || newS.title || ""}`,
+        },
+      ])
+      .select("id, slug")
+      .single();
 
     if (error) {
       alert("Mentési hiba: " + error.message);
       return;
     }
+
+    await logAction(
+      "create_contradiction",
+      data?.id || null,
+      `Új contradiction létrehozva draftként: ${slug}`
+    );
 
     setOldSource("");
     setNewSource("");
@@ -276,8 +310,15 @@ ai_summary:
   }
 
   async function remove(id: string) {
+    if (!canDelete) {
+      alert("Nincs jogosultságod törölni.");
+      return;
+    }
+
     const ok = confirm("Biztos törlöd ezt az ellentmondást?");
     if (!ok) return;
+
+    const item = items.find((x) => x.id === id);
 
     const { error } = await supabase.from("contradictions").delete().eq("id", id);
 
@@ -286,6 +327,12 @@ ai_summary:
       return;
     }
 
+    await logAction(
+      "delete_contradiction",
+      id,
+      `Contradiction törölve: ${item?.slug || id}`
+    );
+
     await loadContradictions();
   }
 
@@ -293,21 +340,42 @@ ai_summary:
     id: string,
     status: "draft" | "review" | "published"
   ) {
+    if (status === "published" && !canPublish) {
+      alert(
+        "Nincs jogosultságod publikálni. Csak main_admin vagy admin publikálhat."
+      );
+      return;
+    }
+
+    if (status === "draft" && !canReview) {
+      alert("Nincs jogosultságod visszaküldeni draftba.");
+      return;
+    }
+
+    const item = items.find((x) => x.id === id);
+    const oldStatus = item?.status || "draft";
+
     const updateData: any = { status };
 
-if (status === "published") {
-  updateData.published_at = new Date().toISOString();
-}
+    if (status === "published") {
+      updateData.published_at = new Date().toISOString();
+    }
 
-const { error } = await supabase
-  .from("contradictions")
-  .update(updateData)
-  .eq("id", id);
+    const { error } = await supabase
+      .from("contradictions")
+      .update(updateData)
+      .eq("id", id);
 
     if (error) {
       alert("Status hiba: " + error.message);
       return;
     }
+
+    await logAction(
+      "update_contradiction_status",
+      id,
+      `Status módosítva: ${oldStatus} → ${status}. Slug: ${item?.slug || id}`
+    );
 
     await loadContradictions();
   }
@@ -352,6 +420,12 @@ ${data.topic || "Ismeretlen"}
       .update({ ai_summary: json.text })
       .eq("id", id);
 
+    await logAction(
+      "generate_ai_summary",
+      id,
+      `AI összefoglaló generálva. Politikus: ${data.politician || "-"}`
+    );
+
     alert("AI kész");
     await loadContradictions();
   }
@@ -390,15 +464,18 @@ ${data.topic || "Ismeretlen"}
           <div style={compareGridStyle}>
             <div style={selectBoxStyle}>
               <h3 style={boxTitleStyle}>OLD source</h3>
+
               <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
-  Találatok: {filteredOldSources.length}
-</div>
+                Találatok: {filteredOldSources.length}
+              </div>
+
               <input
-  placeholder="Keresés régi source között..."
-  value={oldSourceSearch}
-  onChange={(e) => setOldSourceSearch(e.target.value)}
-  style={{ ...inputStyle, marginBottom: 10 }}
-/>
+                placeholder="Keresés régi source között..."
+                value={oldSourceSearch}
+                onChange={(e) => setOldSourceSearch(e.target.value)}
+                style={{ ...inputStyle, marginBottom: 10 }}
+              />
+
               <select
                 value={oldSource}
                 onChange={(e) => setOldSource(e.target.value)}
@@ -418,15 +495,18 @@ ${data.topic || "Ismeretlen"}
 
             <div style={selectBoxStyle}>
               <h3 style={boxTitleStyle}>NEW source</h3>
+
               <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
-  Találatok: {filteredNewSources.length}
-</div>
+                Találatok: {filteredNewSources.length}
+              </div>
+
               <input
-  placeholder="Keresés új source között..."
-  value={newSourceSearch}
-  onChange={(e) => setNewSourceSearch(e.target.value)}
-  style={{ ...inputStyle, marginBottom: 10 }}
-/>
+                placeholder="Keresés új source között..."
+                value={newSourceSearch}
+                onChange={(e) => setNewSourceSearch(e.target.value)}
+                style={{ ...inputStyle, marginBottom: 10 }}
+              />
+
               <select
                 value={newSource}
                 onChange={(e) => setNewSource(e.target.value)}
@@ -479,15 +559,19 @@ ${data.topic || "Ismeretlen"}
                       </div>
 
                       <div style={miniTextStyle}>{item.slug}</div>
+
                       <div style={miniTextStyle}>
-  Létrehozva: {item.created_at ? item.created_at.slice(0, 10) : "-"}
-  {" · "}
- Publikálva : {item.published_at ? item.published_at.slice(0, 10) : "-"}
-</div>
+                        Létrehozva:{" "}
+                        {item.created_at ? item.created_at.slice(0, 10) : "-"}
+                        {" · "}
+                        Publikálva:{" "}
+                        {item.published_at
+                          ? item.published_at.slice(0, 10)
+                          : "-"}
+                      </div>
                     </div>
 
                     <a
-                    
                       href={`/admin/contradictions/${item.id}/edit`}
                       style={editLinkStyle}
                     >
@@ -523,37 +607,42 @@ ${data.topic || "Ismeretlen"}
                       </button>
                     )}
 
-                    {(role === "reviewer" ||
-                      role === "admin" ||
-                      role === "superadmin") &&
-                      item.status === "review" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "draft")}
-                          style={secondaryButtonStyle}
-                        >
-                          Vissza draft
-                        </button>
-                      )}
+                    {canReview && item.status === "review" && (
+                      <button
+                        onClick={() => updateStatus(item.id, "draft")}
+                        style={secondaryButtonStyle}
+                      >
+                        Vissza draft
+                      </button>
+                    )}
 
-                    {(role === "admin" || role === "superadmin") &&
-                      item.status === "review" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "published")}
-                          style={publishButtonStyle}
-                        >
-                          Publish
-                        </button>
-                      )}
+                    {item.status === "review" && (
+                      <button
+                        onClick={() => updateStatus(item.id, "published")}
+                        disabled={!canPublish}
+                        style={{
+                          ...publishButtonStyle,
+                          opacity: canPublish ? 1 : 0.45,
+                          cursor: canPublish ? "pointer" : "not-allowed",
+                        }}
+                        title={
+                          canPublish
+                            ? "Publikálás"
+                            : "Csak main_admin vagy admin publikálhat"
+                        }
+                      >
+                        Publish
+                      </button>
+                    )}
 
-                    {(role === "admin" || role === "superadmin") &&
-                      item.status === "published" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "review")}
-                          style={secondaryButtonStyle}
-                        >
-                          Vissza review
-                        </button>
-                      )}
+                    {canPublish && item.status === "published" && (
+                      <button
+                        onClick={() => updateStatus(item.id, "review")}
+                        style={secondaryButtonStyle}
+                      >
+                        Vissza review
+                      </button>
+                    )}
 
                     <button
                       onClick={() => generateAI(item.id)}
@@ -562,7 +651,7 @@ ${data.topic || "Ismeretlen"}
                       AI
                     </button>
 
-                    {(role === "admin" || role === "superadmin") && (
+                    {canDelete && (
                       <button
                         onClick={() => remove(item.id)}
                         style={deleteButtonStyle}
@@ -608,13 +697,9 @@ function SourcePreview({ source }: { source: Source | null }) {
         {source.source_date ? ` · ${source.source_date}` : ""}
       </div>
 
-      {source.quote_text && (
-        <p style={quoteStyle}>“{source.quote_text}”</p>
-      )}
+      {source.quote_text && <p style={quoteStyle}>“{source.quote_text}”</p>}
 
-      {summary && (
-        <p style={previewSummaryStyle}>{summary}</p>
-      )}
+      {summary && <p style={previewSummaryStyle}>{summary}</p>}
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         {articleUrl && (
@@ -832,6 +917,7 @@ const deleteButtonStyle: CSSProperties = {
   cursor: "pointer",
   fontWeight: 600,
 };
+
 const quoteStyle: CSSProperties = {
   lineHeight: 1.55,
   marginTop: 12,
