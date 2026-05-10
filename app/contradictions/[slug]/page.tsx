@@ -53,6 +53,7 @@ const labels = {
     shareTextFallbackPolitician: "Politikus",
     shareTextFallbackTopic: "ellentmondás",
     shareText: "régen mást mondott, mint most?",
+    videoEvidence: "🎥 Videós bizonyíték",
   },
   de: {
     back: "Zurück",
@@ -72,6 +73,7 @@ const labels = {
     shareTextFallbackPolitician: "Politiker",
     shareTextFallbackTopic: "Widerspruch",
     shareText: "hat früher etwas anderes gesagt als heute?",
+    videoEvidence: "🎥 Video-Beweis",
   },
   en: {
     back: "Back",
@@ -91,6 +93,7 @@ const labels = {
     shareTextFallbackPolitician: "Politician",
     shareTextFallbackTopic: "contradiction",
     shareText: "did they say something different before than now?",
+    videoEvidence: "🎥 Video evidence",
   },
   fr: {
     back: "Retour",
@@ -110,6 +113,7 @@ const labels = {
     shareTextFallbackPolitician: "Politicien",
     shareTextFallbackTopic: "contradiction",
     shareText: "a-t-il dit autre chose avant que maintenant ?",
+    videoEvidence: "🎥 Preuve vidéo",
   },
 };
 
@@ -208,26 +212,41 @@ export default function ContradictionDetailPage() {
   }
 
   function getYouTubeEmbedUrl(url: string | null) {
-    if (!url) return null;
+  if (!url) return null;
 
-    try {
-      const u = new URL(url);
+  try {
+    const u = new URL(url);
 
-      if (u.hostname.includes("youtube.com")) {
-        const v = u.searchParams.get("v");
-        return v ? `https://www.youtube.com/embed/${v}` : null;
-      }
+    let videoId = "";
+    let start = "";
 
-      if (u.hostname.includes("youtu.be")) {
-        const id = u.pathname.replace("/", "");
-        return id ? `https://www.youtube.com/embed/${id}` : null;
-      }
+    if (u.hostname.includes("youtube.com")) {
+      videoId = u.searchParams.get("v") || "";
 
-      return null;
-    } catch {
-      return null;
+      start =
+        u.searchParams.get("t") ||
+        u.searchParams.get("start") ||
+        "";
     }
+
+    if (u.hostname.includes("youtu.be")) {
+      videoId = u.pathname.replace("/", "");
+
+      start =
+        u.searchParams.get("t") ||
+        u.searchParams.get("start") ||
+        "";
+    }
+
+    if (!videoId) return null;
+
+    return `https://www.youtube.com/embed/${videoId}${
+      start ? `?start=${start.replace("s", "")}` : ""
+    }`;
+  } catch {
+    return null;
   }
+}
   function getAiSummary(item: Item, lang: Lang) {
   if (lang === "de") return item.ai_summary_de || item.ai_summary;
   if (lang === "en") return item.ai_summary_en || item.ai_summary;
@@ -387,12 +406,18 @@ export default function ContradictionDetailPage() {
             )}
 
             {oldEmbedUrl && (
-              <iframe
-                src={oldEmbedUrl}
-                style={videoFrameStyle}
-                allowFullScreen
-              />
-            )}
+  <>
+    <div style={videoLabelStyle}>
+      🎥 {labels[lang].videoEvidence}
+    </div>
+
+    <iframe
+      src={oldEmbedUrl}
+      style={videoFrameStyle}
+      allowFullScreen
+    />
+  </>
+)}
           </article>
 
           <article style={newCardStyle}>
@@ -415,12 +440,18 @@ export default function ContradictionDetailPage() {
             )}
 
             {newEmbedUrl && (
-              <iframe
-                src={newEmbedUrl}
-                style={videoFrameStyle}
-                allowFullScreen
-              />
-            )}
+  <>
+    <div style={videoLabelStyle}>
+      🎥 {labels[lang].videoEvidence}
+    </div>
+
+    <iframe
+      src={newEmbedUrl}
+      style={videoFrameStyle}
+      allowFullScreen
+    />
+  </>
+)}
           </article>
         </section>
 
@@ -869,4 +900,11 @@ const timelineTextStyle: CSSProperties = {
   fontSize: 18,
   lineHeight: 1.55,
   margin: 0,
+};
+const videoLabelStyle: CSSProperties = {
+  marginTop: 14,
+  marginBottom: 8,
+  fontWeight: 900,
+  color: "#334155",
+  fontSize: 14,
 };
