@@ -241,32 +241,35 @@ export default function AdminSourcesPage() {
     loadSources();
   }
 
-  async function handleAiSearch() {
-    if (!aiQuery.trim()) {
-      alert("Írj be keresést");
-      return;
-    }
+  async function handleAiSearch(customQuery?: string) {
+  const queryToUse = customQuery || aiQuery;
 
-    setAiLoading(true);
-    setAiResult(null);
-
-    try {
-      const res = await fetch("/api/ai-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: aiQuery }),
-      });
-
-      const data = await res.json();
-      setAiResult(data);
-    } catch {
-      alert("AI keresési hiba");
-    }
-
-    setAiLoading(false);
+  if (!queryToUse.trim()) {
+    alert("Írj be keresést");
+    return;
   }
+
+  setAiQuery(queryToUse);
+  setAiLoading(true);
+  setAiResult(null);
+
+  try {
+    const res = await fetch("/api/ai-search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: queryToUse }),
+    });
+
+    const data = await res.json();
+    setAiResult(data);
+  } catch {
+    alert("AI keresési hiba");
+  }
+
+  setAiLoading(false);
+}
 
   function addArticleFromAi(a: any) {
     setForm((prev) => ({
@@ -351,7 +354,7 @@ export default function AdminSourcesPage() {
               style={{ ...inputStyle, maxWidth: 520 }}
             />
 
-            <button onClick={handleAiSearch} style={buttonStyle}>
+            <button onClick={() => handleAiSearch()} style={buttonStyle}>
               {aiLoading ? "Keresés..." : "AI keresés"}
             </button>
           </div>
@@ -359,11 +362,29 @@ export default function AdminSourcesPage() {
           {aiResult && (
             <div style={{ marginTop: 20 }}>
               {aiResult.summary && (
-                <>
-                  <h3 style={smallTitleStyle}>AI összefoglaló</h3>
-                  <p style={summaryStyle}>{aiResult.summary}</p>
-                </>
-              )}
+  <>
+    <h3 style={smallTitleStyle}>AI összefoglaló</h3>
+    <p style={summaryStyle}>{aiResult.summary}</p>
+  </>
+)}
+
+{aiResult.older_search_suggestion && (
+  <div style={suggestionBoxStyle}>
+    <div>
+      <strong>Régebbi ellentétes állítás keresési javaslat:</strong>
+      <div style={{ marginTop: 6 }}>
+        {aiResult.older_search_suggestion}
+      </div>
+    </div>
+
+    <button
+      onClick={() => handleAiSearch(aiResult.older_search_suggestion)}
+      style={buttonStyle}
+    >
+      🔎 Older search
+    </button>
+  </div>
+)}
 
               <h3 style={smallTitleStyle}>Cikk találatok</h3>
               <div style={{ display: "grid", gap: 8 }}>
@@ -858,4 +879,17 @@ const typeBadgeStyle: CSSProperties = {
   color: "#334155",
   fontSize: 13,
   fontWeight: 800,
+};
+const suggestionBoxStyle: CSSProperties = {
+  marginTop: 14,
+  marginBottom: 18,
+  padding: 14,
+  borderRadius: 12,
+  background: "#fef3c7",
+  border: "1px solid #f59e0b",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "center",
+  flexWrap: "wrap",
 };

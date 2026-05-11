@@ -32,6 +32,8 @@ type Contradiction = {
   status: string | null;
   created_at: string | null;
   published_at: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
   topic_hu: string | null;
   topic_de: string | null;
   topic_en: string | null;
@@ -50,6 +52,8 @@ function makeSlug(text: string) {
 export default function AdminContradictionsPage() {
   const [sources, setSources] = useState<Source[]>([]);
   const [items, setItems] = useState<Contradiction[]>([]);
+  const [showDeleted, setShowDeleted] = useState(false);
+
   const [oldSource, setOldSource] = useState("");
   const [newSource, setNewSource] = useState("");
   const [oldSourceSearch, setOldSourceSearch] = useState("");
@@ -62,15 +66,19 @@ export default function AdminContradictionsPage() {
   const [role, setRole] = useState<string>("editor");
 
   const canPublish = role === "superadmin" || role === "admin";
-
   const canReview =
     role === "superadmin" || role === "admin" || role === "reviewer";
-
   const canDelete = role === "superadmin" || role === "admin";
 
   useEffect(() => {
     checkAccess();
   }, []);
+
+  useEffect(() => {
+    if (!authLoading) {
+      loadContradictions();
+    }
+  }, [showDeleted]);
 
   async function logAction(
     action: string,
@@ -141,6 +149,7 @@ export default function AdminContradictionsPage() {
       .from("sources")
       .select("*")
       .eq("status", "published")
+      .is("deleted_at", null)
       .order("source_date", { ascending: false });
 
     if (error) {
@@ -152,10 +161,18 @@ export default function AdminContradictionsPage() {
   }
 
   async function loadContradictions() {
-    const { data, error } = await supabase
+    let query = supabase
       .from("contradictions")
       .select("*")
       .order("id", { ascending: false });
+
+    if (!showDeleted) {
+      query = query.is("deleted_at", null);
+    } else {
+      query = query.not("deleted_at", "is", null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       alert("Contradictions betöltési hiba: " + error.message);
@@ -188,6 +205,7 @@ export default function AdminContradictionsPage() {
         newS?.country,
         item.status,
         item.slug,
+        item.deleted_by,
       ]
         .filter(Boolean)
         .join(" ")
@@ -233,7 +251,9 @@ export default function AdminContradictionsPage() {
 
     const duplicate = items.find(
       (item) =>
-        item.old_source_id === oldSource && item.new_source_id === newSource
+        item.old_source_id === oldSource &&
+        item.new_source_id === newSource &&
+        !item.deleted_at
     );
 
     if (duplicate) {
@@ -315,12 +335,18 @@ export default function AdminContradictionsPage() {
       return;
     }
 
-    const ok = confirm("Biztos törlöd ezt az ellentmondást?");
+    const ok = confirm("Biztos törlöd ezt az ellentmondást? Mostantól csak a lomtárba kerül, visszaállítható.");
     if (!ok) return;
 
     const item = items.find((x) => x.id === id);
 
-    const { error } = await supabase.from("contradictions").delete().eq("id", id);
+    const { error } = await supabase
+      .from("contradictions")
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: userEmail || role || "unknown",
+      })
+      .eq("id", id);
 
     if (error) {
       alert("Törlési hiba: " + error.message);
@@ -328,9 +354,39 @@ export default function AdminContradictionsPage() {
     }
 
     await logAction(
-      "delete_contradiction",
+      "soft_delete_contradiction",
       id,
-      `Contradiction törölve: ${item?.slug || id}`
+      `Contradiction lomtárba helyezve: ${item?.slug || id}`
+    );
+
+    await loadContradictions();
+  }
+
+  async function restore(id: string) {
+    if (!canDelete) {
+      alert("Nincs jogosultságod visszaállítani.");
+      return;
+    }
+
+    const item = items.find((x) => x.id === id);
+
+    const { error } = await supabase
+      .from("contradictions")
+      .update({
+        deleted_at: null,
+        deleted_by: null,
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert("Restore hiba: " + error.message);
+      return;
+    }
+
+    await logAction(
+      "restore_contradiction",
+      id,
+      `Contradiction visszaállítva: ${item?.slug || id}`
     );
 
     await loadContradictions();
@@ -353,8 +409,13 @@ export default function AdminContradictionsPage() {
     }
 
     const item = items.find((x) => x.id === id);
-    const oldStatus = item?.status || "draft";
 
+    if (item?.deleted_at) {
+      alert("Törölt elemet előbb vissza kell állítani.");
+      return;
+    }
+
+    const oldStatus = item?.status || "draft";
     const updateData: any = { status };
 
     if (status === "published") {
@@ -389,6 +450,11 @@ export default function AdminContradictionsPage() {
 
     if (!data) {
       alert("Nincs adat");
+      return;
+    }
+
+    if (data.deleted_at) {
+      alert("Törölt elemhez előbb restore kell.");
       return;
     }
 
@@ -532,9 +598,18 @@ ${data.topic || "Ismeretlen"}
 
         <section>
           <div style={listHeaderStyle}>
-            <h2 style={sectionTitleStyle}>
-              Contradictions lista ({filteredItems.length})
-            </h2>
+            <div>
+              <h2 style={sectionTitleStyle}>
+                {showDeleted ? "Lomtár" : "Contradictions lista"} ({filteredItems.length})
+              </h2>
+
+              <button
+                onClick={() => setShowDeleted((value) => !value)}
+                style={secondaryButtonStyle}
+              >
+                {showDeleted ? "Aktív elemek mutatása" : "Lomtár mutatása"}
+              </button>
+            </div>
 
             <input
               placeholder="Keresés politikus, téma, ország, cím szerint..."
@@ -548,14 +623,18 @@ ${data.topic || "Ismeretlen"}
             {filteredItems.map((item) => {
               const oldS = getSource(item.old_source_id);
               const newS = getSource(item.new_source_id);
+              const isDeleted = Boolean(item.deleted_at);
 
               return (
-                <article key={item.id} style={cardStyle}>
+                <article key={item.id} style={isDeleted ? deletedCardStyle : cardStyle}>
                   <div style={itemHeaderStyle}>
                     <div>
                       <div style={statusLineStyle}>
                         <strong>Status:</strong>{" "}
                         <span style={badgeStyle}>{item.status || "draft"}</span>
+                        {isDeleted && (
+                          <span style={deletedBadgeStyle}>Deleted</span>
+                        )}
                       </div>
 
                       <div style={miniTextStyle}>{item.slug}</div>
@@ -568,15 +647,28 @@ ${data.topic || "Ismeretlen"}
                         {item.published_at
                           ? item.published_at.slice(0, 10)
                           : "-"}
+                        {isDeleted && (
+                          <>
+                            {" · "}
+                            Törölve:{" "}
+                            {item.deleted_at
+                              ? item.deleted_at.slice(0, 10)
+                              : "-"}
+                            {" · "}
+                            Törölte: {item.deleted_by || "-"}
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    <a
-                      href={`/admin/contradictions/${item.id}/edit`}
-                      style={editLinkStyle}
-                    >
-                      Szerkesztés
-                    </a>
+                    {!isDeleted && (
+                      <a
+                        href={`/admin/contradictions/${item.id}/edit`}
+                        style={editLinkStyle}
+                      >
+                        Szerkesztés
+                      </a>
+                    )}
                   </div>
 
                   <div style={compareGridStyle}>
@@ -598,7 +690,7 @@ ${data.topic || "Ismeretlen"}
                   )}
 
                   <div style={actionRowStyle}>
-                    {item.status === "draft" && (
+                    {!isDeleted && item.status === "draft" && (
                       <button
                         onClick={() => updateStatus(item.id, "review")}
                         style={secondaryButtonStyle}
@@ -607,7 +699,7 @@ ${data.topic || "Ismeretlen"}
                       </button>
                     )}
 
-                    {canReview && item.status === "review" && (
+                    {!isDeleted && canReview && item.status === "review" && (
                       <button
                         onClick={() => updateStatus(item.id, "draft")}
                         style={secondaryButtonStyle}
@@ -616,7 +708,7 @@ ${data.topic || "Ismeretlen"}
                       </button>
                     )}
 
-                    {item.status === "review" && (
+                    {!isDeleted && item.status === "review" && (
                       <button
                         onClick={() => updateStatus(item.id, "published")}
                         disabled={!canPublish}
@@ -635,7 +727,7 @@ ${data.topic || "Ismeretlen"}
                       </button>
                     )}
 
-                    {canPublish && item.status === "published" && (
+                    {!isDeleted && canPublish && item.status === "published" && (
                       <button
                         onClick={() => updateStatus(item.id, "review")}
                         style={secondaryButtonStyle}
@@ -644,19 +736,30 @@ ${data.topic || "Ismeretlen"}
                       </button>
                     )}
 
-                    <button
-                      onClick={() => generateAI(item.id)}
-                      style={secondaryButtonStyle}
-                    >
-                      AI
-                    </button>
+                    {!isDeleted && (
+                      <button
+                        onClick={() => generateAI(item.id)}
+                        style={secondaryButtonStyle}
+                      >
+                        AI
+                      </button>
+                    )}
 
-                    {canDelete && (
+                    {!isDeleted && canDelete && (
                       <button
                         onClick={() => remove(item.id)}
                         style={deleteButtonStyle}
                       >
-                        Törlés
+                        Lomtárba
+                      </button>
+                    )}
+
+                    {isDeleted && canDelete && (
+                      <button
+                        onClick={() => restore(item.id)}
+                        style={restoreButtonStyle}
+                      >
+                        Restore
                       </button>
                     )}
                   </div>
@@ -755,6 +858,12 @@ const cardStyle: CSSProperties = {
   boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
 };
 
+const deletedCardStyle: CSSProperties = {
+  ...cardStyle,
+  background: "#fff7ed",
+  border: "1px solid #fed7aa",
+};
+
 const sectionTitleStyle: CSSProperties = {
   fontSize: 22,
   marginBottom: 16,
@@ -829,6 +938,7 @@ const listHeaderStyle: CSSProperties = {
   alignItems: "center",
   gap: 16,
   marginBottom: 16,
+  flexWrap: "wrap",
 };
 
 const itemHeaderStyle: CSSProperties = {
@@ -849,6 +959,17 @@ const badgeStyle: CSSProperties = {
   background: "#e2e8f0",
   fontSize: 13,
   fontWeight: 700,
+};
+
+const deletedBadgeStyle: CSSProperties = {
+  display: "inline-block",
+  marginLeft: 8,
+  padding: "3px 8px",
+  borderRadius: 999,
+  background: "#fed7aa",
+  color: "#9a3412",
+  fontSize: 13,
+  fontWeight: 800,
 };
 
 const miniTextStyle: CSSProperties = {
@@ -916,6 +1037,16 @@ const deleteButtonStyle: CSSProperties = {
   color: "#dc2626",
   cursor: "pointer",
   fontWeight: 600,
+};
+
+const restoreButtonStyle: CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #16a34a",
+  borderRadius: 8,
+  background: "white",
+  color: "#15803d",
+  cursor: "pointer",
+  fontWeight: 700,
 };
 
 const quoteStyle: CSSProperties = {

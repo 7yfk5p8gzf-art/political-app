@@ -22,11 +22,21 @@ type Item = {
   new_video_url: string | null;
   ai_summary: string | null;
   ai_summary_hu: string | null;
-ai_summary_de: string | null;
-ai_summary_en: string | null;
-ai_summary_fr: string | null;
+  ai_summary_de: string | null;
+  ai_summary_en: string | null;
+  ai_summary_fr: string | null;
   status: string | null;
   views?: number | null;
+};
+
+type RelatedItem = {
+  id: string;
+  slug: string | null;
+  politician: string | null;
+  topic: string | null;
+  old_statement: string | null;
+  new_statement: string | null;
+  views: number | null;
 };
 
 type Vote = {
@@ -55,6 +65,8 @@ const labels = {
     shareTextFallbackTopic: "ellentmondás",
     shareText: "régen mást mondott, mint most?",
     videoEvidence: "🎥 Videós bizonyíték",
+    related: "Kapcsolódó ellentmondások",
+    views: "megtekintés",
   },
   de: {
     back: "Zurück",
@@ -75,6 +87,8 @@ const labels = {
     shareTextFallbackTopic: "Widerspruch",
     shareText: "hat früher etwas anderes gesagt als heute?",
     videoEvidence: "🎥 Video-Beweis",
+    related: "Verwandte Widersprüche",
+    views: "Aufrufe",
   },
   en: {
     back: "Back",
@@ -95,6 +109,8 @@ const labels = {
     shareTextFallbackTopic: "contradiction",
     shareText: "did they say something different before than now?",
     videoEvidence: "🎥 Video evidence",
+    related: "Related contradictions",
+    views: "views",
   },
   fr: {
     back: "Retour",
@@ -115,6 +131,8 @@ const labels = {
     shareTextFallbackTopic: "contradiction",
     shareText: "a-t-il dit autre chose avant que maintenant ?",
     videoEvidence: "🎥 Preuve vidéo",
+    related: "Contradictions liées",
+    views: "vues",
   },
 };
 
@@ -123,6 +141,7 @@ export default function ContradictionDetailPage() {
   const slug = params.slug as string;
 
   const [item, setItem] = useState<Item | null>(null);
+  const [relatedItems, setRelatedItems] = useState<RelatedItem[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
   const [voted, setVoted] = useState(false);
@@ -141,6 +160,7 @@ export default function ContradictionDetailPage() {
       .select("*")
       .eq("slug", slug)
       .eq("status", "published")
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (error || !data) {
@@ -151,12 +171,13 @@ export default function ContradictionDetailPage() {
     }
 
     setItem(data);
+
     await supabase
-  .from("contradictions")
-  .update({
-    views: (data.views || 0) + 1,
-  })
-  .eq("id", data.id);
+      .from("contradictions")
+      .update({
+        views: (data.views || 0) + 1,
+      })
+      .eq("id", data.id);
 
     const { data: voteData } = await supabase
       .from("contradiction_votes")
@@ -164,6 +185,30 @@ export default function ContradictionDetailPage() {
       .eq("contradiction_id", data.id);
 
     setVotes((voteData || []) as Vote[]);
+
+    const { data: relatedData } = await supabase
+      .from("contradictions")
+      .select("id, slug, politician, topic, old_statement, new_statement, views")
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .neq("id", data.id)
+      .limit(50);
+
+    const related = ((relatedData || []) as RelatedItem[])
+      .filter((relatedItem) => {
+        const samePolitician =
+          relatedItem.politician &&
+          data.politician &&
+          relatedItem.politician === data.politician;
+
+        const sameTopic =
+          relatedItem.topic && data.topic && relatedItem.topic === data.topic;
+
+        return samePolitician || sameTopic;
+      })
+      .slice(0, 4);
+
+    setRelatedItems(related);
 
     const localVote = localStorage.getItem(`vote_${data.id}`);
     setVoted(Boolean(localVote));
@@ -219,48 +264,41 @@ export default function ContradictionDetailPage() {
   }
 
   function getYouTubeEmbedUrl(url: string | null) {
-  if (!url) return null;
+    if (!url) return null;
 
-  try {
-    const u = new URL(url);
+    try {
+      const u = new URL(url);
 
-    let videoId = "";
-    let start = "";
+      let videoId = "";
+      let start = "";
 
-    if (u.hostname.includes("youtube.com")) {
-      videoId = u.searchParams.get("v") || "";
+      if (u.hostname.includes("youtube.com")) {
+        videoId = u.searchParams.get("v") || "";
+        start = u.searchParams.get("t") || u.searchParams.get("start") || "";
+      }
 
-      start =
-        u.searchParams.get("t") ||
-        u.searchParams.get("start") ||
-        "";
+      if (u.hostname.includes("youtu.be")) {
+        videoId = u.pathname.replace("/", "");
+        start = u.searchParams.get("t") || u.searchParams.get("start") || "";
+      }
+
+      if (!videoId) return null;
+
+      return `https://www.youtube.com/embed/${videoId}${
+        start ? `?start=${start.replace("s", "")}` : ""
+      }`;
+    } catch {
+      return null;
     }
-
-    if (u.hostname.includes("youtu.be")) {
-      videoId = u.pathname.replace("/", "");
-
-      start =
-        u.searchParams.get("t") ||
-        u.searchParams.get("start") ||
-        "";
-    }
-
-    if (!videoId) return null;
-
-    return `https://www.youtube.com/embed/${videoId}${
-      start ? `?start=${start.replace("s", "")}` : ""
-    }`;
-  } catch {
-    return null;
   }
-}
-  function getAiSummary(item: Item, lang: Lang) {
-  if (lang === "de") return item.ai_summary_de || item.ai_summary;
-  if (lang === "en") return item.ai_summary_en || item.ai_summary;
-  if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
 
-  return item.ai_summary_hu || item.ai_summary;
-}
+  function getAiSummary(item: Item, lang: Lang) {
+    if (lang === "de") return item.ai_summary_de || item.ai_summary;
+    if (lang === "en") return item.ai_summary_en || item.ai_summary;
+    if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
+
+    return item.ai_summary_hu || item.ai_summary;
+  }
 
   const oldEmbedUrl = getYouTubeEmbedUrl(item?.old_video_url || null);
   const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
@@ -334,9 +372,10 @@ export default function ContradictionDetailPage() {
           </h1>
 
           <p style={leadStyle}>{labels[lang].lead}</p>
+
           <div style={viewCounterStyle}>
-  👀 {item.views || 0} megtekintés
-</div>
+            👀 {item.views || 0} {labels[lang].views}
+          </div>
 
           <div style={shareRowStyle}>
             <button onClick={copyLink} style={shareButtonStyle}>
@@ -416,18 +455,11 @@ export default function ContradictionDetailPage() {
             )}
 
             {oldEmbedUrl && (
-  <>
-    <div style={videoLabelStyle}>
-      🎥 {labels[lang].videoEvidence}
-    </div>
-
-    <iframe
-      src={oldEmbedUrl}
-      style={videoFrameStyle}
-      allowFullScreen
-    />
-  </>
-)}
+              <>
+                <div style={videoLabelStyle}>🎥 {labels[lang].videoEvidence}</div>
+                <iframe src={oldEmbedUrl} style={videoFrameStyle} allowFullScreen />
+              </>
+            )}
           </article>
 
           <article style={newCardStyle}>
@@ -450,26 +482,19 @@ export default function ContradictionDetailPage() {
             )}
 
             {newEmbedUrl && (
-  <>
-    <div style={videoLabelStyle}>
-      🎥 {labels[lang].videoEvidence}
-    </div>
-
-    <iframe
-      src={newEmbedUrl}
-      style={videoFrameStyle}
-      allowFullScreen
-    />
-  </>
-)}
+              <>
+                <div style={videoLabelStyle}>🎥 {labels[lang].videoEvidence}</div>
+                <iframe src={newEmbedUrl} style={videoFrameStyle} allowFullScreen />
+              </>
+            )}
           </article>
         </section>
 
         <section style={analysisCardStyle}>
           <div style={kickerStyle}>{t[lang].aiAnalysis.toUpperCase()}</div>
           <p style={analysisTextStyle}>
-  {getAiSummary(item, lang) || labels[lang].noAi}
-</p>
+            {getAiSummary(item, lang) || labels[lang].noAi}
+          </p>
         </section>
 
         <section style={sourcesCardStyle}>
@@ -507,6 +532,36 @@ export default function ContradictionDetailPage() {
             </div>
           </div>
         </section>
+
+        {relatedItems.length > 0 && (
+          <section style={relatedCardStyle}>
+            <h2 style={sectionTitleStyle}>{labels[lang].related}</h2>
+
+            <div style={relatedGridStyle}>
+              {relatedItems.map((related) => (
+                <a
+                  key={related.id}
+                  href={`/contradictions/${related.slug}`}
+                  style={relatedItemStyle}
+                >
+                  <div style={relatedMetaStyle}>
+                    {related.politician || labels[lang].unknown} ·{" "}
+                    {related.topic || labels[lang].noTopic}
+                  </div>
+
+                  <div style={relatedTitleStyle}>
+                    {related.old_statement || labels[lang].noOldStatement} →{" "}
+                    {related.new_statement || labels[lang].noNewStatement}
+                  </div>
+
+                  <div style={relatedViewsStyle}>
+                    👀 {related.views || 0} {labels[lang].views}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section style={voteCardStyle}>
           <h2 style={sectionTitleStyle}>{t[lang].voteQuestion}</h2>
@@ -775,6 +830,50 @@ const plainLinkStyle: CSSProperties = {
   fontWeight: 900,
 };
 
+const relatedCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 24,
+  marginBottom: 22,
+};
+
+const relatedGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: 14,
+};
+
+const relatedItemStyle: CSSProperties = {
+  display: "block",
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: 14,
+  padding: 16,
+  textDecoration: "none",
+  color: "#0f172a",
+};
+
+const relatedMetaStyle: CSSProperties = {
+  fontSize: 13,
+  color: "#64748b",
+  fontWeight: 800,
+  marginBottom: 8,
+};
+
+const relatedTitleStyle: CSSProperties = {
+  fontSize: 16,
+  lineHeight: 1.45,
+  fontWeight: 900,
+};
+
+const relatedViewsStyle: CSSProperties = {
+  marginTop: 10,
+  fontSize: 13,
+  color: "#64748b",
+  fontWeight: 800,
+};
+
 const voteCardStyle: CSSProperties = {
   background: "white",
   border: "1px solid #dbe0e6",
@@ -911,6 +1010,7 @@ const timelineTextStyle: CSSProperties = {
   lineHeight: 1.55,
   margin: 0,
 };
+
 const videoLabelStyle: CSSProperties = {
   marginTop: 14,
   marginBottom: 8,
@@ -918,6 +1018,7 @@ const videoLabelStyle: CSSProperties = {
   color: "#334155",
   fontSize: 14,
 };
+
 const viewCounterStyle: CSSProperties = {
   marginTop: 10,
   fontWeight: 800,
