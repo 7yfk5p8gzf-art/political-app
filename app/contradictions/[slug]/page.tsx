@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
+import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
 
 type Item = {
   id: string;
@@ -312,14 +313,16 @@ export default function ContradictionDetailPage() {
   if (loading) {
     return (
       <main style={pageStyle}>
-        <section style={containerStyle}>{t[lang].loading}</section>
-      </main>
+  <FloatingShareSidebar />
+  <section style={containerStyle}>{t[lang].loading}</section>
+</main>
     );
   }
 
   if (!item) {
     return (
       <main style={pageStyle}>
+        <FloatingShareSidebar />
         <section style={containerStyle}>
           <a href="/contradictions" style={backStyle}>
             ← {labels[lang].back}
@@ -358,6 +361,7 @@ export default function ContradictionDetailPage() {
           </div>
         </div>
 
+<FloatingShareSidebar />
         <header style={heroStyle}>
           <div style={badgeRowStyle}>
             <span style={darkBadgeStyle}>{item.topic || labels[lang].noTopic}</span>
@@ -377,31 +381,7 @@ export default function ContradictionDetailPage() {
             👀 {item.views || 0} {labels[lang].views}
           </div>
 
-          <div style={shareRowStyle}>
-            <button onClick={copyLink} style={shareButtonStyle}>
-              🔗 {t[lang].copyLink}
-            </button>
-
-            <button onClick={() => shareUrl("x")} style={shareButtonStyle}>
-              X
-            </button>
-
-            <button onClick={() => shareUrl("facebook")} style={shareButtonStyle}>
-              Facebook
-            </button>
-
-            <button onClick={() => shareUrl("whatsapp")} style={shareButtonStyle}>
-              WhatsApp
-            </button>
-
-            <button onClick={() => shareUrl("telegram")} style={shareButtonStyle}>
-              Telegram
-            </button>
-
-            <button onClick={() => shareUrl("reddit")} style={shareButtonStyle}>
-              Reddit
-            </button>
-          </div>
+          
         </header>
 
         <section style={timelineCardStyle}>
