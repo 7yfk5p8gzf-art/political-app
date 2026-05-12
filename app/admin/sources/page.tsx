@@ -393,6 +393,35 @@ export default function AdminSourcesPage() {
     “{aiResult.quote_candidate}”
   </div>
 )}
+{aiResult.transcript_quote && (
+  <div style={quoteCandidateStyle}>
+    <strong>Transcript:</strong>
+    <div style={{ marginTop: 6 }}>
+      “{aiResult.transcript_quote}”
+    </div>
+  </div>
+)}
+
+{aiResult.timestamp && (
+  <div style={metaBoxStyle}>
+    <strong>Timestamp:</strong>{" "}
+    {aiResult.timestamp}
+  </div>
+)}
+
+{aiResult.quote_precision && (
+  <div style={metaBoxStyle}>
+    <strong>Quote precision:</strong>{" "}
+    {aiResult.quote_precision}
+  </div>
+)}
+
+{aiResult.contradiction_strength && (
+  <div style={metaBoxStyle}>
+    <strong>Contradiction strength:</strong>{" "}
+    {aiResult.contradiction_strength}
+  </div>
+)}
 {aiResult.contradiction_probability > 0 && (
   <div style={contradictionBoxStyle}>
     <strong>

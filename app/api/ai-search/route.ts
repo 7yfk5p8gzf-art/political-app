@@ -206,8 +206,12 @@ const videoQueries = [
       .map((item) => ({
         ...item,
         score: scoreResult(item, cleanQuery),
+quality_score: scoreSourceQuality(item),
+final_score:
+  scoreResult(item, cleanQuery) * 0.6 +
+  scoreSourceQuality(item) * 0.4,
       }))
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
 
     const videos = uniqueByUrl(allVideoResults)
@@ -219,6 +223,10 @@ const videoQueries = [
       .map((item) => ({
         ...item,
         score: scoreResult(item, cleanQuery),
+        quality_score: scoreSourceQuality(item),
+final_score:
+  scoreResult(item, cleanQuery) * 0.5 +
+  scoreSourceQuality(item) * 0.5,
       }))
       .sort((a, b) => (b.score || 0) - (a.score || 0))
       .slice(0, 5);
@@ -263,7 +271,21 @@ Feladat:
 - Adj rövid timeline_hint javaslatot fontos évekkel vagy időszakokkal.
 - Adj 0-100 ai_confidence értéket arról, mennyire megbízható az elemzésed.
 - Add meg a source_intent mezőben, hogy a találatok főleg interjú, beszéd, nyilatkozat, riport, vélemény, propaganda, vita vagy ismeretlen jellegűek.
+If available, extract an exact transcript quote from the article or video.
 
+If a video timestamp is available, return it in HH:MM:SS format.
+
+Do not invent quotes or timestamps.
+
+quote_precision:
+- high = exact quote/transcript
+- medium = partial/paraphrased quote
+- low = uncertain or inferred
+
+contradiction_strength:
+- strong = directly opposite statements
+- possible = position noticeably changed
+- weak = same topic but contradiction unclear
 Adj vissza CSAK tiszta JSON-t:
 
 {
@@ -279,6 +301,10 @@ Adj vissza CSAK tiszta JSON-t:
   "best_video_url": "",
   "quote_candidate": "",
   "older_search_suggestion": "",
+  "transcript_quote": "",
+"timestamp": "",
+"quote_precision": "low",
+"contradiction_strength": "possible",
   "newer_search_suggestion": "",
 "contradiction_search_suggestion": ""
 "contradiction_probability": 0,
@@ -286,6 +312,10 @@ Adj vissza CSAK tiszta JSON-t:
 "timeline_hint": "",
 "ai_confidence": 0,
 "source_intent": "",
+transcript_quote,
+timestamp,
+quote_precision,
+contradiction_strength,
   
   "warning": ""
 }
@@ -326,6 +356,30 @@ Adj vissza CSAK tiszta JSON-t:
         } catch {
           meta = {};
         }
+        const bestVideoUrl = meta.best_video_url || "";
+
+if (bestVideoUrl) {
+  const transcript = await getYouTubeTranscript(bestVideoUrl);
+
+  if (transcript) {
+    const bestMatch = findBestTranscriptMatch(
+      transcript,
+      cleanQuery
+    );
+
+    if (bestMatch && bestMatch.score > 0) {
+      meta.transcript_quote = bestMatch.text;
+      meta.timestamp = bestMatch.timestamp;
+
+      meta.quote_precision =
+        bestMatch.score > 0.6
+          ? "high"
+          : bestMatch.score > 0.3
+          ? "medium"
+          : "low";
+    }
+  }
+}
       }
     }
 
@@ -347,6 +401,10 @@ best_video_url: meta.best_video_url || "",
 quote_candidate: meta.quote_candidate || "",
 older_search_suggestion: meta.older_search_suggestion || "",
 newer_search_suggestion: meta.newer_search_suggestion || "",
+transcript_quote: meta.transcript_quote || "",
+timestamp: meta.timestamp || "",
+quote_precision: meta.quote_precision || "low",
+contradiction_strength: meta.contradiction_strength || "possible",
 contradiction_search_suggestion:
   meta.contradiction_search_suggestion || "",
   contradiction_probability:
@@ -382,4 +440,161 @@ warning: meta.warning || "",
       { status: 500 }
     );
   }
+}
+function extractYouTubeId(url: string) {
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&?/]+)/
+  );
+  return match?.[1] || null;
+}
+
+function decodeHtml(text: string) {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function formatTimestamp(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
+}
+
+async function getYouTubeTranscript(videoUrl: string) {
+  const videoId = extractYouTubeId(videoUrl);
+  if (!videoId) return null;
+
+  const languages = ["hu", "en", "de"];
+
+  for (const lang of languages) {
+    try {
+      const res = await fetch(
+        `https://www.youtube.com/api/timedtext?lang=${lang}&v=${videoId}`
+      );
+
+      const xml = await res.text();
+
+      if (!xml || !xml.includes("<text")) continue;
+
+      const parts = [...xml.matchAll(/<text start="([^"]+)"[^>]*>(.*?)<\/text>/g)];
+
+      const transcript = parts.map((part) => ({
+        start: Number(part[1]),
+        timestamp: formatTimestamp(Number(part[1])),
+        text: decodeHtml(part[2].replace(/<[^>]+>/g, " ")).trim(),
+      }));
+
+      if (transcript.length > 0) {
+        return transcript;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function findBestTranscriptMatch(
+  transcript: { start: number; timestamp: string; text: string }[],
+  query: string
+) {
+  const cleanQuery = query.toLowerCase();
+
+  let best = null as null | {
+    timestamp: string;
+    text: string;
+    score: number;
+  };
+
+  for (const row of transcript) {
+    const text = row.text.toLowerCase();
+
+    const words = cleanQuery
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+
+    const hits = words.filter((w) => text.includes(w)).length;
+    const score = words.length ? hits / words.length : 0;
+
+    if (!best || score > best.score) {
+      best = {
+        timestamp: row.timestamp,
+        text: row.text,
+        score,
+      };
+    }
+  }
+
+  return best;
+}
+function scoreSourceQuality(item: {
+  title?: string;
+  url?: string;
+  source?: string;
+  description?: string;
+}) {
+  const text = `${item.title || ""} ${item.url || ""} ${item.source || ""} ${
+    item.description || ""
+  }`.toLowerCase();
+
+  let score = 50;
+
+  const strongSources = [
+    "reuters",
+    "apnews",
+    "associated press",
+    "whitehouse.gov",
+    "gov.",
+    "parliament",
+    "bundestag",
+    "europa.eu",
+    "c-span",
+    "congress.gov",
+    "senate.gov",
+    "house.gov",
+    "bbc",
+    "theguardian",
+    "nytimes",
+    "politico",
+  ];
+
+  const weakSources = [
+    "opinion",
+    "reaction",
+    "commentary",
+    "shorts",
+    "tiktok",
+    "facebook",
+    "rumble",
+    "breaking",
+    "shocking",
+    "destroys",
+    "exposed",
+    "must watch",
+  ];
+
+  for (const s of strongSources) {
+    if (text.includes(s)) score += 15;
+  }
+
+  for (const s of weakSources) {
+    if (text.includes(s)) score -= 20;
+  }
+
+  if (text.includes("full speech")) score += 20;
+  if (text.includes("interview")) score += 15;
+  if (text.includes("transcript")) score += 15;
+  if (text.includes("statement")) score += 15;
+  if (text.includes("official")) score += 15;
+
+  if (text.includes("clip")) score -= 10;
+  if (text.includes("highlights")) score -= 10;
+
+  return Math.max(0, Math.min(100, score));
 }
