@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
       .maybeSingle();
 
     const role = profile?.role ?? "editor";
-    const allowedRoles = ["superadmin", "admin", "reviewer", "editor"];
+    const allowedRoles = ["superadmin", "admin"];
 
     if (!allowedRoles.includes(role)) {
       alert("Nincs jogosultságod az adminhoz");

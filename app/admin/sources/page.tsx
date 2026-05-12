@@ -53,6 +53,7 @@ export default function AdminSourcesPage() {
   const [aiQuery, setAiQuery] = useState("");
   const [aiResult, setAiResult] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     checkAccess();
@@ -81,6 +82,7 @@ export default function AdminSourcesPage() {
       window.location.href = "/";
       return;
     }
+    setUserRole(role);
 
     setUserEmail(user.email || null);
     setAuthLoading(false);
@@ -622,18 +624,31 @@ export default function AdminSourcesPage() {
                       <button onClick={() => quickStatus(item.id, "review")} style={smallButtonStyle}>
                         Review
                       </button>
-                      <button
-                        onClick={() => quickStatus(item.id, "published")}
-                        style={publishButtonStyle}
-                      >
-                        Publish
-                      </button>
+                      {item.status === "review" && (
+  <button
+    onClick={() => quickStatus(item.id, "approved")}
+    style={smallButtonStyle}
+  >
+    Approve
+  </button>
+)}
+                      {item.status === "approved" &&
+  (userRole === "admin" || userRole === "superadmin") && (
+  <button
+    onClick={() => quickStatus(item.id, "published")}
+    style={publishButtonStyle}
+  >
+    Publish
+  </button>
+)}
                       <button onClick={() => startEdit(item)} style={editButtonStyle}>
                         Szerkesztés
                       </button>
-                      <button onClick={() => deleteSource(item.id)} style={deleteButtonStyle}>
-                        Törlés
-                      </button>
+                      {(userRole === "admin" || userRole === "superadmin") && (
+  <button onClick={() => deleteSource(item.id)} style={deleteButtonStyle}>
+    Törlés
+  </button>
+)}
                     </div>
                   </div>
 

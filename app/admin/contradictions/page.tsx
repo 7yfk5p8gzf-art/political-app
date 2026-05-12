@@ -64,6 +64,7 @@ export default function AdminContradictionsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string>("editor");
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const canPublish = role === "superadmin" || role === "admin";
   const canReview =
@@ -119,6 +120,7 @@ export default function AdminContradictionsPage() {
       .maybeSingle();
 
     const userRole = profile?.role ?? "editor";
+    setUserRole(role);
     setUserId(user.id);
     setRole(userRole);
 
@@ -393,9 +395,9 @@ export default function AdminContradictionsPage() {
   }
 
   async function updateStatus(
-    id: string,
-    status: "draft" | "review" | "published"
-  ) {
+  id: string,
+  status: "draft" | "review" | "approved" | "published"
+) {
     if (status === "published" && !canPublish) {
       alert(
         "Nincs jogosultságod publikálni. Csak superadmin vagy admin publikálhat."
@@ -701,14 +703,14 @@ ${data.topic || "Ismeretlen"}
 
                     {!isDeleted && canReview && item.status === "review" && (
                       <button
-                        onClick={() => updateStatus(item.id, "draft")}
+                        onClick={() => updateStatus(item.id, "approved")}
                         style={secondaryButtonStyle}
                       >
-                        Vissza draft
+                        Approve
                       </button>
                     )}
 
-                    {!isDeleted && item.status === "review" && (
+                    {!isDeleted && item.status === "approved" && (
                       <button
                         onClick={() => updateStatus(item.id, "published")}
                         disabled={!canPublish}
@@ -1027,6 +1029,16 @@ const publishButtonStyle: CSSProperties = {
   color: "white",
   cursor: "pointer",
   fontWeight: 700,
+
+};
+const approveButtonStyle: CSSProperties = {
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "none",
+  background: "#2563eb",
+  color: "white",
+  fontWeight: 800,
+  cursor: "pointer",
 };
 
 const deleteButtonStyle: CSSProperties = {
