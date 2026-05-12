@@ -364,10 +364,85 @@ export default function AdminSourcesPage() {
           {aiResult && (
             <div style={{ marginTop: 20 }}>
               {aiResult.summary && (
+                
+  <div style={warningBoxStyle}>
+    ⚠️ {aiResult.warning}
+  </div>
+)}
+
+{aiResult.source_quality && (
+  <div style={metaBoxStyle}>
+    <strong>Forrás minőség:</strong> {aiResult.source_quality}
+  </div>
+)}
+
+{aiResult.relevance_score > 0 && (
+  <div style={metaBoxStyle}>
+    <strong>Relevancia:</strong> {aiResult.relevance_score}/100
+  </div>
+)}
+{aiResult.source_intent && (
+  <div style={metaBoxStyle}>
+    <strong>Forrás jelleg:</strong>
+    {" "}
+    {aiResult.source_intent}
+  </div>
+)}
+{aiResult.quote_candidate && (
+  <div style={quoteCandidateStyle}>
+    “{aiResult.quote_candidate}”
+  </div>
+)}
+{aiResult.contradiction_probability > 0 && (
+  <div style={contradictionBoxStyle}>
+    <strong>
+      Lehetséges ellentmondás:
+      {" "}
+      {aiResult.contradiction_probability}%
+    </strong>
+
+    {aiResult.contradiction_reason && (
+      <div style={{ marginTop: 8 }}>
+        {aiResult.contradiction_reason}
+      </div>
+    )}
+  </div>
+)}
   <>
     <h3 style={smallTitleStyle}>AI összefoglaló</h3>
     <p style={summaryStyle}>{aiResult.summary}</p>
   </>
+)
+{aiResult.best_article_url && (
+  <div style={metaBoxStyle}>
+    <strong>Legjobb cikk:</strong>
+
+    <div style={{ marginTop: 6 }}>
+      <a
+        href={aiResult.best_article_url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {aiResult.best_article_url}
+      </a>
+    </div>
+  </div>
+)}
+
+{aiResult.best_video_url && (
+  <div style={metaBoxStyle}>
+    <strong>Legjobb videó:</strong>
+
+    <div style={{ marginTop: 6 }}>
+      <a
+        href={aiResult.best_video_url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {aiResult.best_video_url}
+      </a>
+    </div>
+  </div>
 )}
 
 {aiResult.older_search_suggestion && (
@@ -384,6 +459,24 @@ export default function AdminSourcesPage() {
       style={buttonStyle}
     >
       🔎 Older search
+    </button>
+  </div>
+)}
+{aiResult.newer_search_suggestion && (
+  <div style={suggestionBoxStyle}>
+    <div>
+      <strong>Újabb állítás keresési javaslat:</strong>
+
+      <div style={{ marginTop: 6 }}>
+        {aiResult.newer_search_suggestion}
+      </div>
+    </div>
+
+    <button
+      onClick={() => handleAiSearch(aiResult.newer_search_suggestion)}
+      style={buttonStyle}
+    >
+      🔎 newer search
     </button>
   </div>
 )}
@@ -907,4 +1000,41 @@ const suggestionBoxStyle: CSSProperties = {
   gap: 12,
   alignItems: "center",
   flexWrap: "wrap",
+};
+const warningBoxStyle: CSSProperties = {
+  marginTop: 12,
+  padding: 14,
+  borderRadius: 10,
+  background: "#fef2f2",
+  border: "1px solid #fecaca",
+  color: "#991b1b",
+  fontWeight: 700,
+};
+
+const metaBoxStyle: CSSProperties = {
+  marginTop: 10,
+  padding: 12,
+  borderRadius: 10,
+  background: "#eff6ff",
+  border: "1px solid #bfdbfe",
+};
+
+const quoteCandidateStyle: CSSProperties = {
+  marginTop: 12,
+  padding: 14,
+  borderRadius: 10,
+  background: "#f8fafc",
+  borderLeft: "4px solid #2563eb",
+  fontStyle: "italic",
+  fontSize: 16,
+  lineHeight: 1.5,
+};
+const contradictionBoxStyle: CSSProperties = {
+  marginTop: 14,
+  padding: 16,
+  borderRadius: 12,
+  background: "#fff7ed",
+  border: "1px solid #fdba74",
+  color: "#9a3412",
+  fontWeight: 600,
 };

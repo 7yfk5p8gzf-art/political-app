@@ -52,7 +52,7 @@ function scoreResult(item: SearchResult, query: string) {
 
   score += Math.round(coverage * 40);
 
-  if (coverage < 0.4) score -= 30;
+  if (coverage < 0.6) score -= 35;
 
   if (text.includes("youtube.com") || text.includes("youtu.be")) score += 8;
   if (text.includes("interview")) score += 5;
@@ -75,8 +75,9 @@ function resultMatchesQuery(item: SearchResult, query: string) {
 
   const matchedWords = importantWords.filter((word) => text.includes(word));
   const coverage = matchedWords.length / importantWords.length;
+  
 
-  return coverage >= 0.45;
+  return coverage >= 0.5;
 }
 
 async function braveSearch(query: string, count = 10) {
@@ -149,18 +150,29 @@ export async function POST(req: Request) {
     }
 
     const cleanQuery = String(query).trim();
+    const expandedQuery =
+  cleanQuery
+    .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
+    .replace(/migráció/gi, "migráció bevándorlás illegális migráció migráns");
 
     const articleQueries = [
-      `"${cleanQuery}"`,
-      `${cleanQuery} article news source`,
-      `${cleanQuery} official statement interview speech`,
-    ];
+  `"${expandedQuery}"`,
+  `"${expandedQuery}" nyilatkozat`,
+  `"${expandedQuery}" interjú`,
+  `"${expandedQuery}" beszéd`,
+  `"${expandedQuery}" site:gov.hu OR site:kormany.hu OR site:parlament.hu`,
+  `"${expandedQuery}" -wikipedia -facebook -instagram -tiktok`,
+];
 
-    const videoQueries = [
-      `${cleanQuery} site:youtube.com`,
-      `${cleanQuery} site:youtu.be`,
-      `${cleanQuery} interview statement speech video`,
-    ];
+const videoQueries = [
+  `${expandedQuery} youtube`,
+  `${expandedQuery} interview youtube`,
+  `${expandedQuery} speech youtube`,
+  `${expandedQuery} beszéd youtube`,
+  `${expandedQuery} interjú youtube`,
+  `${expandedQuery} migration youtube`,
+  `${expandedQuery} statement youtube`,
+];
 
     const articleSearches = await Promise.all(
       articleQueries.map((q) => braveSearch(q, 6))
@@ -234,7 +246,23 @@ Feladat:
 - Tippeld meg az országot/régiót.
 - Ha látszik dátum, add vissza YYYY-MM-DD formában, különben üres string.
 - Adj egy jobb keresési javaslatot régebbi ellentétes állítás kereséséhez.
+- Generálj külön keresési javaslatot:
+  - régebbi állítás keresésére
+  - újabb állítás keresésére
+  - lehetséges ellentmondás keresésére
+
+- A keresések legyenek:
+  - rövidek
+  - konkrétak
+  - YouTube/barátságosak
+  - politikai nyilatkozat keresésre optimalizáltak
 - Ha a találatok gyengék, ezt mondd ki röviden.
+- Tippeld meg, hogy van-e lehetséges politikai ellentmondás.
+- Adj 0-100 contradiction_probability értéket.
+- Röviden írd le az okát contradiction_reason mezőben.
+- Adj rövid timeline_hint javaslatot fontos évekkel vagy időszakokkal.
+- Adj 0-100 ai_confidence értéket arról, mennyire megbízható az elemzésed.
+- Add meg a source_intent mezőben, hogy a találatok főleg interjú, beszéd, nyilatkozat, riport, vélemény, propaganda, vita vagy ismeretlen jellegűek.
 
 Adj vissza CSAK tiszta JSON-t:
 
@@ -243,8 +271,23 @@ Adj vissza CSAK tiszta JSON-t:
   "politician": "",
   "topic": "",
   "country": "",
+  "language": "",
   "date": "",
-  "older_search_suggestion": ""
+  "source_quality": "",
+  "relevance_score": 0,
+  "best_article_url": "",
+  "best_video_url": "",
+  "quote_candidate": "",
+  "older_search_suggestion": "",
+  "newer_search_suggestion": "",
+"contradiction_search_suggestion": ""
+"contradiction_probability": 0,
+"contradiction_reason": "",
+"timeline_hint": "",
+"ai_confidence": 0,
+"source_intent": "",
+  
+  "warning": ""
 }
 `;
 
@@ -295,8 +338,29 @@ Adj vissza CSAK tiszta JSON-t:
       politician: meta.politician || "",
       topic: meta.topic || "",
       country: meta.country || "",
-      date: meta.date || "",
-      older_search_suggestion: meta.older_search_suggestion || "",
+language: meta.language || "",
+date: meta.date || "",
+source_quality: meta.source_quality || "",
+relevance_score: meta.relevance_score || 0,
+best_article_url: meta.best_article_url || "",
+best_video_url: meta.best_video_url || "",
+quote_candidate: meta.quote_candidate || "",
+older_search_suggestion: meta.older_search_suggestion || "",
+newer_search_suggestion: meta.newer_search_suggestion || "",
+contradiction_search_suggestion:
+  meta.contradiction_search_suggestion || "",
+  contradiction_probability:
+  meta.contradiction_probability || 0,
+
+contradiction_reason:
+  meta.contradiction_reason || "",
+  timeline_hint:
+  meta.timeline_hint || "",
+  ai_confidence:
+  meta.ai_confidence || 0,
+  source_intent:
+  meta.source_intent || "",
+warning: meta.warning || "",
       debug: {
         query: cleanQuery,
         articleQueries,
