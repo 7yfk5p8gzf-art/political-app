@@ -69,6 +69,36 @@ async function upsertTopicMemory(params: {
     console.error("Topic memory save error:", error);
   }
 }
+async function findPoliticianFromQuery(query: string) {
+  const q = normalize(query);
+
+  const { data, error } = await supabase
+    .from("politicians")
+    .select("*")
+    .eq("active", true);
+
+  if (error) {
+    console.error("Politician lookup error:", error);
+    return null;
+  }
+
+  const politicians = data || [];
+
+  for (const politician of politicians) {
+    const names = [
+      politician.full_name,
+      ...(Array.isArray(politician.aliases) ? politician.aliases : []),
+    ]
+      .filter(Boolean)
+      .map((x: string) => normalize(x));
+
+    if (names.some((name: string) => q.includes(name))) {
+      return politician;
+    }
+  }
+
+  return null;
+}
 
 function extractTopicFromQuery(query: string) {
   const q = normalize(query);
@@ -287,6 +317,11 @@ export async function POST(req: Request) {
 
 const cacheKey = normalize(cleanQuery);
 const detectedTopic = extractTopicFromQuery(cleanQuery);
+const detectedPolitician = await findPoliticianFromQuery(cleanQuery);
+console.log(
+  "DETECTED POLITICIAN:",
+  detectedPolitician?.full_name || "NONE"
+);
 
 
 const { data: cached } = await supabase
@@ -454,11 +489,11 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
 
     let existingProfile: any = null;
 
-if (cleanQuery) {
+if (detectedPolitician?.full_name) {
   const { data } = await supabase
     .from("politician_profiles")
     .select("*")
-    .ilike("politician", `%${cleanQuery.split(" ")[0]}%`)
+    .eq("politician", detectedPolitician.full_name)
     .maybeSingle();
 
   existingProfile = data;
@@ -479,6 +514,8 @@ Használd a korábbi téma memóriát is:
 - építs rá a korábbi összefoglalóra
 - ne csak ismételd a régi találatokat
 - javítsd a keresési javaslatokat a memória alapján
+Felismert politikus registry alapján:
+${detectedPolitician ? JSON.stringify(detectedPolitician, null, 2) : "Nincs biztos politikus találat."}
 
 
 Keresés:
@@ -792,6 +829,17 @@ await upsertTopicMemory({
         meta.summary ||
         `Találtam ${articles.length} releváns cikket és ${videos.length} releváns videót a teljes keresés alapján.`,
       politician: meta.politician || "",
+      detected_politician: detectedPolitician
+  ? {
+      id: detectedPolitician.id,
+      full_name: detectedPolitician.full_name,
+      slug: detectedPolitician.slug,
+      country: detectedPolitician.country,
+      party: detectedPolitician.party,
+      ideology: detectedPolitician.ideology,
+      language: detectedPolitician.language,
+    }
+  : null,
       topic: meta.topic || "",
       country: meta.country || "",
 language: meta.language || "",
