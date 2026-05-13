@@ -352,13 +352,20 @@ if (cached?.response && cached?.created_at) {
   console.log("AI SEARCH CACHE EXPIRED:", cacheKey);
 }
 
-const { data: semanticCache } = await supabase
-  .from("ai_search_cache")
-  .select("response, created_at, query, canonical_topic")
-  .eq("canonical_topic", detectedTopic)
-  .order("created_at", { ascending: false })
-  .limit(1)
-  .maybeSingle();
+let semanticCache: any = null;
+
+if (detectedPolitician?.slug) {
+  const { data } = await supabase
+    .from("ai_search_cache")
+    .select("response, created_at, query, canonical_topic, politician_slug")
+    .eq("canonical_topic", detectedTopic)
+    .eq("politician_slug", detectedPolitician.slug)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  semanticCache = data;
+}
 
 if (semanticCache?.response && semanticCache?.created_at) {
   const semanticAge =
@@ -947,6 +954,7 @@ warning: meta.warning || "",
     query: cleanQuery,
     normalized_query: cacheKey,
     canonical_topic: detectedTopic,
+    politician_slug: detectedPolitician?.slug || null,
     response: responsePayload,
     created_at: new Date().toISOString(),
   },
