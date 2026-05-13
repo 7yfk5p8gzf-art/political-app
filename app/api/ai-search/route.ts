@@ -284,7 +284,10 @@ export async function POST(req: Request) {
     }
 
     const cleanQuery = String(query).trim();
-    const cacheKey = normalize(cleanQuery);
+
+const cacheKey = normalize(cleanQuery);
+const detectedTopic = extractTopicFromQuery(cleanQuery);
+
 
 const { data: cached } = await supabase
   .from("ai_search_cache")
@@ -292,11 +295,60 @@ const { data: cached } = await supabase
   .eq("normalized_query", cacheKey)
   .maybeSingle();
 
-if (cached?.response) {
-  console.log("AI SEARCH CACHE HIT:", cacheKey);
-  return NextResponse.json(cached.response);
+const CACHE_TTL_HOURS = 24;
+
+if (cached?.response && cached?.created_at) {
+  const cacheAge =
+    Date.now() - new Date(cached.created_at).getTime();
+
+  const cacheAgeHours =
+    cacheAge / (1000 * 60 * 60);
+
+  if (cacheAgeHours < CACHE_TTL_HOURS) {
+    console.log(
+      "AI SEARCH CACHE HIT:",
+      cacheKey,
+      `(${cacheAgeHours.toFixed(1)}h old)`
+    );
+
+    return NextResponse.json(cached.response);
+  }
+
+  console.log("AI SEARCH CACHE EXPIRED:", cacheKey);
 }
-    const detectedTopic = extractTopicFromQuery(cleanQuery);
+
+const { data: semanticCache } = await supabase
+  .from("ai_search_cache")
+  .select("response, created_at, query, canonical_topic")
+  .eq("canonical_topic", detectedTopic)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (semanticCache?.response && semanticCache?.created_at) {
+  const semanticAge =
+    Date.now() - new Date(semanticCache.created_at).getTime();
+
+  const semanticAgeHours =
+    semanticAge / (1000 * 60 * 60);
+
+  if (semanticAgeHours < CACHE_TTL_HOURS) {
+    console.log(
+      "AI SEARCH SEMANTIC CACHE HIT:",
+      detectedTopic,
+      `from query: ${semanticCache.query}`,
+      `(${semanticAgeHours.toFixed(1)}h old)`
+    );
+
+    return NextResponse.json({
+      ...semanticCache.response,
+      semantic_cache_hit: true,
+      semantic_cache_source_query: semanticCache.query,
+      semantic_cache_topic: detectedTopic,
+    });
+  }
+}
+
 const topicMemory = await getTopicMemory(detectedTopic);
 
 const expandedQuery = cleanQuery
@@ -846,6 +898,7 @@ warning: meta.warning || "",
   {
     query: cleanQuery,
     normalized_query: cacheKey,
+    canonical_topic: detectedTopic,
     response: responsePayload,
     created_at: new Date().toISOString(),
   },
