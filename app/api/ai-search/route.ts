@@ -173,16 +173,16 @@ const expandedQuery = cleanQuery
 
 const expanded = expandSearchQueries(expandedQuery);
 
-const articleQueries = expanded.articleQueries;
-const videoQueries = expanded.videoQueries;
+const articleQueries = expanded.articleQueries.slice(0, 4);
+const videoQueries = expanded.videoQueries.slice(0, 3);
 
 
     const articleSearches = await Promise.all(
-      articleQueries.map((q) => braveSearch(q, 6))
+      articleQueries.map((q) => braveSearch(q, 4))
     );
 
     const videoSearches = await Promise.all(
-      videoQueries.map((q) => braveSearch(q, 6))
+      videoQueries.map((q) => braveSearch(q, 4))
     );
 
     const allArticleResults = articleSearches.flatMap((r) => r.results);
@@ -288,6 +288,31 @@ Feladat:
 - Ha a találatok gyengék, ezt mondd ki röviden.
 - Tippeld meg, hogy van-e lehetséges politikai ellentmondás.
 - Adj 0-100 contradiction_probability értéket.
+- Az ellentmondást csak akkor értékeld magasra, ha ugyanarról a konkrét témáról, policy-ról vagy ígéretről szól.
+- Ne adj magas értéket, ha csak ugyanaz a politikus és ugyanaz az általános téma szerepel.
+- Vizsgáld meg:
+  - same_topic: ugyanaz a konkrét téma?
+  - opposite_meaning: tényleg ellentétes jelentés?
+  - opposite_meaning legyen true ha:
+  - Határozd meg az álláspont irányát is:
+  - old_stance: support | oppose | neutral | unclear
+  - new_stance: support | oppose | neutral | unclear
+- support = támogatja az adott policy-t, szervezetet, döntést vagy állítást
+- oppose = ellenzi, támadja, elutasítja vagy visszavonná
+- neutral = leíró, technikai vagy kiegyensúlyozott állítás
+- unclear = nincs elég adat
+- Ha old_stance és new_stance egymás ellentéte ugyanazon konkrét témában, akkor opposite_meaning legyen true.
+  - az egyik állítás támogat valamit, a másik ellenzi
+  - az egyik növelést akar, a másik csökkentést
+  - az egyik belépést/támogatást mond, a másik kilépést/elutasítást
+  - az egyik "igen", a másik egyértelmű "nem"
+  - az egyik állítás iránya politikailag vagy tartalmilag fordított
+- Ne legyen true csak azért, mert más a hangnem vagy más szavakat használ.
+- Ha bizonytalan, inkább false legyen.
+  - context_shift: megváltozott a helyzet vagy kontextus?
+  - time_gap_relevant: az időbeli különbség fontos?
+- Ha csak hangnem változott, de a tartalom nem ellentétes, akkor contradiction_strength legyen weak vagy possible.
+- Ha az egyik állítás “kritizál”, a másik pedig “támogat”, akkor csak akkor strong, ha ugyanarra a konkrét ügyre vonatkozik.
 - Röviden írd le az okát contradiction_reason mezőben.
 - Adj rövid timeline_hint javaslatot fontos évekkel vagy időszakokkal.
 - Adj 0-100 ai_confidence értéket arról, mennyire megbízható az elemzésed.
@@ -322,10 +347,20 @@ Adj vissza CSAK tiszta JSON-t:
   "best_video_url": "",
   "quote_candidate": "",
   "older_search_suggestion": "",
+  "possible_contradiction_search": "",
+"timeline_compare_hint": "",
+"transcript_quote": "",
   "transcript_quote": "",
 "timestamp": "",
 "quote_precision": "low",
 "contradiction_strength": "possible",
+"same_topic": false,
+"opposite_meaning": false,
+"old_stance": "unclear",
+"new_stance": "unclear",
+"stance_shift": "none",
+"context_shift": "",
+"time_gap_relevant": false,
   "newer_search_suggestion": "",
 "contradiction_search_suggestion": ""
 "contradiction_probability": 0,
@@ -422,6 +457,11 @@ best_video_url: meta.best_video_url || "",
 quote_candidate: meta.quote_candidate || "",
 older_search_suggestion: meta.older_search_suggestion || "",
 newer_search_suggestion: meta.newer_search_suggestion || "",
+possible_contradiction_search:
+  `${meta.politician || cleanQuery} old statement vs new statement`,
+
+timeline_compare_hint:
+  `${meta.politician || cleanQuery} earlier vs current position`,
 transcript_quote: meta.transcript_quote || "",
 timestamp: meta.timestamp || "",
 quote_precision: meta.quote_precision || "low",
@@ -433,6 +473,14 @@ contradiction_search_suggestion:
 
 contradiction_reason:
   meta.contradiction_reason || "",
+  same_topic: meta.same_topic || false,
+opposite_meaning: meta.opposite_meaning || false,
+old_stance: meta.old_stance || "unclear",
+new_stance: meta.new_stance || "unclear",
+stance_shift: meta.stance_shift || "none",
+context_shift: meta.context_shift || "",
+time_gap_relevant:
+  meta.time_gap_relevant || false,
   timeline_hint:
   meta.timeline_hint || "",
   ai_confidence:
@@ -768,19 +816,19 @@ function detectSourceTrust(item: {
   }
 
   if (
-    text.includes("youtube") ||
-    text.includes("tiktok") ||
-    text.includes("facebook") ||
-    text.includes("rumble")
-  ) {
-    return {
-      source_trust_type: "platform",
-      source_trust_score: 35,
-    };
-  }
-
+  text.includes("youtube") ||
+  text.includes("tiktok") ||
+  text.includes("facebook") ||
+  text.includes("rumble")
+) {
   return {
-    source_trust_type: "unknown",
-    source_trust_score: 45,
+    source_trust_type: "platform",
+    source_trust_score: 35,
   };
+}
+
+return {
+  source_trust_type: "unknown",
+  source_trust_score: 45,
+};
 }
