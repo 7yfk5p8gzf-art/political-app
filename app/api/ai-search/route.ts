@@ -1,4 +1,11 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    ""
+);
 
 type SearchResult = {
   title: string;
@@ -8,6 +15,133 @@ type SearchResult = {
   age?: string;
   score?: number;
 };
+async function getTopicMemory(topic: string | null) {
+  if (!topic) return null;
+
+  const { data, error } = await supabase
+    .from("topic_memory")
+    .select("*")
+    .eq("topic", topic)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Topic memory load error:", error);
+    return null;
+  }
+
+  return data;
+}
+
+async function upsertTopicMemory(params: {
+  topic: string | null;
+  searchQuery: string;
+  summary?: string | null;
+  stance?: string | null;
+}) {
+  if (!params.topic) return;
+
+  const existing = await getTopicMemory(params.topic);
+
+  const previousQueries = Array.isArray(existing?.last_queries)
+    ? existing.last_queries
+    : [];
+
+  const nextQueries = [
+    params.searchQuery,
+    ...previousQueries.filter((x: string) => x !== params.searchQuery),
+  ].slice(0, 20);
+
+  const { error } = await supabase.from("topic_memory").upsert(
+    {
+      politician: "general",
+      topic: params.topic,
+      memory_summary: params.summary || existing?.memory_summary || "",
+      stance_direction: params.stance || existing?.stance_direction || "mixed",
+      last_queries: nextQueries,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "topic",
+    }
+  );
+
+  if (error) {
+    console.error("Topic memory save error:", error);
+  }
+}
+
+function extractTopicFromQuery(query: string) {
+  const q = normalize(query);
+
+  const topicMap = [
+    {
+      canonical: "IMMIGRATION_POLICY",
+      keywords: [
+        "bevándorl",
+        "migráció",
+        "migráns",
+        "migration",
+        "immigration",
+        "asylum",
+        "refugee",
+        "border",
+      ],
+    },
+
+    {
+      canonical: "UKRAINE_WAR",
+      keywords: [
+        "ukrajna",
+        "orosz",
+        "háború",
+        "war",
+        "ukraine",
+        "russia",
+        "nato",
+      ],
+    },
+
+    {
+      canonical: "ECONOMY",
+      keywords: [
+        "gazdaság",
+        "infláció",
+        "árak",
+        "economy",
+        "inflation",
+        "tax",
+        "gdp",
+      ],
+    },
+
+    {
+      canonical: "EU_POLITICS",
+      keywords: [
+        "eu",
+        "european union",
+        "brussels",
+        "európai unió",
+        "bizottság",
+      ],
+    },
+  ];
+
+  for (const topic of topicMap) {
+    if (
+      topic.keywords.some((keyword) =>
+        q.includes(keyword)
+      )
+    ) {
+      return topic.canonical;
+    }
+  }
+
+  return q
+    .split(" ")
+    .slice(0, 3)
+    .join("_")
+    .toUpperCase();
+}
 
 function normalize(text: string) {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
@@ -150,6 +284,20 @@ export async function POST(req: Request) {
     }
 
     const cleanQuery = String(query).trim();
+    const cacheKey = normalize(cleanQuery);
+
+const { data: cached } = await supabase
+  .from("ai_search_cache")
+  .select("response, created_at")
+  .eq("normalized_query", cacheKey)
+  .maybeSingle();
+
+if (cached?.response) {
+  console.log("AI SEARCH CACHE HIT:", cacheKey);
+  return NextResponse.json(cached.response);
+}
+    const detectedTopic = extractTopicFromQuery(cleanQuery);
+const topicMemory = await getTopicMemory(detectedTopic);
 
 const expandedQuery = cleanQuery
   .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
@@ -252,12 +400,34 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
       .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
 
-    const aiPrompt = `
+    let existingProfile: any = null;
+
+if (cleanQuery) {
+  const { data } = await supabase
+    .from("politician_profiles")
+    .select("*")
+    .ilike("politician", `%${cleanQuery.split(" ")[0]}%`)
+    .maybeSingle();
+
+  existingProfile = data;
+}
+      const aiPrompt = `
 Elemezd ezt a politikai forráskeresést.
 
 Nagyon fontos:
 A keresés teljes jelentését vedd figyelembe, ne csak a személy nevét.
 A találatok akkor jók, ha kapcsolódnak a témához, évhez, eseményhez vagy állításhoz is.
+Korábbi politikus memória profil:
+${existingProfile ? JSON.stringify(existingProfile, null, 2) : "Nincs korábbi profil."}
+Korábbi téma memória:
+${topicMemory ? JSON.stringify(topicMemory, null, 2) : "Nincs korábbi téma memória."}
+
+Használd a korábbi téma memóriát is:
+- ha volt már ilyen téma, vedd figyelembe a korábbi kereséseket
+- építs rá a korábbi összefoglalóra
+- ne csak ismételd a régi találatokat
+- javítsd a keresési javaslatokat a memória alapján
+
 
 Keresés:
 "${cleanQuery}"
@@ -506,8 +676,64 @@ if (bestVideoUrl) {
 }
       }
     }
+    console.log("TOPIC MEMORY SAVE TRY:", {
+  detectedTopic,
+  metaTopic: meta.topic,
+  cleanQuery,
+});
 
-    return NextResponse.json({
+await upsertTopicMemory({
+  topic: detectedTopic,
+  searchQuery: cleanQuery,
+  summary: meta.summary || null,
+  stance: meta.stance_signature || meta.new_stance || null,
+  
+});
+    if (meta.politician) {
+  await supabase
+    .from("politician_profiles")
+    .upsert(
+      {
+        politician: meta.politician,
+        country: meta.country || null,
+        language: meta.language || null,
+
+        profile_summary:
+          meta.politician_profile_summary || "",
+
+        stance_stability:
+          meta.stance_stability || "evolving",
+
+        ideological_direction:
+          meta.ideological_direction || "mixed",
+
+        rhetoric_style:
+          meta.rhetoric_style || "mixed",
+
+        contradiction_history_level:
+          meta.contradiction_history_level || "medium",
+
+        memory_snapshot:
+          meta.memory_snapshot || "",
+
+        long_term_direction:
+          meta.long_term_direction || "",
+
+        volatility_level:
+          meta.volatility_level || "medium",
+
+        narrative_pattern:
+          meta.narrative_pattern || "recurring",
+
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "politician,country",
+      }
+    );
+}
+
+    const responsePayload = {
       articles,
       videos,
       summary:
@@ -615,7 +841,20 @@ warning: meta.warning || "",
         articleErrors: articleSearches.map((r) => r.error).filter(Boolean),
         videoErrors: videoSearches.map((r) => r.error).filter(Boolean),
       },
-    });
+    };
+    await supabase.from("ai_search_cache").upsert(
+  {
+    query: cleanQuery,
+    normalized_query: cacheKey,
+    response: responsePayload,
+    created_at: new Date().toISOString(),
+  },
+  {
+    onConflict: "query",
+  }
+);
+
+return NextResponse.json(responsePayload);
   } catch (error: any) {
     return NextResponse.json(
       {
