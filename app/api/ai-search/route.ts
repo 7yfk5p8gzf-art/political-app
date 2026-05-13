@@ -295,6 +295,54 @@ Feladat:
   - opposite_meaning: tényleg ellentétes jelentés?
   - opposite_meaning legyen true ha:
   - Határozd meg az álláspont irányát is:
+  - Készíts magasabb szintű klaszter elemzést is:
+  - Elemezd az időbeli politikai irányváltozást is:
+  - Készíts politikus memória-profilt is:
+  - Készíts hosszabb távú memória snapshotot is:
+  - Készíts politikai graph elemzést is:
+  - graph_node_type: statement | policy | event | rhetoric
+  - graph_relationship: reinforce | contradict | evolve | react
+  - contradiction_edge_strength: weak | medium | strong
+  - narrative_transition: stable | escalating | reversing | fragmenting
+- reinforce = erősíti a korábbi állításokat
+- contradict = szembemegy velük
+- evolve = fokozatos változás
+- react = aktuális eseményre reagál
+  - memory_snapshot: rövid AI memória összefoglaló
+  - long_term_direction: stabil hosszú távú politikai irány
+  - volatility_level: low | medium | high
+  - narrative_pattern: recurring | shifting | reactive | strategic
+- recurring = visszatérő politikai narratíva
+- reactive = eseményekre reagáló kommunikáció
+- strategic = tudatos hosszú távú stratégiai kommunikáció
+  - Mindig töltsd ki az összes politician profile mezőt.
+- Ha bizonytalan vagy, akkor is adj becsült értéket.
+- Soha ne hagyd üresen ezeket:
+  - politician_profile_summary
+  - stance_stability
+  - ideological_direction
+  - rhetoric_style
+  - contradiction_history_level
+  - politician_profile_summary: rövid AI profil
+  - stance_stability: stable | evolving | unstable
+  - ideological_direction: conservative | liberal | nationalist | globalist | mixed | unclear
+  - rhetoric_style: aggressive | diplomatic | populist | technocratic | mixed
+  - contradiction_history_level: low | medium | high
+- stable = hosszú ideje következetes álláspont
+- unstable = gyakori irányváltás
+- evolving = fokozatos politikai változás
+  - timeline_position: past | transition | current
+  - stance_weight: 0-100
+  - historical_relevance: low | medium | high
+  - overall_stance_evolution: rövid összefoglaló az álláspont időbeli változásáról
+- transition = átmeneti vagy változó politikai álláspont
+- stance_weight = mennyire erős és egyértelmű az adott álláspont
+- historical_relevance legyen high ha az állítás fontos politikai fordulatot jelez
+  - cluster_topic: a fő politikai téma rövid neve
+  - timeline_group: early | middle | recent
+  - stance_signature: support | oppose | mixed | unstable
+- unstable = az álláspont időben többször változik
+- mixed = egyszerre többféle álláspont jelenik meg
   - old_stance: support | oppose | neutral | unclear
   - new_stance: support | oppose | neutral | unclear
 - support = támogatja az adott policy-t, szervezetet, döntést vagy állítást
@@ -359,6 +407,26 @@ Adj vissza CSAK tiszta JSON-t:
 "old_stance": "unclear",
 "new_stance": "unclear",
 "stance_shift": "none",
+"cluster_topic": "",
+"timeline_group": "recent",
+"stance_signature": "mixed",
+"timeline_position": "current",
+"stance_weight": 50,
+"historical_relevance": "medium",
+"overall_stance_evolution": "",
+"politician_profile_summary": "",
+"stance_stability": "evolving",
+"ideological_direction": "mixed",
+"rhetoric_style": "mixed",
+"contradiction_history_level": "medium",
+"memory_snapshot": "",
+"long_term_direction": "",
+"volatility_level": "medium",
+"narrative_pattern": "recurring",
+"graph_node_type": "statement",
+"graph_relationship": "evolve",
+"contradiction_edge_strength": "medium",
+"narrative_transition": "escalating",
 "context_shift": "",
 "time_gap_relevant": false,
   "newer_search_suggestion": "",
@@ -478,6 +546,56 @@ opposite_meaning: meta.opposite_meaning || false,
 old_stance: meta.old_stance || "unclear",
 new_stance: meta.new_stance || "unclear",
 stance_shift: meta.stance_shift || "none",
+cluster_topic: meta.cluster_topic || "",
+timeline_group: meta.timeline_group || "recent",
+stance_signature: meta.stance_signature || "mixed",
+timeline_position:
+  meta.timeline_position || "current",
+
+stance_weight:
+  meta.stance_weight || 50,
+
+historical_relevance:
+  meta.historical_relevance || "medium",
+
+overall_stance_evolution:
+  meta.overall_stance_evolution || "",
+  politician_profile_summary:
+  meta.politician_profile_summary || "",
+
+stance_stability:
+  meta.stance_stability || "evolving",
+
+ideological_direction:
+  meta.ideological_direction || "mixed",
+
+rhetoric_style:
+  meta.rhetoric_style || "mixed",
+
+contradiction_history_level:
+  meta.contradiction_history_level || "medium",
+  memory_snapshot:
+  meta.memory_snapshot || "",
+
+long_term_direction:
+  meta.long_term_direction || "",
+
+volatility_level:
+  meta.volatility_level || "medium",
+
+narrative_pattern:
+  meta.narrative_pattern || "recurring",
+  graph_node_type:
+  meta.graph_node_type || "statement",
+
+graph_relationship:
+  meta.graph_relationship || "evolve",
+
+contradiction_edge_strength:
+  meta.contradiction_edge_strength || "medium",
+
+narrative_transition:
+  meta.narrative_transition || "stable",
 context_shift: meta.context_shift || "",
 time_gap_relevant:
   meta.time_gap_relevant || false,
@@ -766,6 +884,37 @@ function detectSourceTrust(item: {
     item.description || ""
   }`.toLowerCase();
 
+
+const trustedDomains: Record<string, number> = {
+  "reuters.com": 95,
+  "apnews.com": 92,
+  "bbc.com": 90,
+  "nytimes.com": 88,
+  "politico.com": 85,
+
+  "whitehouse.gov": 95,
+  "gov.hu": 92,
+  "bundesregierung.de": 92,
+  "bundestag.de": 90,
+  "europa.eu": 90,
+
+  "cnn.com": 75,
+  "foxnews.com": 70,
+
+  "youtube.com": 35,
+  "tiktok.com": 20,
+  "facebook.com": 20,
+  "rumble.com": 15,
+};
+
+for (const domain in trustedDomains) {
+  if (text.includes(domain)) {
+    return {
+      source_trust_type: "domain",
+      source_trust_score: trustedDomains[domain],
+    };
+  }
+}
   if (
     text.includes("gov.hu") ||
     text.includes("kormany.hu") ||

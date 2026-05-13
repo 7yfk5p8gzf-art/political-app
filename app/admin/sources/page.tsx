@@ -440,6 +440,30 @@ export default function AdminSourcesPage() {
   <>
     <h3 style={smallTitleStyle}>AI összefoglaló</h3>
     <p style={summaryStyle}>{aiResult.summary}</p>
+    {aiResult.overall_stance_evolution && (
+  <div style={metaBoxStyle}>
+    <strong>Álláspont időbeli változása:</strong>
+    <div style={{ marginTop: 6 }}>
+      {aiResult.overall_stance_evolution}
+    </div>
+  </div>
+)}
+
+{aiResult.memory_snapshot && (
+  <div style={metaBoxStyle}>
+    <strong>Politikus memória snapshot:</strong>
+    <div style={{ marginTop: 6 }}>
+      {aiResult.memory_snapshot}
+    </div>
+  </div>
+)}
+
+{aiResult.graph_relationship && (
+  <div style={metaBoxStyle}>
+    <strong>Graph kapcsolat:</strong>{" "}
+    {aiResult.graph_relationship} / {aiResult.narrative_transition || "stable"}
+  </div>
+)}
   </>
 )
 {aiResult.best_article_url && (
@@ -517,6 +541,18 @@ export default function AdminSourcesPage() {
                     <a href={a.url} target="_blank" rel="noreferrer">
                       {a.title}
                     </a>
+                    <div
+  style={{
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 4,
+  }}
+>
+  Trust: {a.source_trust_type || "unknown"} (
+  {a.source_trust_score || 0}) | Quality:{" "}
+  {a.quality_score || 0} | Final:{" "}
+  {Math.round(a.final_score || 0)}
+</div>
 
                     <button onClick={() => addArticleFromAi(a)} style={smallButtonStyle}>
                       ➕ Add cikk
@@ -541,6 +577,18 @@ export default function AdminSourcesPage() {
                     >
                       {v.title}
                     </a>
+                    <div
+  style={{
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 4,
+  }}
+>
+  Trust: {v.source_trust_type || "unknown"} (
+  {v.source_trust_score || 0}) | Quality:{" "}
+  {v.quality_score || 0} | Final:{" "}
+  {Math.round(v.final_score || 0)}
+</div>
 
                     <button onClick={() => addVideoFromAi(v)} style={smallButtonStyle}>
                       ➕ Add videó
