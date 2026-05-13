@@ -150,29 +150,32 @@ export async function POST(req: Request) {
     }
 
     const cleanQuery = String(query).trim();
-    const expandedQuery =
-  cleanQuery
-    .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
-    .replace(/migráció/gi, "migráció bevándorlás illegális migráció migráns");
 
-    const articleQueries = [
-  `"${expandedQuery}"`,
-  `"${expandedQuery}" nyilatkozat`,
-  `"${expandedQuery}" interjú`,
-  `"${expandedQuery}" beszéd`,
-  `"${expandedQuery}" site:gov.hu OR site:kormany.hu OR site:parlament.hu`,
-  `"${expandedQuery}" -wikipedia -facebook -instagram -tiktok`,
-];
+const expandedQuery = cleanQuery
+  .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
+  .replace(/migráció/gi, "migráció bevándorlás illegális migráció migráns")
+  .replace(
+  /\bmigration\b/gi,
+  detectQueryLanguageContext(cleanQuery).lang === "hu"
+    ? "bevándorlás migráció illegális migráció migráns migration"
+    : detectQueryLanguageContext(cleanQuery).lang === "de"
+    ? "Migration Flüchtlinge Einwanderung Asyl migration"
+    : "immigration migrants border asylum migration"
+)
+.replace(
+  /\bimmigration\b/gi,
+  detectQueryLanguageContext(cleanQuery).lang === "hu"
+    ? "bevándorlás migráció illegális migráció migráns immigration"
+    : detectQueryLanguageContext(cleanQuery).lang === "de"
+    ? "Migration Flüchtlinge Einwanderung Asyl immigration"
+    : "immigration migrants border asylum"
+);
 
-const videoQueries = [
-  `${expandedQuery} youtube`,
-  `${expandedQuery} interview youtube`,
-  `${expandedQuery} speech youtube`,
-  `${expandedQuery} beszéd youtube`,
-  `${expandedQuery} interjú youtube`,
-  `${expandedQuery} migration youtube`,
-  `${expandedQuery} statement youtube`,
-];
+const expanded = expandSearchQueries(expandedQuery);
+
+const articleQueries = expanded.articleQueries;
+const videoQueries = expanded.videoQueries;
+
 
     const articleSearches = await Promise.all(
       articleQueries.map((q) => braveSearch(q, 6))
@@ -203,14 +206,23 @@ const videoQueries = [
           !item.url.includes("youtu.be") &&
           resultMatchesQuery(item, cleanQuery)
       )
-      .map((item) => ({
-        ...item,
-        score: scoreResult(item, cleanQuery),
-quality_score: scoreSourceQuality(item),
-final_score:
-  scoreResult(item, cleanQuery) * 0.6 +
-  scoreSourceQuality(item) * 0.4,
-      }))
+      .map((item) => {
+  const trust = detectSourceTrust(item);
+
+  return {
+    ...item,
+    score: scoreResult(item, cleanQuery),
+    quality_score: scoreSourceQuality(item),
+
+    source_trust_type: trust.source_trust_type,
+    source_trust_score: trust.source_trust_score,
+
+    final_score:
+      scoreResult(item, cleanQuery) * 0.5 +
+      scoreSourceQuality(item) * 0.3 +
+      trust.source_trust_score * 0.2,
+  };
+})
       .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
 
@@ -220,15 +232,24 @@ final_score:
           (item.url.includes("youtube.com") || item.url.includes("youtu.be")) &&
           resultMatchesQuery(item, cleanQuery)
       )
-      .map((item) => ({
-        ...item,
-        score: scoreResult(item, cleanQuery),
-        quality_score: scoreSourceQuality(item),
-final_score:
-  scoreResult(item, cleanQuery) * 0.5 +
-  scoreSourceQuality(item) * 0.5,
-      }))
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .map((item) => {
+  const trust = detectSourceTrust(item);
+
+  return {
+    ...item,
+    score: scoreResult(item, cleanQuery),
+    quality_score: scoreSourceQuality(item),
+
+    source_trust_type: trust.source_trust_type,
+    source_trust_score: trust.source_trust_score,
+
+    final_score:
+      scoreResult(item, cleanQuery) * 0.45 +
+      scoreSourceQuality(item) * 0.35 +
+      trust.source_trust_score * 0.2,
+  };
+})
+      .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
 
     const aiPrompt = `
@@ -597,4 +618,169 @@ function scoreSourceQuality(item: {
   if (text.includes("highlights")) score -= 10;
 
   return Math.max(0, Math.min(100, score));
+}
+function expandSearchQueries(query: string) {
+  const base = query.trim();
+  const context = detectQueryLanguageContext(query);
+
+  const variants = [
+    base,
+    `${base} ${context.speech}`,
+`${base} ${context.interview}`,
+`${base} ${context.statement}`,
+`${base} ${context.transcript}`,
+    `${base} full speech`,
+    `${base} press conference`,
+    `${base} ${context.official}`,
+    `${base} policy`,
+  ];
+
+  const videoQueries = [
+    `${base} video`,
+    `${base} ${context.interview} youtube`,
+`${base} ${context.speech} youtube`,
+    `${base} full interview`,
+    `${base} live`,
+  ];
+
+  const contradictionQueries = [
+    `${base} previous statement`,
+    `${base} changed position`,
+    `${base} contradiction`,
+    `${base} then vs now`,
+    `${base} old statement`,
+  ];
+
+  return {
+    articleQueries: [...new Set(variants)],
+    videoQueries: [...new Set(videoQueries)],
+    contradictionQueries: [...new Set(contradictionQueries)],
+  };
+}
+function detectQueryLanguageContext(query: string) {
+  const q = query.toLowerCase();
+
+  if (
+    q.includes("orbán") ||
+    q.includes("orban") ||
+    q.includes("gyurcsány") ||
+    q.includes("gyurcsany") ||
+    q.includes("magyar") ||
+    q.includes("fidesz") ||
+    q.includes("tisza")
+  ) {
+    return {
+      lang: "hu",
+      country: "HU",
+      speech: "beszéd",
+      interview: "interjú",
+      statement: "nyilatkozat",
+      transcript: "átirat",
+      official: "site:gov.hu OR site:kormany.hu OR site:parlament.hu",
+    };
+  }
+
+  if (
+    q.includes("merz") ||
+    q.includes("scholz") ||
+    q.includes("afd") ||
+    q.includes("bundestag") ||
+    q.includes("deutschland")
+  ) {
+    return {
+      lang: "de",
+      country: "DE",
+      speech: "Rede",
+      interview: "Interview",
+      statement: "Aussage",
+      transcript: "Transkript",
+      official: "site:bundestag.de OR site:bundesregierung.de",
+    };
+  }
+
+  return {
+    lang: "en",
+    country: "US",
+    speech: "speech",
+    interview: "interview",
+    statement: "statement",
+    transcript: "transcript",
+    official: "site:whitehouse.gov OR site:congress.gov OR site:senate.gov OR site:house.gov",
+  };
+}
+function detectSourceTrust(item: {
+  title?: string;
+  url?: string;
+  source?: string;
+  description?: string;
+}) {
+  const text = `${item.title || ""} ${item.url || ""} ${item.source || ""} ${
+    item.description || ""
+  }`.toLowerCase();
+
+  if (
+    text.includes("gov.hu") ||
+    text.includes("kormany.hu") ||
+    text.includes("parlament.hu") ||
+    text.includes("bundestag.de") ||
+    text.includes("bundesregierung.de") ||
+    text.includes("whitehouse.gov") ||
+    text.includes("congress.gov") ||
+    text.includes("senate.gov") ||
+    text.includes("house.gov")
+  ) {
+    return {
+      source_trust_type: "official",
+      source_trust_score: 95,
+    };
+  }
+
+  if (
+    text.includes("reuters") ||
+    text.includes("apnews") ||
+    text.includes("associated press") ||
+    text.includes("bbc") ||
+    text.includes("theguardian") ||
+    text.includes("nytimes") ||
+    text.includes("politico") ||
+    text.includes("zdf") ||
+    text.includes("ard") ||
+    text.includes("spiegel") ||
+    text.includes("faz")
+  ) {
+    return {
+      source_trust_type: "major_media",
+      source_trust_score: 85,
+    };
+  }
+
+  if (
+    text.includes("origo") ||
+    text.includes("magyar nemzet") ||
+    text.includes("pravda") ||
+    text.includes("mandiner") ||
+    text.includes("pesti srácok")
+  ) {
+    return {
+      source_trust_type: "partisan_media",
+      source_trust_score: 55,
+    };
+  }
+
+  if (
+    text.includes("youtube") ||
+    text.includes("tiktok") ||
+    text.includes("facebook") ||
+    text.includes("rumble")
+  ) {
+    return {
+      source_trust_type: "platform",
+      source_trust_score: 35,
+    };
+  }
+
+  return {
+    source_trust_type: "unknown",
+    source_trust_score: 45,
+  };
 }
