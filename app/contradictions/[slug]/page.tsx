@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
 import AiAnalysisCard from "@/components/public/AiAnalysisCard";
+import SourceCards from "@/components/public/SourceCards";
 
 type Item = {
   id: string;
@@ -512,41 +513,10 @@ export default function ContradictionDetailPage() {
  
         </section>
 
-        <section style={sourcesCardStyle}>
-          <h2 style={sectionTitleStyle}>{t[lang].sources}</h2>
-
-          <div style={sourceGridStyle}>
-            <div style={sourceMiniCardStyle}>
-              <strong>{t[lang].oldStatementSource}</strong>
-              <p style={mutedTextStyle}>
-                {item.old_source
-                  ? t[lang].externalSourceAvailable
-                  : labels[lang].noSource}
-              </p>
-
-              {item.old_source && (
-                <a href={item.old_source} target="_blank" style={plainLinkStyle}>
-                  {t[lang].openButton} →
-                </a>
-              )}
-            </div>
-
-            <div style={sourceMiniCardStyle}>
-              <strong>{t[lang].newStatementSource}</strong>
-              <p style={mutedTextStyle}>
-                {item.new_source
-                  ? t[lang].externalSourceAvailable
-                  : labels[lang].noSource}
-              </p>
-
-              {item.new_source && (
-                <a href={item.new_source} target="_blank" style={plainLinkStyle}>
-                  {t[lang].openButton} →
-                </a>
-              )}
-            </div>
-          </div>
-        </section>
+        <SourceCards
+  oldSource={item.old_source}
+  newSource={item.new_source}
+/>
 
         {relatedItems.length > 0 && (
           <section style={relatedCardStyle}>
