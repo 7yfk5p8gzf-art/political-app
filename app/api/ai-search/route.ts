@@ -15,6 +15,42 @@ type SearchResult = {
   age?: string;
   score?: number;
 };
+
+
+
+type ContradictionDraftInput = {
+  politician: string;
+  topic: string;
+  country?: string | null;
+  language?: string | null;
+  old_statement: string;
+  new_statement: string;
+  old_source?: string | null;
+  new_source?: string | null;
+  old_video_url?: string | null;
+  new_video_url?: string | null;
+  old_date?: string | null;
+  new_date?: string | null;
+  ai_summary?: string | null;
+  confidence_score?: number;
+};
+
+function makeDuplicateHash(input: ContradictionDraftInput) {
+  return [
+    input.politician,
+    input.topic,
+    input.old_statement,
+    input.new_statement,
+  ]
+    .join("|")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
 async function getTopicMemory(topic: string | null) {
   if (!topic) return null;
 
@@ -410,6 +446,7 @@ async function saveContradictionSeed(params: {
   meta: any;
   detectedPolitician: any;
   detectedTopic: string;
+  query?: string;
 }) {
   const meta = params.meta || {};
   console.log("CONTRADICTION CHECK:", {
@@ -463,6 +500,89 @@ async function saveContradictionSeed(params: {
 
     created_at: new Date().toISOString(),
   });
+  const duplicateHash = makeDuplicateHash({
+  politician:
+    meta.politician ||
+    params.detectedPolitician?.full_name ||
+    "",
+
+  topic:
+    meta.cluster_topic ||
+    params.detectedTopic ||
+    "",
+
+  old_statement:
+    meta.old_stance || "",
+
+  new_statement:
+    meta.new_stance || "",
+});
+
+const { data: existingDraft } = await supabase
+  .from("contradictions")
+  .select("id")
+  .eq("duplicate_hash", duplicateHash)
+  .maybeSingle();
+
+if (!existingDraft) {
+  await supabase.from("contradictions").insert({
+    politician:
+      meta.politician ||
+      params.detectedPolitician?.full_name ||
+      "",
+
+    topic:
+      meta.cluster_topic ||
+      params.detectedTopic ||
+      "",
+
+    language:
+      params.detectedPolitician?.language ||
+      meta.language ||
+      "hu",
+
+    country:
+      params.detectedPolitician?.country ||
+      meta.country ||
+      "",
+
+    old_statement: meta.old_stance || "",
+    new_statement: meta.new_stance || "",
+
+    old_source: meta.old_source || "",
+    new_source: meta.new_source || "",
+
+    old_video_url: meta.old_video_url || "",
+    new_video_url: meta.new_video_url || "",
+
+    old_date: meta.old_date || null,
+    new_date: meta.new_date || null,
+
+    ai_summary: meta.contradiction_reason || "",
+
+    confidence_score:
+      meta.contradiction_probability || 0,
+
+    duplicate_hash: duplicateHash,
+    review_status: "draft",
+    status: "draft",
+
+    timeline_data: {
+      timeline_hint: meta.timeline_hint || "",
+    },
+
+    draft_data: {
+      contradiction_strength:
+        meta.contradiction_strength || "possible",
+      generated_by: "ai-search-engine-v1",
+      created_from_query: params.query || "",
+    },
+
+    created_at: new Date().toISOString(),
+  });
+
+  console.log("CONTRADICTION DRAFT CREATED");
+}
 }
 
 export async function POST(req: Request) {
@@ -1028,6 +1148,7 @@ await saveContradictionSeed({
   meta,
   detectedPolitician,
   detectedTopic,
+  query: cleanQuery,
 });
     const responsePayload = {
       articles,
