@@ -752,13 +752,13 @@ const heroStyle: CSSProperties = {
     ? "1fr"
     : "1.4fr 0.8fr",
   gap: 22,
-  background: "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  background: "var(--hero-bg)",
   
-  border: "1px solid rgba(255,255,255,0.72)",
+  border: "1px solid var(--card-border)",
   borderRadius: 34,
   padding: 36,
-  boxShadow:
-    "0 28px 80px rgba(15, 23, 42, 0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  boxShadow: "var(--shadow-main)",
+    
   backdropFilter: "blur(18px)",
   WebkitBackdropFilter: "blur(18px)",
 };
@@ -783,11 +783,12 @@ const titleStyle: CSSProperties = {
   margin: "0 0 18px",
   fontWeight: 950,
   letterSpacing: "-2.4px",
+  color: "var(--text-main)",
 };
 
 const leadStyle: CSSProperties = {
   fontSize: 19,
-  color: "#cbd5e1",
+  color: "var(--text-muted)",
   lineHeight: 1.65,
   maxWidth: 760,
   marginBottom: 24,

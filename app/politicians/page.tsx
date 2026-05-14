@@ -304,13 +304,13 @@ const heroStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   marginBottom: 30,
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
-  border: "1px solid rgba(255,255,255,0.72)",
+  background: "var(--hero-bg)",
+    
+  border: "1px solid var(--card-border)",
   borderRadius: 34,
   padding: 36,
-  boxShadow:
-    "0 28px 80px rgba(15,23,42,0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  boxShadow: "var(--shadow-main)",
+    
   backdropFilter: "blur(18px)",
   WebkitBackdropFilter: "blur(18px)",
 };
@@ -358,12 +358,12 @@ const titleStyle: CSSProperties = {
   margin: "0 0 18px",
   fontWeight: 950,
   letterSpacing: "-2.2px",
-  color: "#0f172a",
+  color: "var(--text-main)",
 };
 
 const leadStyle: CSSProperties = {
   maxWidth: 760,
-  color: "#475569",
+  color: "var(--text-muted)",
   fontSize: 18,
   lineHeight: 1.65,
   margin: 0,
@@ -418,13 +418,13 @@ const gridStyle: CSSProperties = {
 const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
-  border: "1px solid rgba(255,255,255,0.72)",
+  background: "var(--card-bg)",
+    
+  border: "1px solid var(--card-border)",
   borderRadius: 28,
   padding: 26,
-  boxShadow:
-    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+  boxShadow: "var(--shadow-main)",
+    
   backdropFilter: "blur(14px)",
   WebkitBackdropFilter: "blur(14px)",
 };
@@ -478,7 +478,7 @@ const cardTitleStyle: CSSProperties = {
   margin: 0,
   fontWeight: 950,
   letterSpacing: "-0.8px",
-  color: "#0f172a",
+  color: "var(--text-main)",
 };
 
 const openButtonStyle: CSSProperties = {
@@ -494,11 +494,11 @@ const openButtonStyle: CSSProperties = {
 };
 
 const topicLineStyle: CSSProperties = {
-  background: "rgba(248,250,252,0.78)",
-  border: "1px solid rgba(226,232,240,0.85)",
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid var(--card-border)",
   borderRadius: 18,
   padding: 15,
-  color: "#475569",
+  color: "var(--text-muted)",
   marginBottom: 14,
   lineHeight: 1.5,
   backdropFilter: "blur(10px)",
@@ -512,8 +512,9 @@ const statsRowStyle: CSSProperties = {
 };
 
 const statStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.72)",
-  border: "1px solid rgba(226,232,240,0.9)",
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid var(--card-border)",
+  color: "var(--text-main)",
   borderRadius: 18,
   padding: 15,
   display: "grid",
@@ -537,8 +538,8 @@ const navLinkStyle: CSSProperties = {
 };
 
 const topicLinkStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "var(--text-main)",
   fontWeight: 950,
   textDecoration: "none",
-  borderBottom: "2px solid #0f172a",
+  borderBottom: "2px solid var(--text-main)",
 };

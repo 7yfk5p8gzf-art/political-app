@@ -1,17 +1,77 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: light;
+
+  --page-bg:
+    radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(168,85,247,0.12), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+
+  --card-bg: rgba(255,255,255,0.92);
+
+  --card-border: rgba(255,255,255,0.72);
+
+  --text-main: #0f172a;
+
+  --text-muted: #475569;
+
+  --hero-bg:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.94),
+      rgba(248,250,252,0.82)
+    );
+
+  --shadow-main:
+    0 28px 80px rgba(15,23,42,0.13),
+    inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
-html, body {
+html.dark {
+  color-scheme: dark;
+
+  --page-bg:
+    linear-gradient(
+      180deg,
+      #020617 0%,
+      #0f172a 100%
+    );
+
+  --card-bg: rgba(15,23,42,0.88);
+
+  --card-border: rgba(255,255,255,0.08);
+
+  --text-main: #f8fafc;
+
+  --text-muted: #cbd5e1;
+
+  --hero-bg:
+    linear-gradient(
+      135deg,
+      rgba(15,23,42,0.95),
+      rgba(30,41,59,0.92)
+    );
+
+  --shadow-main:
+    0 30px 80px rgba(0,0,0,0.45);
+}
+
+html,
+body {
   min-height: 100%;
 }
 
 body {
-  @apply bg-slate-100 text-slate-900;
+  background: var(--page-bg);
+  color: var(--text-main);
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
 a {
