@@ -406,6 +406,64 @@ if (
     }
   }
 }
+async function saveContradictionSeed(params: {
+  meta: any;
+  detectedPolitician: any;
+  detectedTopic: string;
+}) {
+  const meta = params.meta || {};
+  console.log("CONTRADICTION CHECK:", {
+  probability: meta.contradiction_probability,
+  same_topic: meta.same_topic,
+  opposite_meaning: meta.opposite_meaning,
+  strength: meta.contradiction_strength,
+});
+
+  if (
+    meta.contradiction_probability < 60 ||
+    !meta.same_topic 
+    
+  ) {
+    return;
+  }
+
+  console.log("CONTRADICTION SEED DETECTED:", {
+    politician: meta.politician || params.detectedPolitician?.full_name,
+    topic: meta.cluster_topic || params.detectedTopic,
+    probability: meta.contradiction_probability,
+  });
+
+  await supabase.from("contradiction_memory").insert({
+    politician:
+      meta.politician ||
+      params.detectedPolitician?.full_name ||
+      "",
+
+    topic:
+      meta.cluster_topic ||
+      params.detectedTopic,
+
+    old_stance:
+      meta.old_stance || "unclear",
+
+    new_stance:
+      meta.new_stance || "unclear",
+
+    contradiction_strength:
+      meta.contradiction_strength || "possible",
+
+    contradiction_probability:
+      meta.contradiction_probability || 0,
+
+    contradiction_reason:
+      meta.contradiction_reason || "",
+
+    timeline_hint:
+      meta.timeline_hint || "",
+
+    created_at: new Date().toISOString(),
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -479,8 +537,8 @@ if (detectedPolitician?.slug) {
 
   semanticCache = data;
 }
+if (false && semanticCache?.response && semanticCache?.created_at) {
 
-if (semanticCache?.response && semanticCache?.created_at) {
   const semanticAge =
     Date.now() - new Date(semanticCache.created_at).getTime();
 
@@ -962,6 +1020,11 @@ await upsertTopicMemory({
 await autoSaveSources({
   articles,
   videos,
+  meta,
+  detectedPolitician,
+  detectedTopic,
+});
+await saveContradictionSeed({
   meta,
   detectedPolitician,
   detectedTopic,
