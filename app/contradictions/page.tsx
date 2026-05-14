@@ -171,6 +171,7 @@ export default function PublicContradictionsPage() {
   const [lang, setLang] = useState<Lang>("hu");
   const [mode, setMode] = useState<"latest" | "top">("latest");
   const [activeCountry, setActiveCountry] = useState("all");
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     setLang(detectBrowserLang());
@@ -751,8 +752,8 @@ const heroStyle: CSSProperties = {
     ? "1fr"
     : "1.4fr 0.8fr",
   gap: 22,
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  background: "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  
   border: "1px solid rgba(255,255,255,0.72)",
   borderRadius: 34,
   padding: 36,
@@ -786,7 +787,7 @@ const titleStyle: CSSProperties = {
 
 const leadStyle: CSSProperties = {
   fontSize: 19,
-  color: "#475569",
+  color: "#cbd5e1",
   lineHeight: 1.65,
   maxWidth: 760,
   marginBottom: 24,
@@ -798,14 +799,15 @@ const heroPanelStyle: CSSProperties = {
 };
 
 const miniStatStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.72)",
-  border: "1px solid rgba(255,255,255,0.75)",
+  background: "rgba(15,23,42,0.72)",
+border: "1px solid #dbe0e6",
   borderRadius: 22,
   padding: 18,
   display: "grid",
-  gap: 4,
+  color: "#f8fafc",
+backdropFilter: "blur(10px)",
   boxShadow: "0 14px 40px rgba(15,23,42,0.08)",
-  backdropFilter: "blur(12px)",
+  
   WebkitBackdropFilter: "blur(12px)",
 };
 
@@ -850,7 +852,7 @@ const politicianGridStyle: CSSProperties = {
 
 const politicianCardStyle: CSSProperties = {
   background: "white",
-  border: "1px solid #dbe0e6",
+  border: "1px solid rgba(255,255,255,0.08)",
   borderRadius: 20,
   padding: 16,
   display: "flex",
@@ -858,7 +860,11 @@ const politicianCardStyle: CSSProperties = {
   alignItems: "center",
   textDecoration: "none",
   color: "#0f172a",
-  boxShadow: "0 10px 28px rgba(15, 23, 42, 0.05)",
+  boxShadow:
+  "0 18px 42px rgba(15, 23, 42, 0.08)",
+  
+  
+  
   transition: "all 0.2s ease",
 cursor: "pointer",
 };
