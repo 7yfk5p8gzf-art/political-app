@@ -1,0 +1,77 @@
+[33mcommit 1e08546a18f9c3b4c1c6bf265af1a7deefc24a59[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Thu May 14 12:10:49 2026 +0200
+
+    Add auto source save and local source prioritization
+
+[33mcommit 9969b12e86308b4104b684f267f5066536a02f70[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 21:45:05 2026 +0200
+
+    Fix semantic cache with politician-scoped matching
+
+[33mcommit 77435366f35e1c275535ec652c9eae5414ddff70[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 21:29:40 2026 +0200
+
+    Add politician registry detection and semantic cache engine
+
+[33mcommit c26ff3834e9e63e262213378c03fc3b7e93be836[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 21:05:24 2026 +0200
+
+    Add semantic cache reuse for AI search
+
+[33mcommit 87154cdc883dc515be84bac70d5b14dbfb9a556a[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 20:46:15 2026 +0200
+
+    Add Topic Memory Engine V2 and AI Search Cache Engine
+
+[33mcommit cbef5a7171be99321d36fec26011101c5993dfa6[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 19:27:03 2026 +0200
+
+    Add political timeline memory and graph intelligence
+
+[33mcommit 8f73df6d8a0af1634c0fc468b18c712a250b70da[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 18:45:56 2026 +0200
+
+    Improve AI search semantic stance detection and performance
+
+[33mcommit e033d26d7c5917ed4e773bb6a34f6f964eab54f5[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Wed May 13 17:00:10 2026 +0200
+
+    Add multilingual AI search intent and source trust engine
+
+[33mcommit 2e024b3577412d6e91acb8f30bb665aa0774ba72[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Tue May 12 20:43:28 2026 +0200
+
+    Improve AI research search quality and transcript metadata
+
+[33mcommit 76543c579f8f1ad60e0e3ee13c6a688337b8a0f7[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Tue May 12 18:25:22 2026 +0200
+
+    Massive AI research engine upgrade
+
+[33mcommit 0b09a0cd45cd9d0b39bc077e1baa95b6808cd180[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Mon May 11 16:47:51 2026 +0200
+
+    Improve AI source search and related contradictions
+
+[33mcommit 9381a8c22e7f27322e86224f21c34428ae8ccf84[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Thu May 7 19:06:07 2026 +0200
+
+    Improve sources and contradictions workflow
+
+[33mcommit 2051ab9656e5d091c3058a6d0ddaaefde7148745[m
+Author: 7yfk5p8gzf-art <7yfk5p8gzf-art@users.noreply.github.com>
+Date:   Mon May 4 19:13:09 2026 +0200
+
+    AI source search + auto fill working

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -107,9 +107,9 @@ function extractTopicFromQuery(query: string) {
     {
       canonical: "IMMIGRATION_POLICY",
       keywords: [
-        "bevándorl",
-        "migráció",
-        "migráns",
+        "bev├índorl",
+        "migr├íci├│",
+        "migr├íns",
         "migration",
         "immigration",
         "asylum",
@@ -129,11 +129,11 @@ function extractTopicFromQuery(query: string) {
     "weapons",
     "missile",
     "security",
-    "védelmi",
+    "v├ędelmi",
     "katonai",
     "hadsereg",
     "fegyver",
-    "rakéta",
+    "rak├ęta",
   ],
 },
 
@@ -142,7 +142,7 @@ function extractTopicFromQuery(query: string) {
   keywords: [
     "ukrajna",
     "orosz",
-    "háború",
+    "h├íbor├║",
     "war",
     "ukraine",
     "russia"
@@ -152,9 +152,9 @@ function extractTopicFromQuery(query: string) {
     {
       canonical: "ECONOMY",
       keywords: [
-        "gazdaság",
-        "infláció",
-        "árak",
+        "gazdas├íg",
+        "infl├íci├│",
+        "├írak",
         "economy",
         "inflation",
         "tax",
@@ -168,8 +168,8 @@ function extractTopicFromQuery(query: string) {
         "eu",
         "european union",
         "brussels",
-        "európai unió",
-        "bizottság",
+        "eur├│pai uni├│",
+        "bizotts├íg",
       ],
     },
   ];
@@ -268,7 +268,7 @@ async function braveSearch(query: string, count = 10) {
   if (!key) {
     return {
       ok: false,
-      error: "Hiányzik a BRAVE_API_KEY env variable.",
+      error: "Hi├ínyzik a BRAVE_API_KEY env variable.",
       results: [] as SearchResult[],
     };
   }
@@ -354,12 +354,13 @@ async function autoSaveSources(params: {
   item.url.includes("google.com/search")
 ) {
   continue;
-  if (
+}
+
+if (
   typeof item.final_score === "number" &&
   item.final_score < 45
 ) {
   continue;
-}
 }
 
     const { data: existing } = await supabase
@@ -415,7 +416,7 @@ export async function POST(req: Request) {
         {
           articles: [],
           videos: [],
-          summary: "Nincs keresés megadva.",
+          summary: "Nincs keres├ęs megadva.",
           politician: "",
           topic: "",
           country: "",
@@ -516,22 +517,22 @@ console.log(
 );
 
 const expandedQuery = cleanQuery
-  .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
-  .replace(/migráció/gi, "migráció bevándorlás illegális migráció migráns")
+  .replace(/bev├índorl├ís/gi, "bev├índorl├ís migr├íci├│ illeg├ílis migr├íci├│ migr├íns")
+  .replace(/migr├íci├│/gi, "migr├íci├│ bev├índorl├ís illeg├ílis migr├íci├│ migr├íns")
   .replace(
   /\bmigration\b/gi,
   detectQueryLanguageContext(cleanQuery).lang === "hu"
-    ? "bevándorlás migráció illegális migráció migráns migration"
+    ? "bev├índorl├ís migr├íci├│ illeg├ílis migr├íci├│ migr├íns migration"
     : detectQueryLanguageContext(cleanQuery).lang === "de"
-    ? "Migration Flüchtlinge Einwanderung Asyl migration"
+    ? "Migration Fl├╝chtlinge Einwanderung Asyl migration"
     : "immigration migrants border asylum migration"
 )
 .replace(
   /\bimmigration\b/gi,
   detectQueryLanguageContext(cleanQuery).lang === "hu"
-    ? "bevándorlás migráció illegális migráció migráns immigration"
+    ? "bev├índorl├ís migr├íci├│ illeg├ílis migr├íci├│ migr├íns immigration"
     : detectQueryLanguageContext(cleanQuery).lang === "de"
-    ? "Migration Flüchtlinge Einwanderung Asyl immigration"
+    ? "Migration Fl├╝chtlinge Einwanderung Asyl immigration"
     : "immigration migrants border asylum"
 );
 
@@ -635,131 +636,131 @@ if (detectedPolitician?.full_name) {
   existingProfile = data;
 }
       const aiPrompt = `
-Elemezd ezt a politikai forráskeresést.
+Elemezd ezt a politikai forr├ískeres├ęst.
 
 Nagyon fontos:
-A keresés teljes jelentését vedd figyelembe, ne csak a személy nevét.
-A találatok akkor jók, ha kapcsolódnak a témához, évhez, eseményhez vagy állításhoz is.
-Korábbi politikus memória profil:
-${existingProfile ? JSON.stringify(existingProfile, null, 2) : "Nincs korábbi profil."}
-Korábbi téma memória:
-${topicMemory ? JSON.stringify(topicMemory, null, 2) : "Nincs korábbi téma memória."}
+A keres├ęs teljes jelent├ęs├ęt vedd figyelembe, ne csak a szem├ęly nev├ęt.
+A tal├ílatok akkor j├│k, ha kapcsol├│dnak a t├ęm├íhoz, ├ęvhez, esem├ęnyhez vagy ├íll├şt├íshoz is.
+Kor├íbbi politikus mem├│ria profil:
+${existingProfile ? JSON.stringify(existingProfile, null, 2) : "Nincs kor├íbbi profil."}
+Kor├íbbi t├ęma mem├│ria:
+${topicMemory ? JSON.stringify(topicMemory, null, 2) : "Nincs kor├íbbi t├ęma mem├│ria."}
 
-Használd a korábbi téma memóriát is:
-- ha volt már ilyen téma, vedd figyelembe a korábbi kereséseket
-- építs rá a korábbi összefoglalóra
-- ne csak ismételd a régi találatokat
-- javítsd a keresési javaslatokat a memória alapján
-Felismert politikus registry alapján:
-${detectedPolitician ? JSON.stringify(detectedPolitician, null, 2) : "Nincs biztos politikus találat."}
+Haszn├íld a kor├íbbi t├ęma mem├│ri├ít is:
+- ha volt m├ír ilyen t├ęma, vedd figyelembe a kor├íbbi keres├ęseket
+- ├ęp├şts r├í a kor├íbbi ├Âsszefoglal├│ra
+- ne csak ism├ęteld a r├ęgi tal├ílatokat
+- jav├ştsd a keres├ęsi javaslatokat a mem├│ria alapj├ín
+Felismert politikus registry alapj├ín:
+${detectedPolitician ? JSON.stringify(detectedPolitician, null, 2) : "Nincs biztos politikus tal├ílat."}
 
 
-Keresés:
+Keres├ęs:
 "${cleanQuery}"
 
-Cikk találatok:
+Cikk tal├ílatok:
 ${JSON.stringify(articles, null, 2)}
 
-Videó találatok:
+Vide├│ tal├ílatok:
 ${JSON.stringify(videos, null, 2)}
 
 Feladat:
-- Adj rövid magyar összefoglalót.
-- Tippeld meg a politikust/személyt.
-- Tippeld meg a témát.
-- Tippeld meg az országot/régiót.
-- Ha látszik dátum, add vissza YYYY-MM-DD formában, különben üres string.
-- Adj egy jobb keresési javaslatot régebbi ellentétes állítás kereséséhez.
-- Generálj külön keresési javaslatot:
-  - régebbi állítás keresésére
-  - újabb állítás keresésére
-  - lehetséges ellentmondás keresésére
+- Adj r├Âvid magyar ├Âsszefoglal├│t.
+- Tippeld meg a politikust/szem├ęlyt.
+- Tippeld meg a t├ęm├ít.
+- Tippeld meg az orsz├ígot/r├ęgi├│t.
+- Ha l├ítszik d├ítum, add vissza YYYY-MM-DD form├íban, k├╝l├Ânben ├╝res string.
+- Adj egy jobb keres├ęsi javaslatot r├ęgebbi ellent├ętes ├íll├şt├ís keres├ęs├ęhez.
+- Gener├ílj k├╝l├Ân keres├ęsi javaslatot:
+  - r├ęgebbi ├íll├şt├ís keres├ęs├ęre
+  - ├║jabb ├íll├şt├ís keres├ęs├ęre
+  - lehets├ęges ellentmond├ís keres├ęs├ęre
 
-- A keresések legyenek:
-  - rövidek
-  - konkrétak
-  - YouTube/barátságosak
-  - politikai nyilatkozat keresésre optimalizáltak
-- Ha a találatok gyengék, ezt mondd ki röviden.
-- Tippeld meg, hogy van-e lehetséges politikai ellentmondás.
-- Adj 0-100 contradiction_probability értéket.
-- Az ellentmondást csak akkor értékeld magasra, ha ugyanarról a konkrét témáról, policy-ról vagy ígéretről szól.
-- Ne adj magas értéket, ha csak ugyanaz a politikus és ugyanaz az általános téma szerepel.
-- Vizsgáld meg:
-  - same_topic: ugyanaz a konkrét téma?
-  - opposite_meaning: tényleg ellentétes jelentés?
+- A keres├ęsek legyenek:
+  - r├Âvidek
+  - konkr├ętak
+  - YouTube/bar├íts├ígosak
+  - politikai nyilatkozat keres├ęsre optimaliz├íltak
+- Ha a tal├ílatok gyeng├ęk, ezt mondd ki r├Âviden.
+- Tippeld meg, hogy van-e lehets├ęges politikai ellentmond├ís.
+- Adj 0-100 contradiction_probability ├ęrt├ęket.
+- Az ellentmond├íst csak akkor ├ęrt├ękeld magasra, ha ugyanarr├│l a konkr├ęt t├ęm├ír├│l, policy-r├│l vagy ├şg├ęretr┼Ĺl sz├│l.
+- Ne adj magas ├ęrt├ęket, ha csak ugyanaz a politikus ├ęs ugyanaz az ├íltal├ínos t├ęma szerepel.
+- Vizsg├íld meg:
+  - same_topic: ugyanaz a konkr├ęt t├ęma?
+  - opposite_meaning: t├ęnyleg ellent├ętes jelent├ęs?
   - opposite_meaning legyen true ha:
-  - Határozd meg az álláspont irányát is:
-  - Készíts magasabb szintű klaszter elemzést is:
-  - Elemezd az időbeli politikai irányváltozást is:
-  - Készíts politikus memória-profilt is:
-  - Készíts hosszabb távú memória snapshotot is:
-  - Készíts politikai graph elemzést is:
+  - Hat├írozd meg az ├íll├íspont ir├íny├ít is:
+  - K├ęsz├şts magasabb szint┼▒ klaszter elemz├ęst is:
+  - Elemezd az id┼Ĺbeli politikai ir├ínyv├íltoz├íst is:
+  - K├ęsz├şts politikus mem├│ria-profilt is:
+  - K├ęsz├şts hosszabb t├ív├║ mem├│ria snapshotot is:
+  - K├ęsz├şts politikai graph elemz├ęst is:
   - graph_node_type: statement | policy | event | rhetoric
   - graph_relationship: reinforce | contradict | evolve | react
   - contradiction_edge_strength: weak | medium | strong
   - narrative_transition: stable | escalating | reversing | fragmenting
-- reinforce = erősíti a korábbi állításokat
-- contradict = szembemegy velük
-- evolve = fokozatos változás
-- react = aktuális eseményre reagál
-  - memory_snapshot: rövid AI memória összefoglaló
-  - long_term_direction: stabil hosszú távú politikai irány
+- reinforce = er┼Ĺs├şti a kor├íbbi ├íll├şt├ísokat
+- contradict = szembemegy vel├╝k
+- evolve = fokozatos v├íltoz├ís
+- react = aktu├ílis esem├ęnyre reag├íl
+  - memory_snapshot: r├Âvid AI mem├│ria ├Âsszefoglal├│
+  - long_term_direction: stabil hossz├║ t├ív├║ politikai ir├íny
   - volatility_level: low | medium | high
   - narrative_pattern: recurring | shifting | reactive | strategic
-- recurring = visszatérő politikai narratíva
-- reactive = eseményekre reagáló kommunikáció
-- strategic = tudatos hosszú távú stratégiai kommunikáció
-  - Mindig töltsd ki az összes politician profile mezőt.
-- Ha bizonytalan vagy, akkor is adj becsült értéket.
-- Soha ne hagyd üresen ezeket:
+- recurring = visszat├ęr┼Ĺ politikai narrat├şva
+- reactive = esem├ęnyekre reag├íl├│ kommunik├íci├│
+- strategic = tudatos hossz├║ t├ív├║ strat├ęgiai kommunik├íci├│
+  - Mindig t├Âltsd ki az ├Âsszes politician profile mez┼Ĺt.
+- Ha bizonytalan vagy, akkor is adj becs├╝lt ├ęrt├ęket.
+- Soha ne hagyd ├╝resen ezeket:
   - politician_profile_summary
   - stance_stability
   - ideological_direction
   - rhetoric_style
   - contradiction_history_level
-  - politician_profile_summary: rövid AI profil
+  - politician_profile_summary: r├Âvid AI profil
   - stance_stability: stable | evolving | unstable
   - ideological_direction: conservative | liberal | nationalist | globalist | mixed | unclear
   - rhetoric_style: aggressive | diplomatic | populist | technocratic | mixed
   - contradiction_history_level: low | medium | high
-- stable = hosszú ideje következetes álláspont
-- unstable = gyakori irányváltás
-- evolving = fokozatos politikai változás
+- stable = hossz├║ ideje k├Âvetkezetes ├íll├íspont
+- unstable = gyakori ir├ínyv├ílt├ís
+- evolving = fokozatos politikai v├íltoz├ís
   - timeline_position: past | transition | current
   - stance_weight: 0-100
   - historical_relevance: low | medium | high
-  - overall_stance_evolution: rövid összefoglaló az álláspont időbeli változásáról
-- transition = átmeneti vagy változó politikai álláspont
-- stance_weight = mennyire erős és egyértelmű az adott álláspont
-- historical_relevance legyen high ha az állítás fontos politikai fordulatot jelez
-  - cluster_topic: a fő politikai téma rövid neve
+  - overall_stance_evolution: r├Âvid ├Âsszefoglal├│ az ├íll├íspont id┼Ĺbeli v├íltoz├ís├ír├│l
+- transition = ├ítmeneti vagy v├íltoz├│ politikai ├íll├íspont
+- stance_weight = mennyire er┼Ĺs ├ęs egy├ęrtelm┼▒ az adott ├íll├íspont
+- historical_relevance legyen high ha az ├íll├şt├ís fontos politikai fordulatot jelez
+  - cluster_topic: a f┼Ĺ politikai t├ęma r├Âvid neve
   - timeline_group: early | middle | recent
   - stance_signature: support | oppose | mixed | unstable
-- unstable = az álláspont időben többször változik
-- mixed = egyszerre többféle álláspont jelenik meg
+- unstable = az ├íll├íspont id┼Ĺben t├Âbbsz├Âr v├íltozik
+- mixed = egyszerre t├Âbbf├ęle ├íll├íspont jelenik meg
   - old_stance: support | oppose | neutral | unclear
   - new_stance: support | oppose | neutral | unclear
-- support = támogatja az adott policy-t, szervezetet, döntést vagy állítást
-- oppose = ellenzi, támadja, elutasítja vagy visszavonná
-- neutral = leíró, technikai vagy kiegyensúlyozott állítás
-- unclear = nincs elég adat
-- Ha old_stance és new_stance egymás ellentéte ugyanazon konkrét témában, akkor opposite_meaning legyen true.
-  - az egyik állítás támogat valamit, a másik ellenzi
-  - az egyik növelést akar, a másik csökkentést
-  - az egyik belépést/támogatást mond, a másik kilépést/elutasítást
-  - az egyik "igen", a másik egyértelmű "nem"
-  - az egyik állítás iránya politikailag vagy tartalmilag fordított
-- Ne legyen true csak azért, mert más a hangnem vagy más szavakat használ.
-- Ha bizonytalan, inkább false legyen.
-  - context_shift: megváltozott a helyzet vagy kontextus?
-  - time_gap_relevant: az időbeli különbség fontos?
-- Ha csak hangnem változott, de a tartalom nem ellentétes, akkor contradiction_strength legyen weak vagy possible.
-- Ha az egyik állítás “kritizál”, a másik pedig “támogat”, akkor csak akkor strong, ha ugyanarra a konkrét ügyre vonatkozik.
-- Röviden írd le az okát contradiction_reason mezőben.
-- Adj rövid timeline_hint javaslatot fontos évekkel vagy időszakokkal.
-- Adj 0-100 ai_confidence értéket arról, mennyire megbízható az elemzésed.
-- Add meg a source_intent mezőben, hogy a találatok főleg interjú, beszéd, nyilatkozat, riport, vélemény, propaganda, vita vagy ismeretlen jellegűek.
+- support = t├ímogatja az adott policy-t, szervezetet, d├Ânt├ęst vagy ├íll├şt├íst
+- oppose = ellenzi, t├ímadja, elutas├ştja vagy visszavonn├í
+- neutral = le├şr├│, technikai vagy kiegyens├║lyozott ├íll├şt├ís
+- unclear = nincs el├ęg adat
+- Ha old_stance ├ęs new_stance egym├ís ellent├ęte ugyanazon konkr├ęt t├ęm├íban, akkor opposite_meaning legyen true.
+  - az egyik ├íll├şt├ís t├ímogat valamit, a m├ísik ellenzi
+  - az egyik n├Âvel├ęst akar, a m├ísik cs├Âkkent├ęst
+  - az egyik bel├ęp├ęst/t├ímogat├íst mond, a m├ísik kil├ęp├ęst/elutas├şt├íst
+  - az egyik "igen", a m├ísik egy├ęrtelm┼▒ "nem"
+  - az egyik ├íll├şt├ís ir├ínya politikailag vagy tartalmilag ford├ştott
+- Ne legyen true csak az├ęrt, mert m├ís a hangnem vagy m├ís szavakat haszn├íl.
+- Ha bizonytalan, ink├íbb false legyen.
+  - context_shift: megv├íltozott a helyzet vagy kontextus?
+  - time_gap_relevant: az id┼Ĺbeli k├╝l├Ânbs├ęg fontos?
+- Ha csak hangnem v├íltozott, de a tartalom nem ellent├ętes, akkor contradiction_strength legyen weak vagy possible.
+- Ha az egyik ├íll├şt├ís ÔÇťkritiz├ílÔÇŁ, a m├ísik pedig ÔÇťt├ímogatÔÇŁ, akkor csak akkor strong, ha ugyanarra a konkr├ęt ├╝gyre vonatkozik.
+- R├Âviden ├şrd le az ok├ít contradiction_reason mez┼Ĺben.
+- Adj r├Âvid timeline_hint javaslatot fontos ├ęvekkel vagy id┼Ĺszakokkal.
+- Adj 0-100 ai_confidence ├ęrt├ęket arr├│l, mennyire megb├şzhat├│ az elemz├ęsed.
+- Add meg a source_intent mez┼Ĺben, hogy a tal├ílatok f┼Ĺleg interj├║, besz├ęd, nyilatkozat, riport, v├ęlem├ęny, propaganda, vita vagy ismeretlen jelleg┼▒ek.
 If available, extract an exact transcript quote from the article or video.
 
 If a video timestamp is available, return it in HH:MM:SS format.
@@ -970,7 +971,7 @@ await autoSaveSources({
       videos,
       summary:
         meta.summary ||
-        `Találtam ${articles.length} releváns cikket és ${videos.length} releváns videót a teljes keresés alapján.`,
+        `Tal├íltam ${articles.length} relev├íns cikket ├ęs ${videos.length} relev├íns vide├│t a teljes keres├ęs alapj├ín.`,
       politician: meta.politician || "",
       detected_politician: detectedPolitician
   ? {
@@ -1105,7 +1106,7 @@ return NextResponse.json(responsePayload);
       {
         articles: [],
         videos: [],
-        summary: "AI keresési hiba.",
+        summary: "AI keres├ęsi hiba.",
         error: error?.message || "Unknown error",
       },
       { status: 500 }
@@ -1311,9 +1312,9 @@ function detectQueryLanguageContext(query: string) {
   const q = query.toLowerCase();
 
   if (
-    q.includes("orbán") ||
+    q.includes("orb├ín") ||
     q.includes("orban") ||
-    q.includes("gyurcsány") ||
+    q.includes("gyurcs├íny") ||
     q.includes("gyurcsany") ||
     q.includes("magyar") ||
     q.includes("fidesz") ||
@@ -1322,10 +1323,10 @@ function detectQueryLanguageContext(query: string) {
     return {
       lang: "hu",
       country: "HU",
-      speech: "beszéd",
-      interview: "interjú",
+      speech: "besz├ęd",
+      interview: "interj├║",
       statement: "nyilatkozat",
-      transcript: "átirat",
+      transcript: "├ítirat",
       official: "site:gov.hu OR site:kormany.hu OR site:parlament.hu",
     };
   }
@@ -1440,7 +1441,7 @@ for (const domain in trustedDomains) {
     text.includes("magyar nemzet") ||
     text.includes("pravda") ||
     text.includes("mandiner") ||
-    text.includes("pesti srácok")
+    text.includes("pesti sr├ícok")
   ) {
     return {
       source_trust_type: "partisan_media",
@@ -1465,3 +1466,4 @@ return {
   source_trust_score: 45,
 };
 }
+
