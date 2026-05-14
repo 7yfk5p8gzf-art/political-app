@@ -525,7 +525,9 @@ const { data: existingDraft } = await supabase
   .maybeSingle();
 
 if (!existingDraft) {
-  await supabase.from("contradictions").insert({
+  await supabase
+  .from("contradictions")
+  .upsert({
     politician:
       meta.politician ||
       params.detectedPolitician?.full_name ||
@@ -579,7 +581,13 @@ if (!existingDraft) {
     },
 
     created_at: new Date().toISOString(),
-  });
+      },
+    {
+      onConflict: "duplicate_hash",
+    }
+  )
+  .select()
+  .single();
 
   console.log("CONTRADICTION DRAFT CREATED");
 }
