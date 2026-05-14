@@ -10,6 +10,7 @@ import AiAnalysisCard from "@/components/public/AiAnalysisCard";
 import SourceCards from "@/components/public/SourceCards";
 import VoteSection from "@/components/public/VoteSection";
 import RelatedContradictions from "@/components/public/RelatedContradictions";
+import StatementCards from "@/components/public/StatementCards";
 
 type Item = {
   id: string;
@@ -451,90 +452,34 @@ export default function ContradictionDetailPage() {
             </div>
           </div>
         </section>
-
-        <section style={compareGridStyle}>
-          <article style={oldCardStyle}>
-            <div style={kickerStyle}>{t[lang].old}</div>
-            <div style={dateStyle}>{item.old_date || t[lang].unknownDate}</div>
-            <p style={statementStyle}>
-              {item.old_statement || labels[lang].noOldStatement}
-            </p>
-
-            {item.old_source && (
-              <a href={item.old_source} target="_blank" style={sourceButtonStyle}>
-                {t[lang].openOldSource} →
-              </a>
-            )}
-
-            {item.old_video_url && (
-              <a href={item.old_video_url} target="_blank" style={videoButtonStyle}>
-                {t[lang].openOldVideo} →
-              </a>
-            )}
-
-            {oldEmbedUrl && (
-              <>
-                <div style={videoLabelStyle}>🎥 {labels[lang].videoEvidence}</div>
-                <iframe src={oldEmbedUrl} style={videoFrameStyle} allowFullScreen />
-              </>
-            )}
-          </article>
-
-          <article style={newCardStyle}>
-            <div style={kickerStyle}>{t[lang].now}</div>
-            <div style={dateStyle}>{item.new_date || t[lang].unknownDate}</div>
-            <p style={statementStyle}>
-              {item.new_statement || labels[lang].noNewStatement}
-            </p>
-
-            {item.new_source && (
-              <a href={item.new_source} target="_blank" style={sourceButtonStyle}>
-                {t[lang].openNewSource} →
-              </a>
-            )}
-
-            {item.new_video_url && (
-              <a href={item.new_video_url} target="_blank" style={videoButtonStyle}>
-                {t[lang].openNewVideo} →
-              </a>
-            )}
-
-            {newEmbedUrl && (
-              <>
-                <div style={videoLabelStyle}>🎥 {labels[lang].videoEvidence}</div>
-                <iframe src={newEmbedUrl} style={videoFrameStyle} allowFullScreen />
-              </>
-            )}
-          </article>
         </section>
 
-        <AiAnalysisCard
+        <StatementCards
+  oldStatement={item.old_statement}
+  newStatement={item.new_statement}
+/>
+<AiAnalysisCard
   summary={getAiSummary(item, lang) || labels[lang].noAi}
 />
-          
- 
-        </section>
 
-        <SourceCards
+<SourceCards
   oldSource={item.old_source}
   newSource={item.new_source}
 />
 
-        <RelatedContradictions
+<RelatedContradictions
   items={relatedItems}
 />
 
-        <VoteSection
+<VoteSection
   yesPercent={yesPercent}
   noPercent={noPercent}
   totalVotes={totalVotes}
   voted={voted}
   onVote={vote}
 />
-          
-      
-    </main>
-  );
+</main>
+);
 }
 
 const pageStyle: CSSProperties = {
