@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, type Lang } from "@/lib/i18n";
+import PublicPageShell from "@/components/public/PublicPageShell";
 
 type Item = {
   id: string;
@@ -31,46 +32,43 @@ type TopicCard = {
 const labels = {
   hu: {
     title: "Témák",
-    lead:
-      "Fedezd fel a politikai témákat, vitákat és ellentmondásokat egy helyen.",
+    lead: "Fedezd fel a politikai témákat, vitákat és ellentmondásokat egy helyen.",
     contradictions: "ellentmondás",
     politicians: "politikus",
     votes: "szavazat",
     open: "Megnyitás",
     search: "Keresés témák között...",
+    badge: "🌍 Political Topics",
   },
-
   de: {
     title: "Themen",
-    lead:
-      "Entdecke politische Themen, Debatten und Widersprüche an einem Ort.",
+    lead: "Entdecke politische Themen, Debatten und Widersprüche an einem Ort.",
     contradictions: "Widersprüche",
     politicians: "Politiker",
     votes: "Stimmen",
     open: "Öffnen",
     search: "Themen suchen...",
+    badge: "🌍 Political Topics",
   },
-
   en: {
     title: "Topics",
-    lead:
-      "Explore political topics, debates and contradictions in one place.",
+    lead: "Explore political topics, debates and contradictions in one place.",
     contradictions: "contradictions",
     politicians: "politicians",
     votes: "votes",
     open: "Open",
     search: "Search topics...",
+    badge: "🌍 Political Topics",
   },
-
   fr: {
     title: "Sujets",
-    lead:
-      "Explorez les sujets politiques, débats et contradictions au même endroit.",
+    lead: "Explorez les sujets politiques, débats et contradictions au même endroit.",
     contradictions: "contradictions",
     politicians: "politiciens",
     votes: "votes",
     open: "Ouvrir",
     search: "Rechercher des sujets...",
+    badge: "🌍 Political Topics",
   },
 };
 
@@ -87,7 +85,6 @@ function getTopic(item: Item, lang: Lang) {
   if (lang === "de") return item.topic_de || item.topic;
   if (lang === "en") return item.topic_en || item.topic;
   if (lang === "fr") return item.topic_fr || item.topic;
-
   return item.topic_hu || item.topic;
 }
 
@@ -122,7 +119,6 @@ export default function TopicsPage() {
 
     items.forEach((item) => {
       const topicName = getTopic(item, lang);
-
       if (!topicName) return;
 
       const slug = slugify(topicName);
@@ -162,138 +158,160 @@ export default function TopicsPage() {
   const filteredTopics = topics.filter((topic) =>
     topic.name.toLowerCase().includes(search.toLowerCase())
   );
+    return (
+    <PublicPageShell>
+      <section style={containerStyle}>
+        <header style={heroStyle}>
+          <div style={heroGlowStyle} />
 
-  return (
-    <main style={pageStyle}>
-      <section style={heroStyle}>
-        <div style={heroTopStyle}>
-          <div>
-            <div style={badgeStyle}>🌍 Political Topics</div>
-
-            <h1 style={titleStyle}>{labels[lang].title}</h1>
-
-            <p style={leadStyle}>{labels[lang].lead}</p>
-          </div>
-          <div style={navStyle}>
-  <a href="/contradictions" style={navLinkStyle}>
-    Contradictions
-  </a>
-
-  <a href="/topics" style={navLinkStyle}>
-    Topics
-  </a>
-
-  <a href="/politicians" style={navLinkStyle}>
-    Politicians
-  </a>
-</div>
-
-          <div style={langSwitcherStyle}>
-            {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => {
-                  setLang(l);
-                  saveLang(l);
-                }}
-                style={lang === l ? activeLangButtonStyle : langButtonStyle}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={labels[lang].search}
-          style={searchStyle}
-        />
-      </section>
-
-      <section style={gridStyle}>
-        {filteredTopics.map((topic) => (
-          <article key={topic.slug} style={cardStyle}>
-            <div style={cardTopStyle}>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={heroTopStyle}>
               <div>
-                <div style={topicBadgeStyle}>Topic</div>
-
-                <h2 style={cardTitleStyle}>{topic.name}</h2>
+                <div style={badgeStyle}>{labels[lang].badge}</div>
+                <h1 style={titleStyle}>{labels[lang].title}</h1>
+                <p style={leadStyle}>{labels[lang].lead}</p>
               </div>
 
-              <a
-                href={`/topics/${topic.slug}`}
-                style={openButtonStyle}
-              >
-                {labels[lang].open} →
-              </a>
+              <div style={rightTopStyle}>
+                <nav style={navStyle}>
+                  <a href="/contradictions" style={navLinkStyle}>
+                    Contradictions
+                  </a>
+                  <a href="/topics" style={navLinkStyle}>
+                    Topics
+                  </a>
+                  <a href="/politicians" style={navLinkStyle}>
+                    Politicians
+                  </a>
+                </nav>
+
+                <div style={langSwitcherStyle}>
+                  {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => {
+                        setLang(l);
+                        saveLang(l);
+                      }}
+                      style={lang === l ? activeLangButtonStyle : langButtonStyle}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div style={statsRowStyle}>
-              <div style={statStyle}>
-                <strong>{topic.count}</strong>
-                <span>{labels[lang].contradictions}</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={labels[lang].search}
+              style={searchStyle}
+            />
+          </div>
+        </header>
+
+        <section style={gridStyle}>
+          {filteredTopics.map((topic) => (
+            <article key={topic.slug} style={cardStyle}>
+              <div style={cardTopStyle}>
+                <div>
+                  <div style={topicBadgeStyle}>Topic</div>
+                  <h2 style={cardTitleStyle}>{topic.name}</h2>
+                </div>
+
+                <a href={`/topics/${topic.slug}`} style={openButtonStyle}>
+                  {labels[lang].open} →
+                </a>
               </div>
 
-              <div style={statStyle}>
-                <strong>{topic.politicians}</strong>
-                <span>{labels[lang].politicians}</span>
-              </div>
+              <div style={statsRowStyle}>
+                <div style={statStyle}>
+                  <strong>{topic.count}</strong>
+                  <span>{labels[lang].contradictions}</span>
+                </div>
 
-              <div style={statStyle}>
-                <strong>{topic.votes}</strong>
-                <span>{labels[lang].votes}</span>
+                <div style={statStyle}>
+                  <strong>{topic.politicians}</strong>
+                  <span>{labels[lang].politicians}</span>
+                </div>
+
+                <div style={statStyle}>
+                  <strong>{topic.votes}</strong>
+                  <span>{labels[lang].votes}</span>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+        </section>
       </section>
-    </main>
+    </PublicPageShell>
   );
 }
 
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background:
-    "radial-gradient(circle at top left, #dbeafe 0, transparent 30%), #f3f4f6",
-  padding: "30px 18px 50px",
+const containerStyle: CSSProperties = {
+  maxWidth: 1180,
+  margin: "0 auto",
 };
 
 const heroStyle: CSSProperties = {
-  maxWidth: 1180,
-  margin: "0 auto 30px",
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 30,
-  padding: 34,
-  boxShadow: "0 18px 42px rgba(15, 23, 42, 0.08)",
+  position: "relative",
+  overflow: "hidden",
+  marginBottom: 30,
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 34,
+  padding: 36,
+  boxShadow:
+    "0 28px 80px rgba(15,23,42,0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+};
+
+const heroGlowStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  background:
+    "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 30%), radial-gradient(circle at bottom right, rgba(168,85,247,0.16), transparent 28%)",
+  pointerEvents: "none",
 };
 
 const heroTopStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 20,
+  gap: 24,
   flexWrap: "wrap",
-  marginBottom: 24,
+  marginBottom: 26,
+};
+
+const rightTopStyle: CSSProperties = {
+  display: "grid",
+  gap: 16,
+  justifyItems: "end",
+  alignContent: "start",
 };
 
 const badgeStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "7px 12px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
+  fontSize: 12,
+  letterSpacing: 0.6,
   fontWeight: 900,
-  marginBottom: 16,
+  marginBottom: 18,
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 58,
-  lineHeight: 1,
-  margin: "0 0 14px",
+  fontSize: "clamp(38px, 6vw, 66px)",
+  lineHeight: 0.98,
+  margin: "0 0 18px",
   fontWeight: 950,
+  letterSpacing: "-2.2px",
   color: "#0f172a",
 };
 
@@ -301,15 +319,21 @@ const leadStyle: CSSProperties = {
   maxWidth: 760,
   color: "#475569",
   fontSize: 18,
-  lineHeight: 1.6,
+  lineHeight: 1.65,
+  margin: 0,
 };
 
 const searchStyle: CSSProperties = {
   width: "100%",
-  padding: 16,
-  borderRadius: 16,
-  border: "1px solid #cbd5e1",
+  padding: "17px 18px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  borderRadius: 18,
   fontSize: 16,
+  outline: "none",
+  background: "rgba(255,255,255,0.78)",
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const langSwitcherStyle: CSSProperties = {
@@ -319,70 +343,88 @@ const langSwitcherStyle: CSSProperties = {
 };
 
 const langButtonStyle: CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #111827",
-  background: "white",
+  padding: "8px 13px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.7)",
+  borderRadius: 12,
   cursor: "pointer",
-  fontWeight: 800,
-  borderRadius: 8,
+  fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const activeLangButtonStyle: CSSProperties = {
   ...langButtonStyle,
-  background: "#111827",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
+  border: "1px solid rgba(255,255,255,0.18)",
+  boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
 };
 
 const gridStyle: CSSProperties = {
-  maxWidth: 1180,
-  margin: "0 auto",
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   gap: 18,
 };
 
 const cardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 24,
-  padding: 24,
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 28,
+  padding: 26,
+  boxShadow:
+    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
 };
 
 const cardTopStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 12,
-  alignItems: "start",
-  marginBottom: 20,
+  gap: 14,
+  alignItems: "flex-start",
+  marginBottom: 22,
+  flexWrap: "wrap",
 };
 
 const topicBadgeStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "5px 10px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
-  marginBottom: 10,
+  letterSpacing: 0.3,
+  marginBottom: 12,
+  boxShadow: "0 8px 22px rgba(15,23,42,0.16)",
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 28,
+  fontSize: 30,
+  lineHeight: 1.08,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.8px",
   color: "#0f172a",
 };
 
 const openButtonStyle: CSSProperties = {
-  padding: "10px 13px",
-  background: "#0f172a",
+  padding: "11px 15px",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  borderRadius: 12,
+  borderRadius: 14,
   textDecoration: "none",
   fontWeight: 900,
   whiteSpace: "nowrap",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.18)",
 };
 
 const statsRowStyle: CSSProperties = {
@@ -392,14 +434,16 @@ const statsRowStyle: CSSProperties = {
 };
 
 const statStyle: CSSProperties = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 16,
-  padding: 14,
+  background: "rgba(255,255,255,0.72)",
+  border: "1px solid rgba(226,232,240,0.9)",
+  borderRadius: 18,
+  padding: 15,
   display: "grid",
   gap: 4,
   textAlign: "center",
+  boxShadow: "0 10px 28px rgba(15,23,42,0.05)",
 };
+
 const navStyle: CSSProperties = {
   display: "flex",
   gap: 16,
@@ -408,8 +452,8 @@ const navStyle: CSSProperties = {
 };
 
 const navLinkStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#334155",
   textDecoration: "none",
-  fontWeight: 800,
-  fontSize: 15,
+  fontWeight: 900,
+  fontSize: 14,
 };

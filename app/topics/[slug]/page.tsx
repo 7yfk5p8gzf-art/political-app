@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, type Lang } from "@/lib/i18n";
+import PublicPageShell from "@/components/public/PublicPageShell";
 
 type Item = {
   id: string;
@@ -53,6 +54,7 @@ const labels = {
     noStatement: "Nincs állítás",
     noDate: "Nincs dátum",
     ai: "AI elemzés",
+    loading: "Betöltés...",
   },
   de: {
     back: "Zurück",
@@ -71,6 +73,7 @@ const labels = {
     noStatement: "Keine Aussage",
     noDate: "Kein Datum",
     ai: "KI-Analyse",
+    loading: "Wird geladen...",
   },
   en: {
     back: "Back",
@@ -89,6 +92,7 @@ const labels = {
     noStatement: "No statement",
     noDate: "No date",
     ai: "AI analysis",
+    loading: "Loading...",
   },
   fr: {
     back: "Retour",
@@ -107,6 +111,7 @@ const labels = {
     noStatement: "Aucune déclaration",
     noDate: "Aucune date",
     ai: "Analyse IA",
+    loading: "Chargement...",
   },
 };
 
@@ -207,12 +212,13 @@ export default function TopicPage() {
   function yesPercent(id: string) {
     const itemVotes = votes.filter((v) => v.contradiction_id === id);
     if (itemVotes.length === 0) return 0;
-
     const yes = itemVotes.filter((v) => v.vote_type === "yes").length;
     return Math.round((yes / itemVotes.length) * 100);
   }
 
-  const topicName = items[0] ? getTopic(items[0], lang) || prettySlug(slug) : prettySlug(slug);
+  const topicName = items[0]
+    ? getTopic(items[0], lang) || prettySlug(slug)
+    : prettySlug(slug);
 
   const politicians = useMemo(() => {
     return new Set(items.map((i) => i.politician).filter(Boolean)).size;
@@ -226,14 +232,13 @@ export default function TopicPage() {
 
   if (loading) {
     return (
-      <main style={pageStyle}>
-        <section style={containerStyle}>Betöltés...</section>
-      </main>
+      <PublicPageShell>
+        <section style={containerStyle}>{labels[lang].loading}</section>
+      </PublicPageShell>
     );
   }
-
-  return (
-    <main style={pageStyle}>
+    return (
+    <PublicPageShell>
       <section style={containerStyle}>
         <div style={topRowStyle}>
           <a href="/contradictions" style={backStyle}>
@@ -257,31 +262,35 @@ export default function TopicPage() {
         </div>
 
         <header style={heroStyle}>
-          <div style={badgeStyle}>{labels[lang].topicPage}</div>
+          <div style={heroGlowStyle} />
 
-          <h1 style={titleStyle}>{topicName}</h1>
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={badgeStyle}>{labels[lang].topicPage}</div>
 
-          <p style={leadStyle}>{labels[lang].lead}</p>
+            <h1 style={titleStyle}>{topicName}</h1>
 
-          <div style={statsGridStyle}>
-            <div style={statCardStyle}>
-              <strong>{items.length}</strong>
-              <span>{labels[lang].contradictions}</span>
-            </div>
+            <p style={leadStyle}>{labels[lang].lead}</p>
 
-            <div style={statCardStyle}>
-              <strong>{politicians}</strong>
-              <span>{labels[lang].politicians}</span>
-            </div>
+            <div style={statsGridStyle}>
+              <div style={statCardStyle}>
+                <strong>{items.length}</strong>
+                <span>{labels[lang].contradictions}</span>
+              </div>
 
-            <div style={statCardStyle}>
-              <strong>{totalVotes}</strong>
-              <span>{labels[lang].votes}</span>
-            </div>
+              <div style={statCardStyle}>
+                <strong>{politicians}</strong>
+                <span>{labels[lang].politicians}</span>
+              </div>
 
-            <div style={statCardStyle}>
-              <strong>{countries}</strong>
-              <span>{labels[lang].countries}</span>
+              <div style={statCardStyle}>
+                <strong>{totalVotes}</strong>
+                <span>{labels[lang].votes}</span>
+              </div>
+
+              <div style={statCardStyle}>
+                <strong>{countries}</strong>
+                <span>{labels[lang].countries}</span>
+              </div>
             </div>
           </div>
         </header>
@@ -321,17 +330,17 @@ export default function TopicPage() {
                     </div>
 
                     <h2 style={cardTitleStyle}>
-  {item.politician ? (
-    <a
-      href={`/politicians/${slugify(item.politician)}`}
-      style={politicianLinkStyle}
-    >
-      {item.politician}
-    </a>
-  ) : (
-    labels[lang].unknown
-  )}
-</h2>
+                      {item.politician ? (
+                        <a
+                          href={`/politicians/${slugify(item.politician)}`}
+                          style={politicianLinkStyle}
+                        >
+                          {item.politician}
+                        </a>
+                      ) : (
+                        labels[lang].unknown
+                      )}
+                    </h2>
                   </div>
 
                   <a href={detailHref} style={openButtonStyle}>
@@ -363,29 +372,21 @@ export default function TopicPage() {
           })}
         </section>
       </section>
-    </main>
+    </PublicPageShell>
   );
 }
 
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background:
-    "radial-gradient(circle at top left, #e0f2fe 0, transparent 32%), #f3f4f6",
-  padding: "32px 18px",
-  color: "#0f172a",
-};
-
 const containerStyle: CSSProperties = {
-  maxWidth: 1100,
+  maxWidth: 1120,
   margin: "0 auto",
 };
 
 const topRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 12,
+  gap: 14,
   alignItems: "center",
-  marginBottom: 22,
+  marginBottom: 26,
   flexWrap: "wrap",
 };
 
@@ -393,6 +394,8 @@ const backStyle: CSSProperties = {
   color: "#0f172a",
   fontWeight: 900,
   textDecoration: "none",
+  fontSize: 15,
+  opacity: 0.82,
 };
 
 const langSwitcherStyle: CSSProperties = {
@@ -401,54 +404,77 @@ const langSwitcherStyle: CSSProperties = {
 };
 
 const langButtonStyle: CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #111827",
-  background: "white",
+  padding: "8px 13px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.7)",
+  borderRadius: 12,
   cursor: "pointer",
-  fontWeight: 800,
-  borderRadius: 8,
+  fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const activeLangButtonStyle: CSSProperties = {
   ...langButtonStyle,
-  background: "#111827",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
+  border: "1px solid rgba(255,255,255,0.18)",
+  boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
 };
 
 const heroStyle: CSSProperties = {
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  border: "1px solid #dbe0e6",
-  borderRadius: 30,
-  padding: 34,
-  marginBottom: 28,
-  boxShadow: "0 18px 42px rgba(15, 23, 42, 0.08)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 34,
+  padding: 36,
+  marginBottom: 30,
+  boxShadow:
+    "0 28px 80px rgba(15, 23, 42, 0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+};
+
+const heroGlowStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  background:
+    "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 30%), radial-gradient(circle at bottom right, rgba(168,85,247,0.16), transparent 28%)",
+  pointerEvents: "none",
 };
 
 const badgeStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "7px 12px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
+  fontSize: 12,
+  letterSpacing: 0.6,
   fontWeight: 900,
-  marginBottom: 16,
+  marginBottom: 18,
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 54,
-  lineHeight: 1.02,
-  margin: "0 0 14px",
+  fontSize: "clamp(38px, 6vw, 66px)",
+  lineHeight: 0.98,
+  margin: "0 0 18px",
   fontWeight: 950,
-  letterSpacing: -1.2,
+  letterSpacing: "-2.2px",
 };
 
 const leadStyle: CSSProperties = {
   fontSize: 18,
   color: "#475569",
-  lineHeight: 1.6,
+  lineHeight: 1.65,
   maxWidth: 780,
-  marginBottom: 26,
+  marginBottom: 28,
 };
 
 const statsGridStyle: CSSProperties = {
@@ -458,30 +484,35 @@ const statsGridStyle: CSSProperties = {
 };
 
 const statCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #e2e8f0",
-  borderRadius: 18,
+  background: "rgba(255,255,255,0.72)",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 22,
   padding: 18,
   display: "grid",
   gap: 6,
   fontWeight: 800,
+  boxShadow: "0 14px 40px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
 
 const sectionHeaderStyle: CSSProperties = {
-  marginBottom: 16,
+  marginBottom: 18,
 };
 
 const sectionTitleStyle: CSSProperties = {
   fontSize: 30,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.8px",
 };
 
 const emptyStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
+  background: "rgba(255,255,255,0.8)",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 24,
   padding: 24,
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
 };
 
 const gridStyle: CSSProperties = {
@@ -490,11 +521,17 @@ const gridStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 24,
-  padding: 24,
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 28,
+  padding: 26,
+  boxShadow:
+    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
 };
 
 const cardTopStyle: CSSProperties = {
@@ -502,7 +539,7 @@ const cardTopStyle: CSSProperties = {
   justifyContent: "space-between",
   gap: 16,
   alignItems: "flex-start",
-  marginBottom: 16,
+  marginBottom: 18,
   flexWrap: "wrap",
 };
 
@@ -510,84 +547,104 @@ const tagRowStyle: CSSProperties = {
   display: "flex",
   gap: 8,
   flexWrap: "wrap",
-  marginBottom: 10,
+  marginBottom: 12,
 };
 
 const darkTagStyle: CSSProperties = {
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  letterSpacing: 0.3,
+  boxShadow: "0 8px 22px rgba(15,23,42,0.16)",
 };
 
 const lightTagStyle: CSSProperties = {
-  background: "#e2e8f0",
+  background: "rgba(255,255,255,0.72)",
   color: "#0f172a",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  border: "1px solid rgba(226,232,240,0.9)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const voteTagStyle: CSSProperties = {
-  background: "#dcfce7",
+  background: "rgba(220,252,231,0.9)",
   color: "#166534",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  border: "1px solid rgba(134,239,172,0.8)",
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 27,
+  fontSize: 28,
+  lineHeight: 1.08,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.7px",
 };
 
 const openButtonStyle: CSSProperties = {
-  padding: "10px 13px",
-  background: "#0f172a",
+  padding: "11px 15px",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  borderRadius: 12,
+  borderRadius: 14,
   textDecoration: "none",
   fontWeight: 900,
   whiteSpace: "nowrap",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.18)",
 };
 
 const compareGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gridTemplateColumns:
+    typeof window !== "undefined" && window.innerWidth < 900
+      ? "1fr"
+      : "1fr 1fr",
   gap: 14,
 };
 
 const oldBoxStyle: CSSProperties = {
-  background: "#eef2ff",
-  border: "1px solid #c7d2fe",
-  borderRadius: 16,
+  background:
+    "linear-gradient(135deg, rgba(238,242,255,0.92), rgba(224,231,255,0.82))",
+  border: "1px solid rgba(199,210,254,0.9)",
+  borderRadius: 18,
   padding: 16,
-  lineHeight: 1.5,
+  lineHeight: 1.6,
   color: "#0f172a",
 };
 
 const newBoxStyle: CSSProperties = {
-  background: "#ecfdf5",
-  border: "1px solid #bbf7d0",
-  borderRadius: 16,
+  background:
+    "linear-gradient(135deg, rgba(236,253,245,0.92), rgba(220,252,231,0.82))",
+  border: "1px solid rgba(134,239,172,0.9)",
+  borderRadius: 18,
   padding: 16,
-  lineHeight: 1.5,
+  lineHeight: 1.6,
   color: "#0f172a",
 };
 
 const summaryStyle: CSSProperties = {
-  marginTop: 14,
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  padding: 14,
-  borderRadius: 14,
-  lineHeight: 1.6,
+  marginTop: 16,
+  background: "rgba(248,250,252,0.78)",
+  border: "1px solid rgba(226,232,240,0.8)",
+  padding: 16,
+  borderRadius: 16,
+  lineHeight: 1.65,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
+
 const politicianLinkStyle: CSSProperties = {
   color: "#0f172a",
   textDecoration: "none",
