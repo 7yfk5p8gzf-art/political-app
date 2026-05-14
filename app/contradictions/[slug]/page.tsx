@@ -9,6 +9,7 @@ import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
 import AiAnalysisCard from "@/components/public/AiAnalysisCard";
 import SourceCards from "@/components/public/SourceCards";
 import VoteSection from "@/components/public/VoteSection";
+import RelatedContradictions from "@/components/public/RelatedContradictions";
 
 type Item = {
   id: string;
@@ -519,35 +520,9 @@ export default function ContradictionDetailPage() {
   newSource={item.new_source}
 />
 
-        {relatedItems.length > 0 && (
-          <section style={relatedCardStyle}>
-            <h2 style={sectionTitleStyle}>{labels[lang].related}</h2>
-
-            <div style={relatedGridStyle}>
-              {relatedItems.map((related) => (
-                <a
-                  key={related.id}
-                  href={`/contradictions/${related.slug}`}
-                  style={relatedItemStyle}
-                >
-                  <div style={relatedMetaStyle}>
-                    {related.politician || labels[lang].unknown} ·{" "}
-                    {related.topic || labels[lang].noTopic}
-                  </div>
-
-                  <div style={relatedTitleStyle}>
-                    {related.old_statement || labels[lang].noOldStatement} →{" "}
-                    {related.new_statement || labels[lang].noNewStatement}
-                  </div>
-
-                  <div style={relatedViewsStyle}>
-                    👀 {related.views || 0} {labels[lang].views}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
+        <RelatedContradictions
+  items={relatedItems}
+/>
 
         <VoteSection
   yesPercent={yesPercent}
