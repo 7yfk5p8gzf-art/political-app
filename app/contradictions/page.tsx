@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
+import PublicPageShell from "@/components/public/PublicPageShell";
 
 type Item = {
   id: string;
@@ -320,7 +321,7 @@ const mostVotedItems = [...items]
   }, [items, votes]);
 
   return (
-    <main style={pageStyle}>
+  <PublicPageShell>
       <div style={topBarStyle}>
         <div style={brandStyle}>Political App</div>
         <div style={navStyle}>
@@ -358,6 +359,15 @@ const mostVotedItems = [...items]
       </div>
 
       <section style={heroStyle}>
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      background:
+        "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 30%), radial-gradient(circle at bottom right, rgba(168,85,247,0.16), transparent 28%)",
+      pointerEvents: "none",
+    }}
+  />
         <div>
           <div style={badgeStyle}>{labels[lang].eyebrow}</div>
           <h1 style={titleStyle}>{labels[lang].headline}</h1>
@@ -387,7 +397,13 @@ const mostVotedItems = [...items]
           
         </div>
 
-        <div style={heroPanelStyle}>
+        <div
+  style={{
+    ...heroPanelStyle,
+    position: "relative",
+    zIndex: 1,
+  }}
+>
           <div style={miniStatStyle}>
             <strong>{items.length}</strong>
             <span>{t[lang].publishedCases}</span>
@@ -582,7 +598,7 @@ const mostVotedItems = [...items]
           ))}
         </div>
       </section>
-    </main>
+    </PublicPageShell>
   );
 }
 
@@ -693,13 +709,7 @@ function ContradictionCard({
   );
 }
 
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background:
-    "radial-gradient(circle at top left, #e0f2fe 0, transparent 32%), #f3f4f6",
-  padding: "26px 18px 42px",
-  color: "#0f172a",
-};
+
 
 const topBarStyle: CSSProperties = {
   maxWidth: 1180,
@@ -723,33 +733,42 @@ const langSwitcherStyle: CSSProperties = {
 const heroStyle: CSSProperties = {
   maxWidth: 1180,
   margin: "0 auto 30px",
+  position: "relative",
+  overflow: "hidden",
   display: "grid",
   gridTemplateColumns: "1.4fr 0.8fr",
   gap: 22,
-  background: "rgba(255,255,255,0.9)",
-  border: "1px solid #dbe0e6",
-  borderRadius: 32,
-  padding: 34,
-  boxShadow: "0 22px 55px rgba(15, 23, 42, 0.1)",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 34,
+  padding: 36,
+  boxShadow:
+    "0 28px 80px rgba(15, 23, 42, 0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
 };
 
 const badgeStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "7px 12px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
+  fontSize: 12,
+  letterSpacing: 0.5,
   fontWeight: 900,
-  marginBottom: 16,
+  marginBottom: 18,
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 56,
-  lineHeight: 1.02,
-  margin: "0 0 16px",
+  fontSize: "clamp(38px, 6vw, 68px)",
+  lineHeight: 0.98,
+  margin: "0 0 18px",
   fontWeight: 950,
-  letterSpacing: -1.5,
+  letterSpacing: "-2.4px",
 };
 
 const leadStyle: CSSProperties = {
@@ -766,20 +785,28 @@ const heroPanelStyle: CSSProperties = {
 };
 
 const miniStatStyle: CSSProperties = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 18,
-  padding: 16,
+  background: "rgba(255,255,255,0.72)",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 22,
+  padding: 18,
   display: "grid",
   gap: 4,
+  boxShadow: "0 14px 40px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
 
 const searchStyle: CSSProperties = {
   width: "100%",
-  padding: 16,
-  border: "1px solid #cbd5e1",
-  borderRadius: 16,
+  padding: "17px 18px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  borderRadius: 18,
   fontSize: 16,
+  outline: "none",
+  background: "rgba(255,255,255,0.78)",
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const sectionStyle: CSSProperties = {
