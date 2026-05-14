@@ -570,8 +570,29 @@ if (!existingDraft) {
     status: "draft",
 
     timeline_data: {
-      timeline_hint: meta.timeline_hint || "",
-    },
+  timeline_hint:
+    meta.timeline_hint || "",
+
+  timeline_nodes:
+    String(meta.timeline_hint || "")
+      .split("->")
+      .map((step: string) => step.trim())
+      .filter(Boolean)
+      .map((label: string) => {
+        const yearMatch = label.match(/\b(19|20)\d{2}\b/);
+
+        return {
+          year: yearMatch
+            ? Number(yearMatch[0])
+            : null,
+          label,
+          stance:
+            meta.stance_signature ||
+            meta.new_stance ||
+            "mixed",
+        };
+      }),
+},
 
     draft_data: {
       contradiction_strength:

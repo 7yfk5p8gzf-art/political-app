@@ -259,6 +259,102 @@ export default function ContradictionDetailPage() {
           Status:
           {" "}
           {item.status}
+          <div
+  style={{
+    marginTop: 20,
+    paddingTop: 16,
+    borderTop: "1px solid #333",
+  }}
+>
+  <h3 style={{ marginBottom: 12 }}>
+    Timeline Data
+  </h3>
+  {item.timeline_data?.timeline_hint && (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 16,
+      overflowX: "auto",
+    }}
+  >
+    {String(item.timeline_data.timeline_hint)
+      .split("->")
+      .map((step: string, index: number) => (
+        <div
+          key={index}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: 999,
+              background: "#1d4ed8",
+              color: "white",
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {step.trim()}
+          </div>
+
+          {index <
+            String(item.timeline_data.timeline_hint)
+              .split("->").length -
+              1 && (
+            <div
+              style={{
+                opacity: 0.6,
+                fontSize: 20,
+              }}
+            >
+              →
+            </div>
+          )}
+        </div>
+      ))}
+  </div>
+)}
+
+  <pre
+    style={{
+      whiteSpace: "pre-wrap",
+      fontSize: 13,
+      opacity: 0.85,
+    }}
+  >
+    {JSON.stringify(item.timeline_data, null, 2)}
+  </pre>
+</div>
+
+<div
+  style={{
+    marginTop: 20,
+    paddingTop: 16,
+    borderTop: "1px solid #333",
+  }}
+>
+  <h3 style={{ marginBottom: 12 }}>
+    Draft Data
+  </h3>
+
+  <pre
+    style={{
+      whiteSpace: "pre-wrap",
+      fontSize: 13,
+      opacity: 0.85,
+    }}
+  >
+    {JSON.stringify(item.draft_data, null, 2)}
+  </pre>
+</div>
         </div>
       </div>
     </div>
