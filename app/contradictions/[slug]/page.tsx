@@ -11,6 +11,7 @@ import SourceCards from "@/components/public/SourceCards";
 import VoteSection from "@/components/public/VoteSection";
 import RelatedContradictions from "@/components/public/RelatedContradictions";
 import StatementCards from "@/components/public/StatementCards";
+import StatementTimeline from "@/components/public/StatementTimeline";
 
 type Item = {
   id: string;
@@ -422,37 +423,14 @@ export default function ContradictionDetailPage() {
 
           
         </header>
-
-        <section style={timelineCardStyle}>
-          <div style={timelineLineStyle} />
-
-          <div style={timelineItemStyle}>
-            <div style={timelineDotOldStyle}>1</div>
-            <div>
-              <div style={timelineLabelStyle}>{labels[lang].oldTimeline}</div>
-              <div style={timelineDateStyle}>
-                {item.old_date || t[lang].unknownDate}
-              </div>
-              <p style={timelineTextStyle}>
-                {item.old_statement || labels[lang].noOldStatement}
-              </p>
-            </div>
-          </div>
-
-          <div style={timelineItemStyle}>
-            <div style={timelineDotNewStyle}>2</div>
-            <div>
-              <div style={timelineLabelStyle}>{labels[lang].newTimeline}</div>
-              <div style={timelineDateStyle}>
-                {item.new_date || t[lang].unknownDate}
-              </div>
-              <p style={timelineTextStyle}>
-                {item.new_statement || labels[lang].noNewStatement}
-              </p>
-            </div>
-          </div>
         </section>
-        </section>
+
+        <StatementTimeline
+  oldDate={item.old_date}
+  newDate={item.new_date}
+  oldStatement={item.old_statement}
+  newStatement={item.new_statement}
+/>
 
         <StatementCards
   oldStatement={item.old_statement}
