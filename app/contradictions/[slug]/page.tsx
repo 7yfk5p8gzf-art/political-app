@@ -12,6 +12,7 @@ import VoteSection from "@/components/public/VoteSection";
 import RelatedContradictions from "@/components/public/RelatedContradictions";
 import StatementCards from "@/components/public/StatementCards";
 import StatementTimeline from "@/components/public/StatementTimeline";
+import PublicPageShell from "@/components/public/PublicPageShell";
 
 type Item = {
   id: string;
@@ -351,17 +352,17 @@ export default function ContradictionDetailPage() {
   const noPercent = totalVotes ? 100 - yesPercent : 0;
 
   if (loading) {
-    return (
-      <main style={pageStyle}>
-  <FloatingShareSidebar />
-  <section style={containerStyle}>{t[lang].loading}</section>
-</main>
-    );
-  }
+  return (
+    <PublicPageShell>
+      <FloatingShareSidebar />
+      <section style={containerStyle}>{t[lang].loading}</section>
+    </PublicPageShell>
+  );
+}
 
   if (!item) {
-    return (
-      <main style={pageStyle}>
+  return (
+    <PublicPageShell>
         <FloatingShareSidebar />
         <section style={containerStyle}>
           <a href="/contradictions" style={backStyle}>
@@ -373,12 +374,12 @@ export default function ContradictionDetailPage() {
             <p>{labels[lang].notFoundText}</p>
           </div>
         </section>
-      </main>
+      </PublicPageShell>
     );
   }
 
   return (
-    <main style={pageStyle}>
+  <PublicPageShell>
       <section style={containerStyle}>
         <div style={topRowStyle}>
           <a href="/contradictions" style={backStyle}>
@@ -403,27 +404,37 @@ export default function ContradictionDetailPage() {
 
 <FloatingShareSidebar />
         <header style={heroStyle}>
-          <div style={badgeRowStyle}>
-            <span style={darkBadgeStyle}>{item.topic || labels[lang].noTopic}</span>
-            <span style={lightBadgeStyle}>
-              {(item.language || lang).toUpperCase()}
-            </span>
-          </div>
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      background:
+        "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 32%), radial-gradient(circle at bottom right, rgba(168,85,247,0.14), transparent 28%)",
+      pointerEvents: "none",
+    }}
+  />
 
-          <h1 style={titleStyle}>
-            {item.politician || labels[lang].unknown} –{" "}
-            {item.topic || labels[lang].topic}
-          </h1>
+  <div style={{ position: "relative", zIndex: 1 }}>
+    <div style={badgeRowStyle}>
+      <span style={darkBadgeStyle}>{item.topic || labels[lang].noTopic}</span>
+      <span style={lightBadgeStyle}>
+        {(item.language || lang).toUpperCase()}
+      </span>
+    </div>
 
-          <p style={leadStyle}>{labels[lang].lead}</p>
+    <h1 style={titleStyle}>
+      {item.politician || labels[lang].unknown} –{" "}
+      {item.topic || labels[lang].topic}
+    </h1>
 
-          <div style={viewCounterStyle}>
-            👀 {item.views || 0} {labels[lang].views}
-          </div>
+    <p style={leadStyle}>{labels[lang].lead}</p>
 
-          
-        </header>
-        </section>
+    <div style={viewCounterStyle}>
+      👀 {item.views || 0} {labels[lang].views}
+    </div>
+  </div>
+</header>
+        
 
         <StatementTimeline
   oldDate={item.old_date}
@@ -456,35 +467,35 @@ export default function ContradictionDetailPage() {
   voted={voted}
   onVote={vote}
 />
-</main>
+
+</section>
+</PublicPageShell>
 );
 }
 
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background: "#f3f4f6",
-  color: "#0f172a",
-  padding: "32px 18px",
-};
+
 
 const containerStyle: CSSProperties = {
-  maxWidth: 1080,
+  maxWidth: 1120,
   margin: "0 auto",
 };
 
 const topRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  gap: 12,
+  gap: 14,
   alignItems: "center",
-  marginBottom: 22,
+  marginBottom: 26,
   flexWrap: "wrap",
-};
+};;
 
 const backStyle: CSSProperties = {
   color: "#0f172a",
-  fontWeight: 800,
+  fontWeight: 900,
   textDecoration: "none",
+  fontSize: 15,
+  opacity: 0.82,
+  transition: "opacity 0.2s ease",
 };
 
 const langSwitcherStyle: CSSProperties = {
@@ -493,383 +504,92 @@ const langSwitcherStyle: CSSProperties = {
 };
 
 const langButtonStyle: CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #111827",
-  background: "white",
+  padding: "8px 13px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.7)",
+  borderRadius: 12,
   cursor: "pointer",
-  fontWeight: 800,
+  fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  transition: "all 0.2s ease",
 };
 
 const activeLangButtonStyle: CSSProperties = {
   ...langButtonStyle,
-  background: "#111827",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
+  border: "1px solid rgba(255,255,255,0.18)",
+  boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
 };
 
 const heroStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 28,
-  marginBottom: 22,
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(248,250,252,0.82))",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 28,
+  padding: 34,
+  marginBottom: 26,
+  boxShadow:
+    "0 24px 70px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
 };
 
 const badgeRowStyle: CSSProperties = {
   display: "flex",
-  gap: 8,
-  marginBottom: 14,
+  gap: 10,
+  marginBottom: 18,
   flexWrap: "wrap",
+  alignItems: "center",
 };
 
 const darkBadgeStyle: CSSProperties = {
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "6px 10px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
-  fontWeight: 800,
+  fontSize: 12,
+  letterSpacing: 0.6,
+  fontWeight: 900,
+  boxShadow: "0 10px 24px rgba(15,23,42,0.18)",
 };
 
 const lightBadgeStyle: CSSProperties = {
-  background: "#e2e8f0",
+  background: "rgba(255,255,255,0.7)",
   color: "#0f172a",
-  padding: "6px 10px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
-  fontWeight: 800,
+  fontSize: 12,
+  letterSpacing: 0.6,
+  fontWeight: 900,
+  border: "1px solid rgba(255,255,255,0.8)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 46,
-  lineHeight: 1.05,
-  margin: "0 0 12px",
-  fontWeight: 900,
+  fontSize: "clamp(34px, 5vw, 58px)",
+  lineHeight: 1.02,
+  letterSpacing: "-1.8px",
+  margin: "0 0 14px",
+  fontWeight: 950,
 };
 
 const leadStyle: CSSProperties = {
   fontSize: 18,
-  lineHeight: 1.55,
+  lineHeight: 1.65,
   color: "#475569",
-  maxWidth: 820,
-  marginBottom: 16,
+  maxWidth: 860,
+  margin: "0 0 18px",
 };
 
-const shareRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  marginTop: 16,
-};
 
-const shareButtonStyle: CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid #0f172a",
-  borderRadius: 10,
-  background: "white",
-  color: "#0f172a",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
-const compareGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-  gap: 18,
-  marginBottom: 22,
-};
-
-const oldCardStyle: CSSProperties = {
-  background: "#eef2ff",
-  border: "1px solid #c7d2fe",
-  borderRadius: 18,
-  padding: 22,
-};
-
-const newCardStyle: CSSProperties = {
-  background: "#ecfdf5",
-  border: "1px solid #bbf7d0",
-  borderRadius: 18,
-  padding: 22,
-};
-
-const kickerStyle: CSSProperties = {
-  fontSize: 13,
-  letterSpacing: 1.5,
-  fontWeight: 900,
-  marginBottom: 10,
-};
-
-const dateStyle: CSSProperties = {
-  fontSize: 15,
-  color: "#475569",
-  fontWeight: 800,
-  marginBottom: 12,
-};
-
-const statementStyle: CSSProperties = {
-  fontSize: 23,
-  lineHeight: 1.35,
-  marginBottom: 18,
-};
-
-const sourceButtonStyle: CSSProperties = {
-  display: "inline-block",
-  padding: "10px 13px",
-  background: "#0f172a",
-  color: "white",
-  borderRadius: 10,
-  fontWeight: 800,
-  textDecoration: "none",
-  marginRight: 8,
-};
-
-const videoButtonStyle: CSSProperties = {
-  ...sourceButtonStyle,
-  background: "#7c3aed",
-};
-
-const videoFrameStyle: CSSProperties = {
-  width: "100%",
-  aspectRatio: "16 / 9",
-  border: "none",
-  borderRadius: 14,
-  marginTop: 14,
-};
-
-const analysisCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderLeft: "6px solid #991b1b",
-  borderRadius: 18,
-  padding: 24,
-  marginBottom: 22,
-};
-
-const analysisTextStyle: CSSProperties = {
-  fontSize: 18,
-  lineHeight: 1.7,
-  margin: 0,
-};
-
-const sourcesCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 24,
-  marginBottom: 22,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  fontSize: 26,
-  marginTop: 0,
-  marginBottom: 16,
-  fontWeight: 900,
-};
-
-const sourceGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  gap: 14,
-};
-
-const sourceMiniCardStyle: CSSProperties = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 14,
-  padding: 16,
-};
-
-const mutedTextStyle: CSSProperties = {
-  color: "#64748b",
-  lineHeight: 1.5,
-};
-
-const plainLinkStyle: CSSProperties = {
-  color: "#0f172a",
-  fontWeight: 900,
-};
-
-const relatedCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 24,
-  marginBottom: 22,
-};
-
-const relatedGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-  gap: 14,
-};
-
-const relatedItemStyle: CSSProperties = {
-  display: "block",
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 14,
-  padding: 16,
-  textDecoration: "none",
-  color: "#0f172a",
-};
-
-const relatedMetaStyle: CSSProperties = {
-  fontSize: 13,
-  color: "#64748b",
-  fontWeight: 800,
-  marginBottom: 8,
-};
-
-const relatedTitleStyle: CSSProperties = {
-  fontSize: 16,
-  lineHeight: 1.45,
-  fontWeight: 900,
-};
-
-const relatedViewsStyle: CSSProperties = {
-  marginTop: 10,
-  fontSize: 13,
-  color: "#64748b",
-  fontWeight: 800,
-};
-
-const voteCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 24,
-};
-
-const voteTextStyle: CSSProperties = {
-  fontWeight: 800,
-  color: "#334155",
-};
-
-const progressOuterStyle: CSSProperties = {
-  height: 12,
-  background: "#e5e7eb",
-  borderRadius: 999,
-  overflow: "hidden",
-  marginBottom: 16,
-};
-
-const progressInnerStyle: CSSProperties = {
-  height: "100%",
-  background: "#16a34a",
-};
-
-const buttonRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 10,
-  flexWrap: "wrap",
-};
-
-const voteYesButtonStyle: CSSProperties = {
-  padding: "11px 16px",
-  border: "none",
-  borderRadius: 10,
-  background: "#16a34a",
-  color: "white",
-  cursor: "pointer",
-  fontWeight: 900,
-};
-
-const voteNoButtonStyle: CSSProperties = {
-  padding: "11px 16px",
-  border: "1px solid #0f172a",
-  borderRadius: 10,
-  background: "white",
-  color: "#0f172a",
-  cursor: "pointer",
-  fontWeight: 900,
-};
-
-const disabledButtonStyle: CSSProperties = {
-  padding: "11px 16px",
-  border: "1px solid #cbd5e1",
-  borderRadius: 10,
-  background: "#e5e7eb",
-  color: "#64748b",
-  cursor: "not-allowed",
-  fontWeight: 900,
-};
-
-const thanksStyle: CSSProperties = {
-  marginTop: 12,
-  color: "#166534",
-  fontWeight: 800,
-};
-
-const emptyCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 28,
-};
-
-const timelineCardStyle: CSSProperties = {
-  position: "relative",
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
-  padding: 24,
-  marginBottom: 22,
-  overflow: "hidden",
-};
-
-const timelineLineStyle: CSSProperties = {
-  position: "absolute",
-  left: 38,
-  top: 34,
-  bottom: 34,
-  width: 3,
-  background: "#cbd5e1",
-};
-
-const timelineItemStyle: CSSProperties = {
-  position: "relative",
-  display: "grid",
-  gridTemplateColumns: "48px 1fr",
-  gap: 14,
-  marginBottom: 22,
-  zIndex: 1,
-};
-
-const timelineDotOldStyle: CSSProperties = {
-  width: 34,
-  height: 34,
-  borderRadius: "50%",
-  background: "#4f46e5",
-  color: "white",
-  display: "grid",
-  placeItems: "center",
-  fontWeight: 900,
-};
-
-const timelineDotNewStyle: CSSProperties = {
-  ...timelineDotOldStyle,
-  background: "#16a34a",
-};
-
-const timelineLabelStyle: CSSProperties = {
-  fontSize: 13,
-  fontWeight: 900,
-  letterSpacing: 1.2,
-};
-
-const timelineDateStyle: CSSProperties = {
-  color: "#64748b",
-  fontWeight: 800,
-  marginTop: 4,
-  marginBottom: 8,
-};
-
-const timelineTextStyle: CSSProperties = {
-  fontSize: 18,
-  lineHeight: 1.55,
-  margin: 0,
-};
 
 const videoLabelStyle: CSSProperties = {
   marginTop: 14,
@@ -880,7 +600,15 @@ const videoLabelStyle: CSSProperties = {
 };
 
 const viewCounterStyle: CSSProperties = {
-  marginTop: 10,
+  marginTop: 14,
   fontWeight: 800,
-  color: "#475569",
+  color: "#64748b",
+  fontSize: 14,
+  letterSpacing: 0.2,
+};
+const emptyCardStyle: CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe0e6",
+  borderRadius: 18,
+  padding: 28,
 };
