@@ -8,6 +8,7 @@ import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
 import AiAnalysisCard from "@/components/public/AiAnalysisCard";
 import SourceCards from "@/components/public/SourceCards";
+import VoteSection from "@/components/public/VoteSection";
 
 type Item = {
   id: string;
@@ -548,38 +549,14 @@ export default function ContradictionDetailPage() {
           </section>
         )}
 
-        <section style={voteCardStyle}>
-          <h2 style={sectionTitleStyle}>{t[lang].voteQuestion}</h2>
-
-          <p style={voteTextStyle}>
-            👍 {yesPercent}% {t[lang].yes} · 👎 {noPercent}% {t[lang].no} ·{" "}
-            {t[lang].total} {totalVotes} {t[lang].votes}
-          </p>
-
-          <div style={progressOuterStyle}>
-            <div style={{ ...progressInnerStyle, width: `${yesPercent}%` }} />
-          </div>
-
-          <div style={buttonRowStyle}>
-            <button
-              disabled={voted}
-              onClick={() => vote("yes")}
-              style={voted ? disabledButtonStyle : voteYesButtonStyle}
-            >
-              👍 {t[lang].yes}
-            </button>
-
-            <button
-              disabled={voted}
-              onClick={() => vote("no")}
-              style={voted ? disabledButtonStyle : voteNoButtonStyle}
-            >
-              👎 {t[lang].no}
-            </button>
-          </div>
-
-          {voted && <p style={thanksStyle}>{t[lang].alreadyVoted}</p>}
-        </section>
+        <VoteSection
+  yesPercent={yesPercent}
+  noPercent={noPercent}
+  totalVotes={totalVotes}
+  voted={voted}
+  onVote={vote}
+/>
+          
       
     </main>
   );
