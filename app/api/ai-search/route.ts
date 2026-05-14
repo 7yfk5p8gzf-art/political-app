@@ -564,6 +564,8 @@ if (!existingDraft) {
 
     confidence_score:
       meta.contradiction_probability || 0,
+      severity_score:
+  meta.contradiction_severity || 0,
 
     duplicate_hash: duplicateHash,
     review_status: "draft",
@@ -575,7 +577,7 @@ if (!existingDraft) {
 
   timeline_nodes:
     String(meta.timeline_hint || "")
-      .split("->")
+  .split(/->|→/)
       .map((step: string) => step.trim())
       .filter(Boolean)
       .map((label: string) => {
@@ -585,7 +587,7 @@ if (!existingDraft) {
           year: yearMatch
             ? Number(yearMatch[0])
             : null,
-          label,
+          label: label.replace(/\b(19|20)\d{2}\b/g, "").trim(),
           stance:
             meta.stance_signature ||
             meta.new_stance ||
@@ -1005,6 +1007,7 @@ Adj vissza CSAK tiszta JSON-t:
 "timestamp": "",
 "quote_precision": "low",
 "contradiction_strength": "possible",
+"contradiction_severity": 50,
 "same_topic": false,
 "opposite_meaning": false,
 "old_stance": "unclear",
@@ -1037,6 +1040,13 @@ Adj vissza CSAK tiszta JSON-t:
 "contradiction_probability": 0,
 "contradiction_reason": "",
 "timeline_hint": "",
+"timeline_nodes": [
+  {
+    "year": 2024,
+    "label": "",
+    "stance": "mixed"
+  }
+],
 "ai_confidence": 0,
 "source_intent": "",
 transcript_quote,

@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 type Contradiction = {
   id: string;
   politician: string | null;
+  severity_score?: number;
   topic: string | null;
 
   old_statement: string | null;
@@ -259,13 +260,8 @@ export default function ContradictionDetailPage() {
           Status:
           {" "}
           {item.status}
-          <div
-  style={{
-    marginTop: 20,
-    paddingTop: 16,
-    borderTop: "1px solid #333",
-  }}
->
+          </div>
+
   <h3 style={{ marginBottom: 12 }}>
     Timeline Data
   </h3>
@@ -356,7 +352,7 @@ export default function ContradictionDetailPage() {
   </pre>
 </div>
         </div>
-      </div>
-    </div>
+      
+    
   );
 }
