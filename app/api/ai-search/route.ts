@@ -119,17 +119,35 @@ function extractTopicFromQuery(query: string) {
     },
 
     {
-      canonical: "UKRAINE_WAR",
-      keywords: [
-        "ukrajna",
-        "orosz",
-        "háború",
-        "war",
-        "ukraine",
-        "russia",
-        "nato",
-      ],
-    },
+  canonical: "NATO_DEFENSE",
+  keywords: [
+    "nato",
+    "defense",
+    "military",
+    "army",
+    "weapon",
+    "weapons",
+    "missile",
+    "security",
+    "védelmi",
+    "katonai",
+    "hadsereg",
+    "fegyver",
+    "rakéta",
+  ],
+},
+
+{
+  canonical: "UKRAINE_WAR",
+  keywords: [
+    "ukrajna",
+    "orosz",
+    "háború",
+    "war",
+    "ukraine",
+    "russia"
+  ],
+},
 
     {
       canonical: "ECONOMY",
@@ -294,6 +312,100 @@ async function braveSearch(query: string, count = 10) {
   };
 }
 
+async function autoSaveSources(params: {
+  articles: any[];
+  videos: any[];
+  meta: any;
+  detectedPolitician: any;
+  detectedTopic: string;
+}) {
+  const bestArticle = params.articles?.[0];
+  const bestVideo = params.videos?.[0];
+
+  const items = [
+    bestArticle
+      ? {
+          title: bestArticle.title || "AI found article",
+          final_score: bestArticle.final_score || 0,
+          url: bestArticle.url,
+          article_url: bestArticle.url,
+          video_url: null,
+          type: "article",
+          source_type: "article",
+        }
+      : null,
+    bestVideo
+      ? {
+          title: bestVideo.title || "AI found video",
+          final_score: bestVideo.final_score || 0,
+          url: bestVideo.url,
+          article_url: null,
+          video_url: bestVideo.url,
+          type: "video",
+          source_type: "video",
+        }
+      : null,
+  ].filter(Boolean);
+
+  for (const item of items as any[]) {
+    if (!item.url) continue;
+    if (
+  item.url.includes("youtube.com/results?search") ||
+  item.url.includes("google.com/search")
+) {
+  continue;
+  if (
+  typeof item.final_score === "number" &&
+  item.final_score < 45
+) {
+  continue;
+}
+}
+
+    const { data: existing } = await supabase
+      .from("sources")
+      .select("id")
+      .eq("url", item.url)
+      .maybeSingle();
+
+    if (existing) continue;
+
+    const { error } = await supabase.from("sources").insert({
+      title: item.title,
+      url: item.url,
+      article_url: item.article_url,
+      video_url: item.video_url,
+      type: item.type,
+      source_type: item.source_type,
+      language:
+        params.detectedPolitician?.language ||
+        params.meta.language ||
+        "hu",
+      summary: params.meta.summary || "",
+      ai_summary: params.meta.summary || "",
+      politician:
+        params.detectedPolitician?.full_name ||
+        params.meta.politician ||
+        "",
+      topic: params.detectedTopic,
+      country:
+        params.detectedPolitician?.country ||
+        params.meta.country ||
+        "",
+      quote_text:
+        params.meta.transcript_quote ||
+        params.meta.quote_candidate ||
+        null,
+      source_date: params.meta.date || null,
+      status: "draft",
+    });
+
+    if (error) {
+      console.error("Auto source save error:", error);
+    }
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { query } = await req.json();
@@ -392,6 +504,16 @@ if (semanticCache?.response && semanticCache?.created_at) {
 }
 
 const topicMemory = await getTopicMemory(detectedTopic);
+const { data: localSources } = await supabase
+  .from("sources")
+  .select("*")
+  .ilike("politician", `%${detectedPolitician?.full_name || ""}%`)
+  .limit(5);
+
+console.log(
+  "LOCAL SOURCE MATCHES:",
+  localSources?.length || 0
+);
 
 const expandedQuery = cleanQuery
   .replace(/bevándorlás/gi, "bevándorlás migráció illegális migráció migráns")
@@ -440,6 +562,11 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
 
       return Array.from(map.values());
     };
+    const prioritizedLocalUrls = new Set(
+  (localSources || [])
+    .map((s: any) => s.url)
+    .filter(Boolean)
+);
 
     const articles = uniqueByUrl(allArticleResults)
       .filter(
@@ -453,6 +580,7 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
 
   return {
     ...item,
+    local_priority: prioritizedLocalUrls.has(item.url),
     score: scoreResult(item, cleanQuery),
     quality_score: scoreSourceQuality(item),
 
@@ -460,9 +588,10 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
     source_trust_score: trust.source_trust_score,
 
     final_score:
-      scoreResult(item, cleanQuery) * 0.5 +
-      scoreSourceQuality(item) * 0.3 +
-      trust.source_trust_score * 0.2,
+  scoreResult(item, cleanQuery) * 0.5 +
+  scoreSourceQuality(item) * 0.3 +
+  trust.source_trust_score * 0.2 +
+  (prioritizedLocalUrls.has(item.url) ? 25 : 0),
   };
 })
       .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
@@ -829,6 +958,13 @@ await upsertTopicMemory({
     );
 }
 
+await autoSaveSources({
+  articles,
+  videos,
+  meta,
+  detectedPolitician,
+  detectedTopic,
+});
     const responsePayload = {
       articles,
       videos,
