@@ -712,17 +712,27 @@ function ContradictionCard({
 
 
 const topBarStyle: CSSProperties = {
+  
   maxWidth: 1180,
   margin: "0 auto 18px",
   display: "flex",
+  flexWrap: "wrap",
   justifyContent: "space-between",
-  gap: 12,
+  gap: 14,
   alignItems: "center",
+  padding: "12px 14px",
+  borderRadius: 22,
+  background: "rgba(255,255,255,0.62)",
+  border: "1px solid rgba(255,255,255,0.72)",
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
 };
 
 const brandStyle: CSSProperties = {
   fontWeight: 950,
-  letterSpacing: -0.4,
+  letterSpacing: -0.6,
+  fontSize: 18,
 };
 
 const langSwitcherStyle: CSSProperties = {
@@ -736,7 +746,10 @@ const heroStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
   display: "grid",
-  gridTemplateColumns: "1.4fr 0.8fr",
+  gridTemplateColumns:
+  typeof window !== "undefined" && window.innerWidth < 900
+    ? "1fr"
+    : "1.4fr 0.8fr",
   gap: 22,
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
@@ -877,9 +890,11 @@ const tabStyle: CSSProperties = {
 
 const activeTabStyle: CSSProperties = {
   ...tabStyle,
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  borderColor: "#0f172a",
+  borderColor: "rgba(255,255,255,0.2)",
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
 };
 
 const emptyStyle: CSSProperties = {
@@ -895,12 +910,18 @@ const gridStyle: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 24,
-  padding: 24,
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
-  transition: "all 0.2s ease",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 28,
+  padding: 26,
+  boxShadow:
+    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
+  transition: "all 0.22s ease",
 };
 
 const cardTopStyle: CSSProperties = {
@@ -919,47 +940,58 @@ const tagRowStyle: CSSProperties = {
 };
 
 const darkTagStyle: CSSProperties = {
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  letterSpacing: 0.3,
+  boxShadow: "0 8px 22px rgba(15,23,42,0.16)",
 };
 
 const lightTagStyle: CSSProperties = {
-  background: "#e2e8f0",
+  background: "rgba(255,255,255,0.72)",
   color: "#0f172a",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  border: "1px solid rgba(226,232,240,0.9)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const voteTagStyle: CSSProperties = {
-  background: "#dcfce7",
+  background: "rgba(220,252,231,0.9)",
   color: "#166534",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
+  border: "1px solid rgba(134,239,172,0.8)",
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 25,
+  fontSize: 28,
+  lineHeight: 1.08,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.7px",
 };
 
 const openButtonStyle: CSSProperties = {
-  padding: "10px 13px",
-  background: "#0f172a",
+  padding: "11px 15px",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  borderRadius: 12,
+  borderRadius: 14,
   textDecoration: "none",
   fontWeight: 900,
   whiteSpace: "nowrap",
-  transition: "all 0.2s ease",
+  transition: "all 0.22s ease",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.18)",
 };
 
 const compareGridStyle: CSSProperties = {
@@ -987,25 +1019,28 @@ const newBoxStyle: CSSProperties = {
 };
 
 const summaryStyle: CSSProperties = {
-  marginTop: 14,
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  padding: 14,
-  borderRadius: 14,
-  lineHeight: 1.55,
+  marginTop: 16,
+  background: "rgba(248,250,252,0.78)",
+  border: "1px solid rgba(226,232,240,0.8)",
+  padding: 16,
+  borderRadius: 16,
+  lineHeight: 1.65,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const footerStyle: CSSProperties = {
-  marginTop: 14,
-  paddingTop: 12,
-  borderTop: "1px solid #e5e7eb",
+  marginTop: 18,
+  paddingTop: 14,
+  borderTop: "1px solid rgba(226,232,240,0.9)",
   display: "flex",
   justifyContent: "space-between",
   gap: 12,
   flexWrap: "wrap",
   color: "#64748b",
   fontSize: 13,
-  fontWeight: 700,
+  fontWeight: 800,
 };
 
 const politicianLinkStyle: CSSProperties = {
@@ -1030,12 +1065,15 @@ const activeLangButtonStyle: CSSProperties = {
 };
 const spotlightStyle: CSSProperties = {
   maxWidth: 1180,
-  margin: "0 auto 28px",
-  background: "#0f172a",
+  margin: "0 auto 30px",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)",
   color: "white",
-  borderRadius: 30,
-  padding: 30,
-  boxShadow: "0 22px 55px rgba(15, 23, 42, 0.18)",
+  borderRadius: 34,
+  padding: 34,
+  boxShadow: "0 28px 80px rgba(15, 23, 42, 0.22)",
 };
 
 const spotlightBadgeStyle: CSSProperties = {
@@ -1050,13 +1088,15 @@ const spotlightBadgeStyle: CSSProperties = {
 };
 
 const spotlightTitleStyle: CSSProperties = {
-  fontSize: 34,
-  margin: "0 0 18px",
+  fontSize: "clamp(28px, 4vw, 42px)",
+  lineHeight: 1.08,
+  margin: "0 0 20px",
   fontWeight: 950,
+  letterSpacing: "-1px",
 };
 
 const spotlightFooterStyle: CSSProperties = {
-  marginTop: 18,
+  marginTop: 20,
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -1073,15 +1113,16 @@ const darkTagLinkStyle: CSSProperties = {
 };
 const navStyle: CSSProperties = {
   display: "flex",
-  gap: 16,
+  gap: 14,
   alignItems: "center",
+  flexWrap: "wrap",
 };
 
 const navLinkStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#334155",
   textDecoration: "none",
-  fontWeight: 800,
-  fontSize: 15,
+  fontWeight: 900,
+  fontSize: 14,
 };
 const countryFilterStyle: CSSProperties = {
   display: "flex",
@@ -1091,19 +1132,24 @@ const countryFilterStyle: CSSProperties = {
 };
 
 const countryButtonStyle: CSSProperties = {
-  padding: "8px 14px",
+  padding: "9px 15px",
   borderRadius: 999,
-  border: "1px solid #cbd5e1",
-  background: "white",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.68)",
   cursor: "pointer",
   fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const activeCountryButtonStyle: CSSProperties = {
   ...countryButtonStyle,
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
-  borderColor: "#0f172a",
+  borderColor: "rgba(255,255,255,0.25)",
+  boxShadow: "0 12px 28px rgba(79,70,229,0.32)",
 };
 const trendingRowStyle: CSSProperties = {
   display: "flex",
