@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, type Lang } from "@/lib/i18n";
+import PublicPageShell from "@/components/public/PublicPageShell";
 
 type Item = {
   id: string;
@@ -54,6 +55,7 @@ const labels = {
     noItems: "Ehhez a politikushoz még nincs publikált ellentmondás.",
     all: "Összes",
     latestLabel: "Legutóbbi",
+    loading: "Betöltés...",
   },
   de: {
     profile: "Politikerprofil",
@@ -73,6 +75,7 @@ const labels = {
     noItems: "Für diesen Politiker gibt es noch keine veröffentlichten Widersprüche.",
     all: "Alle",
     latestLabel: "Neueste",
+    loading: "Wird geladen...",
   },
   en: {
     profile: "Politician profile",
@@ -92,6 +95,7 @@ const labels = {
     noItems: "There are no published contradictions for this politician yet.",
     all: "All",
     latestLabel: "Latest",
+    loading: "Loading...",
   },
   fr: {
     profile: "Profil politique",
@@ -111,6 +115,7 @@ const labels = {
     noItems: "Aucune contradiction publiée pour ce politicien.",
     all: "Tous",
     latestLabel: "Dernier",
+    loading: "Chargement...",
   },
 };
 
@@ -127,7 +132,6 @@ function getTopic(item: Item, lang: Lang) {
   if (lang === "de") return item.topic_de || item.topic;
   if (lang === "en") return item.topic_en || item.topic;
   if (lang === "fr") return item.topic_fr || item.topic;
-
   return item.topic_hu || item.topic;
 }
 
@@ -135,7 +139,6 @@ function getAiSummary(item: Item, lang: Lang) {
   if (lang === "de") return item.ai_summary_de || item.ai_summary;
   if (lang === "en") return item.ai_summary_en || item.ai_summary;
   if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
-
   return item.ai_summary_hu || item.ai_summary;
 }
 
@@ -202,7 +205,6 @@ export default function PoliticianProfilePage() {
 
   const filteredProfileItems = useMemo(() => {
     if (activeTopic === "all") return items;
-
     return items.filter((item) => getTopic(item, lang) === activeTopic);
   }, [items, activeTopic, lang]);
 
@@ -212,14 +214,14 @@ export default function PoliticianProfilePage() {
 
   if (loading) {
     return (
-      <main style={pageStyle}>
-        <div style={containerStyle}>Betöltés...</div>
-      </main>
+      <PublicPageShell>
+        <section style={containerStyle}>{labels[lang].loading}</section>
+      </PublicPageShell>
     );
   }
 
   return (
-    <main style={pageStyle}>
+    <PublicPageShell>
       <section style={containerStyle}>
         <div style={topRowStyle}>
           <a href="/contradictions" style={backStyle}>
@@ -244,59 +246,63 @@ export default function PoliticianProfilePage() {
         </div>
 
         <header style={heroStyle}>
-          <div style={heroTopStyle}>
-            <div>
-              <div style={badgeStyle}>{labels[lang].profile}</div>
-              <h1 style={titleStyle}>{politicianName}</h1>
-              <p style={leadStyle}>{labels[lang].lead}</p>
+          <div style={heroGlowStyle} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={heroTopStyle}>
+              <div>
+                <div style={badgeStyle}>{labels[lang].profile}</div>
+                <h1 style={titleStyle}>{politicianName}</h1>
+                <p style={leadStyle}>{labels[lang].lead}</p>
+              </div>
+
+              <div style={avatarStyle}>{initials}</div>
             </div>
 
-            <div style={avatarStyle}>{initials}</div>
-          </div>
+            <div style={statsGridStyle}>
+              <div style={statCardStyle}>
+                <strong>{items.length}</strong>
+                <span>{labels[lang].contradictions}</span>
+              </div>
 
-          <div style={statsGridStyle}>
-            <div style={statCardStyle}>
-              <strong>{items.length}</strong>
-              <span>{labels[lang].contradictions}</span>
+              <div style={statCardStyle}>
+                <strong>{topics.length}</strong>
+                <span>{labels[lang].topics}</span>
+              </div>
+
+              <div style={statCardStyle}>
+                <strong>{totalVotes}</strong>
+                <span>{labels[lang].votes}</span>
+              </div>
+
+              <div style={statCardStyle}>
+                <strong>{latestDate}</strong>
+                <span>{labels[lang].latestLabel}</span>
+              </div>
             </div>
 
-            <div style={statCardStyle}>
-              <strong>{topics.length}</strong>
-              <span>{labels[lang].topics}</span>
-            </div>
-
-            <div style={statCardStyle}>
-              <strong>{totalVotes}</strong>
-              <span>{labels[lang].votes}</span>
-            </div>
-
-            <div style={statCardStyle}>
-              <strong>{latestDate}</strong>
-              <span>{labels[lang].latestLabel}</span>
-            </div>
-          </div>
-
-          <div style={tagsRowStyle}>
-            <button
-              onClick={() => setActiveTopic("all")}
-              style={
-                activeTopic === "all" ? activeTagButtonStyle : tagButtonStyle
-              }
-            >
-              {labels[lang].all}
-            </button>
-
-            {topics.map((topic) => (
+            <div style={tagsRowStyle}>
               <button
-                key={topic}
-                onClick={() => setActiveTopic(String(topic))}
+                onClick={() => setActiveTopic("all")}
                 style={
-                  activeTopic === topic ? activeTagButtonStyle : tagButtonStyle
+                  activeTopic === "all" ? activeTagButtonStyle : tagButtonStyle
                 }
               >
-                {topic}
+                {labels[lang].all}
               </button>
-            ))}
+
+              {topics.map((topic) => (
+                <button
+                  key={String(topic)}
+                  onClick={() => setActiveTopic(String(topic))}
+                  style={
+                    activeTopic === topic ? activeTagButtonStyle : tagButtonStyle
+                  }
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
@@ -386,19 +392,12 @@ export default function PoliticianProfilePage() {
           })}
         </section>
       </section>
-    </main>
+    </PublicPageShell>
   );
 }
 
-const pageStyle: CSSProperties = {
-  minHeight: "100vh",
-  background: "#f3f4f6",
-  padding: "32px 18px",
-  color: "#0f172a",
-};
-
 const containerStyle: CSSProperties = {
-  maxWidth: 1100,
+  maxWidth: 1120,
   margin: "0 auto",
 };
 
@@ -406,8 +405,8 @@ const topRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: 12,
-  marginBottom: 22,
+  gap: 14,
+  marginBottom: 26,
   flexWrap: "wrap",
 };
 
@@ -415,6 +414,8 @@ const backStyle: CSSProperties = {
   color: "#0f172a",
   fontWeight: 900,
   textDecoration: "none",
+  fontSize: 15,
+  opacity: 0.82,
 };
 
 const langSwitcherStyle: CSSProperties = {
@@ -423,26 +424,47 @@ const langSwitcherStyle: CSSProperties = {
 };
 
 const langButtonStyle: CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #111827",
-  background: "white",
+  padding: "8px 13px",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.7)",
+  borderRadius: 12,
   cursor: "pointer",
-  fontWeight: 800,
+  fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const activeLangButtonStyle: CSSProperties = {
   ...langButtonStyle,
-  background: "#111827",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
+  border: "1px solid rgba(255,255,255,0.18)",
+  boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
 };
 
 const heroStyle: CSSProperties = {
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  border: "1px solid #dbe0e6",
-  borderRadius: 28,
-  padding: 34,
-  marginBottom: 28,
-  boxShadow: "0 18px 42px rgba(15, 23, 42, 0.08)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.82))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 34,
+  padding: 36,
+  marginBottom: 30,
+  boxShadow:
+    "0 28px 80px rgba(15, 23, 42, 0.13), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+};
+
+const heroGlowStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  background:
+    "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 30%), radial-gradient(circle at bottom right, rgba(168,85,247,0.16), transparent 28%)",
+  pointerEvents: "none",
 };
 
 const heroTopStyle: CSSProperties = {
@@ -454,42 +476,47 @@ const heroTopStyle: CSSProperties = {
 };
 
 const avatarStyle: CSSProperties = {
-  width: 92,
-  height: 92,
-  borderRadius: 24,
-  background: "#0f172a",
+  width: 96,
+  height: 96,
+  borderRadius: 28,
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
   display: "grid",
   placeItems: "center",
   fontSize: 30,
   fontWeight: 950,
-  boxShadow: "0 14px 28px rgba(15, 23, 42, 0.18)",
+  boxShadow: "0 18px 42px rgba(15, 23, 42, 0.22)",
 };
 
 const badgeStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "6px 12px",
+  padding: "8px 14px",
   borderRadius: 999,
-  fontSize: 13,
+  fontSize: 12,
+  letterSpacing: 0.6,
   fontWeight: 900,
-  marginBottom: 16,
+  marginBottom: 18,
+  boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 54,
-  lineHeight: 1.02,
+  fontSize: "clamp(38px, 6vw, 66px)",
+  lineHeight: 0.98,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-2.2px",
 };
 
 const leadStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#475569",
   fontSize: 18,
-  marginTop: 14,
-  marginBottom: 28,
-  lineHeight: 1.6,
+  marginTop: 16,
+  marginBottom: 30,
+  lineHeight: 1.65,
   maxWidth: 760,
 };
 
@@ -497,18 +524,21 @@ const statsGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
   gap: 14,
-  marginBottom: 20,
+  marginBottom: 22,
 };
 
 const statCardStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #e2e8f0",
-  borderRadius: 18,
+  background: "rgba(255,255,255,0.72)",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 22,
   padding: 18,
   display: "flex",
   flexDirection: "column",
   gap: 6,
   fontWeight: 800,
+  boxShadow: "0 14px 40px rgba(15,23,42,0.08)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
 
 const tagsRowStyle: CSSProperties = {
@@ -518,23 +548,28 @@ const tagsRowStyle: CSSProperties = {
 };
 
 const tagButtonStyle: CSSProperties = {
-  background: "#e2e8f0",
-  padding: "7px 11px",
+  padding: "9px 15px",
   borderRadius: 999,
-  fontWeight: 800,
-  fontSize: 13,
-  border: "none",
+  border: "1px solid rgba(148,163,184,0.35)",
+  background: "rgba(255,255,255,0.68)",
   cursor: "pointer",
+  fontWeight: 900,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const activeTagButtonStyle: CSSProperties = {
   ...tagButtonStyle,
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
   color: "white",
+  borderColor: "rgba(255,255,255,0.25)",
+  boxShadow: "0 12px 28px rgba(79,70,229,0.32)",
 };
 
 const sectionHeaderStyle: CSSProperties = {
-  marginBottom: 16,
+  marginBottom: 18,
   display: "flex",
   justifyContent: "space-between",
   alignItems: "end",
@@ -543,9 +578,10 @@ const sectionHeaderStyle: CSSProperties = {
 };
 
 const sectionTitleStyle: CSSProperties = {
-  fontSize: 28,
+  fontSize: 30,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.8px",
 };
 
 const filterInfoStyle: CSSProperties = {
@@ -555,18 +591,25 @@ const filterInfoStyle: CSSProperties = {
 };
 
 const emptyStyle: CSSProperties = {
-  background: "white",
-  border: "1px solid #dbe0e6",
-  borderRadius: 18,
+  background: "rgba(255,255,255,0.8)",
+  border: "1px solid rgba(255,255,255,0.75)",
+  borderRadius: 24,
   padding: 24,
+  boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
 };
 
 const cardStyle: CSSProperties = {
-  background: "white",
-  borderRadius: 22,
-  border: "1px solid #dbe0e6",
-  padding: 24,
-  boxShadow: "0 10px 28px rgba(15, 23, 42, 0.05)",
+  position: "relative",
+  overflow: "hidden",
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
+  border: "1px solid rgba(255,255,255,0.72)",
+  borderRadius: 28,
+  padding: 26,
+  boxShadow:
+    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
 };
 
 const cardTopStyle: CSSProperties = {
@@ -575,74 +618,91 @@ const cardTopStyle: CSSProperties = {
   gap: 16,
   marginBottom: 18,
   alignItems: "flex-start",
+  flexWrap: "wrap",
 };
 
 const smallTagStyle: CSSProperties = {
   display: "inline-block",
-  background: "#0f172a",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
-  padding: "5px 9px",
+  padding: "6px 11px",
   borderRadius: 999,
   fontSize: 12,
   fontWeight: 900,
-  marginBottom: 10,
+  letterSpacing: 0.3,
+  marginBottom: 12,
+  boxShadow: "0 8px 22px rgba(15,23,42,0.16)",
 };
 
 const cardTitleStyle: CSSProperties = {
-  fontSize: 26,
+  fontSize: 28,
+  lineHeight: 1.08,
   margin: 0,
   fontWeight: 950,
+  letterSpacing: "-0.7px",
 };
 
 const openButtonStyle: CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 12,
-  background: "#0f172a",
+  padding: "11px 15px",
+  background:
+    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
   color: "white",
+  borderRadius: 14,
   textDecoration: "none",
   fontWeight: 900,
   whiteSpace: "nowrap",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.18)",
 };
 
 const compareGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gridTemplateColumns:
+    typeof window !== "undefined" && window.innerWidth < 900
+      ? "1fr"
+      : "1fr 1fr",
   gap: 14,
 };
 
 const oldBoxStyle: CSSProperties = {
-  background: "#eef2ff",
-  border: "1px solid #c7d2fe",
-  borderRadius: 16,
+  background:
+    "linear-gradient(135deg, rgba(238,242,255,0.92), rgba(224,231,255,0.82))",
+  border: "1px solid rgba(199,210,254,0.9)",
+  borderRadius: 18,
   padding: 16,
-  lineHeight: 1.55,
+  lineHeight: 1.6,
 };
 
 const newBoxStyle: CSSProperties = {
-  background: "#ecfdf5",
-  border: "1px solid #bbf7d0",
-  borderRadius: 16,
+  background:
+    "linear-gradient(135deg, rgba(236,253,245,0.92), rgba(220,252,231,0.82))",
+  border: "1px solid rgba(134,239,172,0.9)",
+  borderRadius: 18,
   padding: 16,
-  lineHeight: 1.55,
+  lineHeight: 1.6,
 };
 
 const summaryStyle: CSSProperties = {
   marginTop: 16,
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: 14,
-  padding: 14,
-  lineHeight: 1.6,
+  background: "rgba(248,250,252,0.78)",
+  border: "1px solid rgba(226,232,240,0.8)",
+  padding: 16,
+  borderRadius: 16,
+  lineHeight: 1.65,
+  color: "#334155",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const footerStyle: CSSProperties = {
-  marginTop: 16,
+  marginTop: 18,
   paddingTop: 14,
-  borderTop: "1px solid #e5e7eb",
+  borderTop: "1px solid rgba(226,232,240,0.9)",
   display: "flex",
   justifyContent: "space-between",
   gap: 12,
   flexWrap: "wrap",
   color: "#64748b",
+  fontSize: 13,
   fontWeight: 800,
 };
