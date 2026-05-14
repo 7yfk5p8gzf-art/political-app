@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type Contradiction = {
@@ -44,28 +45,29 @@ export default function ReviewQueuePage() {
 
     setLoading(false);
   }
-  async function updateReviewStatus(
-  id: string,
-  reviewStatus: "review" | "rejected" | "approved",
-  status: "draft" | "rejected" | "published"
-) {
-  const { error } = await supabase
-    .from("contradictions")
-    .update({
-      review_status: reviewStatus,
-      status,
-      reviewed_at: new Date().toISOString(),
-      published_at:
-        status === "published"
-          ? new Date().toISOString()
-          : null,
-    })
-    .eq("id", id);
 
-  if (!error) {
-    await loadItems();
+  async function updateReviewStatus(
+    id: string,
+    reviewStatus: "review" | "rejected" | "approved",
+    status: "draft" | "rejected" | "published"
+  ) {
+    const { error } = await supabase
+      .from("contradictions")
+      .update({
+        review_status: reviewStatus,
+        status,
+        reviewed_at: new Date().toISOString(),
+        published_at:
+          status === "published"
+            ? new Date().toISOString()
+            : null,
+      })
+      .eq("id", id);
+
+    if (!error) {
+      await loadItems();
+    }
   }
-}
 
   useEffect(() => {
     loadItems();
@@ -101,130 +103,145 @@ export default function ReviewQueuePage() {
         }}
       >
         {items.map((item) => (
-          <div
+          <Link
             key={item.id}
+            href={`/admin/contradictions/review/${item.id}`}
             style={{
-              border: "1px solid #333",
-              borderRadius: 12,
-              padding: 16,
-              background: "#111",
+              textDecoration: "none",
+              color: "inherit",
             }}
           >
             <div
               style={{
-                fontSize: 20,
-                fontWeight: 700,
-                marginBottom: 8,
+                border: "1px solid #333",
+                borderRadius: 12,
+                padding: 16,
+                background: "#111",
               }}
             >
-              {item.politician}
-            </div>
-
-            <div
-              style={{
-                opacity: 0.8,
-                marginBottom: 8,
-              }}
-            >
-              {item.topic}
-            </div>
-
-            <div
-              style={{
-                marginBottom: 12,
-              }}
-            >
-              {item.ai_summary}
-            </div>
-
-            <div
-              style={{
-                fontSize: 14,
-                opacity: 0.7,
-              }}
-            >
-              Confidence: {item.confidence_score || 0}
-            </div>
-
-            <div
-              style={{
-                fontSize: 14,
-                opacity: 0.7,
-              }}
-            >
-              Status: {item.review_status}
               <div
-  style={{
-    display: "flex",
-    gap: 12,
-    marginTop: 16,
-  }}
->
-  <button
-    onClick={() =>
-      updateReviewStatus(
-        item.id,
-        "approved",
-        "published"
-      )
-    }
-    style={{
-      padding: "8px 14px",
-      borderRadius: 8,
-      border: "none",
-      cursor: "pointer",
-      background: "#15803d",
-      color: "white",
-      fontWeight: 600,
-    }}
-  >
-    Approve
-  </button>
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  marginBottom: 8,
+                }}
+              >
+                {item.politician}
+              </div>
 
-  <button
-    onClick={() =>
-      updateReviewStatus(
-        item.id,
-        "rejected",
-        "rejected"
-      )
-    }
-    style={{
-      padding: "8px 14px",
-      borderRadius: 8,
-      border: "none",
-      cursor: "pointer",
-      background: "#b91c1c",
-      color: "white",
-      fontWeight: 600,
-    }}
-  >
-    Reject
-  </button>
+              <div
+                style={{
+                  opacity: 0.8,
+                  marginBottom: 8,
+                }}
+              >
+                {item.topic}
+              </div>
 
-  <button
-    onClick={() =>
-      updateReviewStatus(
-        item.id,
-        "review",
-        "draft"
-      )
-    }
-    style={{
-      padding: "8px 14px",
-      borderRadius: 8,
-      border: "none",
-      cursor: "pointer",
-      background: "#1d4ed8",
-      color: "white",
-      fontWeight: 600,
-    }}
-  >
-    Review
-  </button>
-</div>
+              <div
+                style={{
+                  marginBottom: 12,
+                }}
+              >
+                {item.ai_summary}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  opacity: 0.7,
+                }}
+              >
+                Confidence: {item.confidence_score || 0}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  opacity: 0.7,
+                }}
+              >
+                Status: {item.review_status}
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  marginTop: 16,
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    updateReviewStatus(
+                      item.id,
+                      "approved",
+                      "published"
+                    );
+                  }}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "none",
+                    cursor: "pointer",
+                    background: "#15803d",
+                    color: "white",
+                    fontWeight: 600,
+                  }}
+                >
+                  Approve
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    updateReviewStatus(
+                      item.id,
+                      "rejected",
+                      "rejected"
+                    );
+                  }}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "none",
+                    cursor: "pointer",
+                    background: "#b91c1c",
+                    color: "white",
+                    fontWeight: 600,
+                  }}
+                >
+                  Reject
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    updateReviewStatus(
+                      item.id,
+                      "review",
+                      "draft"
+                    );
+                  }}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "none",
+                    cursor: "pointer",
+                    background: "#1d4ed8",
+                    color: "white",
+                    fontWeight: 600,
+                  }}
+                >
+                  Review
+                </button>
+              </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
