@@ -6,6 +6,7 @@ import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
+import AiAnalysisCard from "@/components/public/AiAnalysisCard";
 
 type Item = {
   id: string;
@@ -504,103 +505,11 @@ export default function ContradictionDetailPage() {
           </article>
         </section>
 
-        <section style={analysisCardStyle}>
-          <div style={kickerStyle}>{t[lang].aiAnalysis.toUpperCase()}</div>
-          <p style={analysisTextStyle}>
-            {getAiSummary(item, lang) || labels[lang].noAi}
-          </p>
-          <div
-  style={{
-    marginTop: 16,
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-  }}
->
-  <div
-    style={{
-      padding: "8px 12px",
-      borderRadius: 999,
-      background: "#1e3a8a",
-      color: "white",
-      fontSize: 13,
-      fontWeight: 600,
-    }}
-  >
-    AI Contradiction Analysis
-  </div>
-  <div
-  style={{
-    marginTop: 12,
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  }}
->
-  {getDynamicLabels(item).map((label) => (
-    <div
-      key={label}
-      style={{
-        padding: "6px 10px",
-        borderRadius: 999,
-        background: "#111827",
-        border: "1px solid #374151",
-        color: "#e5e7eb",
-        fontSize: 12,
-        fontWeight: 600,
-      }}
-    >
-      {label}
-    </div>
-  ))}
-</div>
-
-  <div
-    style={{
-      padding: "8px 12px",
-      borderRadius: 999,
-      background: "#7c2d12",
-      color: "white",
-      fontSize: 13,
-      fontWeight: 600,
-    }}
-  >
-    Narrative Evolution Detected
-  </div>
-</div>
-<div
-  style={{
-    marginTop: 18,
-    padding: 16,
-    borderRadius: 16,
-    background: "#111827",
-    border: "1px solid #1f2937",
-  }}
->
-  <div
-    style={{
-      fontSize: 12,
-      fontWeight: 700,
-      letterSpacing: 1,
-      opacity: 0.7,
-      marginBottom: 10,
-    }}
-  >
-    WHAT CHANGED?
-  </div>
-
-  <div
-    style={{
-      lineHeight: 1.7,
-      fontSize: 15,
-      color: "white",
-    }}
-  >
-    The politician's rhetoric, framing or policy emphasis
-    appears to have shifted over time based on the compared
-    statements and sources.
-  </div>
-</div>
+        <AiAnalysisCard
+  summary={getAiSummary(item, lang) || labels[lang].noAi}
+/>
+          
+ 
         </section>
 
         <section style={sourcesCardStyle}>
@@ -701,7 +610,7 @@ export default function ContradictionDetailPage() {
 
           {voted && <p style={thanksStyle}>{t[lang].alreadyVoted}</p>}
         </section>
-      </section>
+      
     </main>
   );
 }
