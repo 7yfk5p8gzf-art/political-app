@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+function makeSlug(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 type Contradiction = {
   id: string;
@@ -54,6 +62,10 @@ export default function ReviewQueuePage() {
     const { error } = await supabase
       .from("contradictions")
       .update({
+        slug:
+  status === "published"
+    ? makeSlug(`${items.find((x) => x.id === id)?.politician || "politician"}-${items.find((x) => x.id === id)?.topic || "contradiction"}`)
+    : undefined,
         review_status: reviewStatus,
         status,
         reviewed_at: new Date().toISOString(),

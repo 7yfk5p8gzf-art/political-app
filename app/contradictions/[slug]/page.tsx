@@ -27,7 +27,13 @@ type Item = {
   ai_summary_en: string | null;
   ai_summary_fr: string | null;
   status: string | null;
+  confidence_score?: number | null;
+severity_score?: number | null;
+review_status?: string | null;
+timeline_data?: any;
+draft_data?: any;
   views?: number | null;
+  
 };
 
 type RelatedItem = {
@@ -300,6 +306,34 @@ export default function ContradictionDetailPage() {
 
     return item.ai_summary_hu || item.ai_summary;
   }
+  function getDynamicLabels(item: Item) {
+  const labels = [];
+
+  if ((item.severity_score || 0) > 70) {
+    labels.push("High Severity");
+  }
+
+  if ((item.confidence_score || 0) > 60) {
+    labels.push("Strong AI Confidence");
+  }
+
+  if (item.timeline_data?.timeline_nodes?.length > 0) {
+    labels.push("Timeline Evolution");
+  }
+
+  if (
+    String(item.old_statement || "")
+      .toLowerCase()
+      .includes("support") &&
+    String(item.new_statement || "")
+      .toLowerCase()
+      .includes("oppose")
+  ) {
+    labels.push("Ideological Reversal");
+  }
+
+  return labels;
+}
 
   const oldEmbedUrl = getYouTubeEmbedUrl(item?.old_video_url || null);
   const newEmbedUrl = getYouTubeEmbedUrl(item?.new_video_url || null);
@@ -475,6 +509,98 @@ export default function ContradictionDetailPage() {
           <p style={analysisTextStyle}>
             {getAiSummary(item, lang) || labels[lang].noAi}
           </p>
+          <div
+  style={{
+    marginTop: 16,
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+  }}
+>
+  <div
+    style={{
+      padding: "8px 12px",
+      borderRadius: 999,
+      background: "#1e3a8a",
+      color: "white",
+      fontSize: 13,
+      fontWeight: 600,
+    }}
+  >
+    AI Contradiction Analysis
+  </div>
+  <div
+  style={{
+    marginTop: 12,
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+  }}
+>
+  {getDynamicLabels(item).map((label) => (
+    <div
+      key={label}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 999,
+        background: "#111827",
+        border: "1px solid #374151",
+        color: "#e5e7eb",
+        fontSize: 12,
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </div>
+  ))}
+</div>
+
+  <div
+    style={{
+      padding: "8px 12px",
+      borderRadius: 999,
+      background: "#7c2d12",
+      color: "white",
+      fontSize: 13,
+      fontWeight: 600,
+    }}
+  >
+    Narrative Evolution Detected
+  </div>
+</div>
+<div
+  style={{
+    marginTop: 18,
+    padding: 16,
+    borderRadius: 16,
+    background: "#111827",
+    border: "1px solid #1f2937",
+  }}
+>
+  <div
+    style={{
+      fontSize: 12,
+      fontWeight: 700,
+      letterSpacing: 1,
+      opacity: 0.7,
+      marginBottom: 10,
+    }}
+  >
+    WHAT CHANGED?
+  </div>
+
+  <div
+    style={{
+      lineHeight: 1.7,
+      fontSize: 15,
+      color: "white",
+    }}
+  >
+    The politician's rhetoric, framing or policy emphasis
+    appears to have shifted over time based on the compared
+    statements and sources.
+  </div>
+</div>
         </section>
 
         <section style={sourcesCardStyle}>
