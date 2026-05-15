@@ -10,6 +10,7 @@ import PoliticianMiniCard from "../../components/public/cards/PoliticianMiniCard
 import PublicHero from "../../components/public/layout/PublicHero";
 import ContradictionCard from "../../components/public/cards/ContradictionCard";
 import SpotlightCard from "../../components/public/cards/SpotlightCard";
+import PublicLanguageSwitcher from "@/components/public/ui/PublicLanguageSwitcher";
 
 type Item = {
   id: string;
@@ -327,6 +328,7 @@ const mostVotedItems = [...items]
   }, [items, votes]);
 
   return (
+    
   <PublicPageShell>
       <div style={topBarStyle}>
         <div style={brandStyle}>Political App</div>
@@ -344,25 +346,19 @@ const mostVotedItems = [...items]
 <a href="/login" style={navLinkStyle}>
   Login / Register
 </a>
+</div>
 
   
 </div>
 
-        <div style={langSwitcherStyle}>
-          {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
-            <button
-              key={l}
-              onClick={() => {
-                setLang(l);
-                saveLang(l);
-              }}
-              style={lang === l ? activeLangButtonStyle : langButtonStyle}
-            >
-              {l.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+        <PublicLanguageSwitcher
+  lang={lang}
+  onChange={(nextLang) => {
+    setLang(nextLang);
+    saveLang(nextLang);
+  }}
+/>
+              
 
       <section style={heroStyle}>
   <div
