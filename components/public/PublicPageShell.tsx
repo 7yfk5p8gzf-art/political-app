@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { publicStyles } from "@/lib/publicStyles";
+import PublicHeader from "@/components/layout/PublicHeader";
 
 export default function PublicPageShell({
   children,
@@ -77,7 +78,11 @@ export default function PublicPageShell({
           </button>
         </div>
 
-        {children}
+        <PublicHeader />
+
+<div className="mt-6">
+  {children}
+</div>
       </div>
     </main>
   );

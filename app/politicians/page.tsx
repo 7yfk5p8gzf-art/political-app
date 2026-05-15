@@ -10,6 +10,7 @@ import PublicTag from "../../components/public/ui/PublicTag";
 import PublicInput from "@/components/public/ui/PublicInput";
 import PublicGrid from "@/components/public/ui/PublicGrid";
 import PublicSection from "@/components/public/ui/PublicSection";
+import PublicStatCard from "@/components/public/ui/PublicStatCard";
 
 type Item = {
   id: string;
@@ -278,20 +279,19 @@ export default function PoliticiansPage() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
-                  <strong className="block text-2xl text-white">{p.count}</strong>
-                  <span className="text-sm text-slate-400">
-                    {labels[lang].contradictions}
-                  </span>
-                </div>
+  <PublicStatCard
+    value={p.count}
+    label={labels[lang].contradictions}
+  />
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
-                  <strong className="block text-2xl text-white">{p.votes}</strong>
-                  <span className="text-sm text-slate-400">
-                    {labels[lang].votes}
-                  </span>
-                </div>
-              </div>
+  <PublicStatCard
+    value={p.votes}
+    label={labels[lang].votes}
+  />
+</div>
+
+                
+              
 
               <div className="mt-6">
                 <PublicButton href={`/politicians/${p.slug}`}>
