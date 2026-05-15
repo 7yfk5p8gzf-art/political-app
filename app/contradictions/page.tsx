@@ -7,7 +7,7 @@ import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import { publicStyles } from "@/lib/publicStyles";
 import PoliticianMiniCard from "../../components/public/cards/PoliticianMiniCard";
-
+import PublicHero from "../../components/public/layout/PublicHero";
 import ContradictionCard from "../../components/public/cards/ContradictionCard";
 
 type Item = {
