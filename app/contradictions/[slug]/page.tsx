@@ -16,6 +16,7 @@ import PublicPageShell from "@/components/public/PublicPageShell";
 import DetailHero from "@/components/public/detail/DetailHero";
 import DetailTopBar from "@/components/public/detail/DetailTopBar";
 import DetailTimeline from "@/components/public/detail/DetailTimeline";
+import DetailStatementCards from "@/components/public/detail/DetailStatementCards";
 
 type Item = {
   id: string;
@@ -411,9 +412,13 @@ export default function ContradictionDetailPage() {
   newStatement={item.new_statement}
 />
 
-        <StatementCards
+        <DetailStatementCards
+  oldLabel={labels[lang].oldTimeline}
+  newLabel={labels[lang].newTimeline}
   oldStatement={item.old_statement}
   newStatement={item.new_statement}
+  noOldStatement={labels[lang].noOldStatement}
+  noNewStatement={labels[lang].noNewStatement}
 />
 <AiAnalysisCard
   summary={getAiSummary(item, lang) || labels[lang].noAi}
