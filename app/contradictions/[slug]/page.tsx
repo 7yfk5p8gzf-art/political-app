@@ -17,6 +17,7 @@ import DetailHero from "@/components/public/detail/DetailHero";
 import DetailTopBar from "@/components/public/detail/DetailTopBar";
 import DetailTimeline from "@/components/public/detail/DetailTimeline";
 import DetailStatementCards from "@/components/public/detail/DetailStatementCards";
+import DetailAiAnalysis from "@/components/public/detail/DetailAiAnalysis";
 
 type Item = {
   id: string;
@@ -420,7 +421,7 @@ export default function ContradictionDetailPage() {
   noOldStatement={labels[lang].noOldStatement}
   noNewStatement={labels[lang].noNewStatement}
 />
-<AiAnalysisCard
+<DetailAiAnalysis
   summary={getAiSummary(item, lang) || labels[lang].noAi}
 />
 
