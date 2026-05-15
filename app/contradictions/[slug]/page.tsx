@@ -13,6 +13,7 @@ import RelatedContradictions from "@/components/public/RelatedContradictions";
 import StatementCards from "@/components/public/StatementCards";
 import StatementTimeline from "@/components/public/StatementTimeline";
 import PublicPageShell from "@/components/public/PublicPageShell";
+import DetailHero from "@/components/public/detail/DetailHero";
 
 type Item = {
   id: string;
@@ -401,39 +402,17 @@ export default function ContradictionDetailPage() {
             ))}
           </div>
         </div>
+<DetailHero
+  topic={item.topic || labels[lang].noTopic}
+  language={item.language || lang}
+  title={`${item.politician || labels[lang].unknown} – ${
+    item.topic || labels[lang].topic
+  }`}
+  lead={labels[lang].lead}
+  views={item.views || 0}
+  viewsLabel={labels[lang].views}
+/>
 
-<FloatingShareSidebar />
-        <header style={heroStyle}>
-  <div
-    style={{
-      position: "absolute",
-      inset: 0,
-      background:
-        "radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 32%), radial-gradient(circle at bottom right, rgba(168,85,247,0.14), transparent 28%)",
-      pointerEvents: "none",
-    }}
-  />
-
-  <div style={{ position: "relative", zIndex: 1 }}>
-    <div style={badgeRowStyle}>
-      <span style={darkBadgeStyle}>{item.topic || labels[lang].noTopic}</span>
-      <span style={lightBadgeStyle}>
-        {(item.language || lang).toUpperCase()}
-      </span>
-    </div>
-
-    <h1 style={titleStyle}>
-      {item.politician || labels[lang].unknown} –{" "}
-      {item.topic || labels[lang].topic}
-    </h1>
-
-    <p style={leadStyle}>{labels[lang].lead}</p>
-
-    <div style={viewCounterStyle}>
-      👀 {item.views || 0} {labels[lang].views}
-    </div>
-  </div>
-</header>
         
 
         <StatementTimeline
