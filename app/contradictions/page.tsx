@@ -6,9 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import { publicStyles } from "@/lib/publicStyles";
-import PublicCard from "../../components/public/ui/PublicCard";
-import PublicButton from "../../components/public/ui/PublicButton";
-import PublicTag from "../../components/public/ui/PublicTag";
+
 import ContradictionCard from "../../components/public/cards/ContradictionCard";
 
 type Item = {
@@ -595,130 +593,24 @@ const mostVotedItems = [...items]
 
         <div style={gridStyle}>
           {visibleItems.map((item) => (
-            <ContradictionCard />
-              
-            
-          ))}
+  <ContradictionCard
+    key={item.id}
+    item={item}
+    voteCount={voteCount(item.id)}
+    yesPercent={yesPercent(item.id)}
+    lang={lang}
+    labels={labels[lang]}
+    topicLabel={getTopic(item, lang) || labels[lang].noTopic}
+    summary={getAiSummary(item, lang)}
+  />
+))}
         </div>
       </section>
     </PublicPageShell>
   );
 }
 
-function OldContradictionCard({
-  item,
-  voteCount,
-  yesPercent,
-  lang,
-}: {
-  item: Item;
-  voteCount: number;
-  yesPercent: number;
-  lang: Lang;
-}) {
-  const cardSlug =
-    item.slug ||
-    slugify(`${item.politician || "case"}-${item.topic || "topic"}`);
 
-  const summary = getAiSummary(item, lang);
-
-  return (
-    <PublicCard className="relative overflow-hidden">
-  
-      <div style={cardTopStyle}>
-        <div>
-          <div style={tagRowStyle}>
-            <PublicTag
-  href={`/topics/${slugify(
-    getTopic(item, lang) || item.topic || ""
-  )}`}
->
-  {getTopic(item, lang) || labels[lang].noTopic} →
-</PublicTag>
-
-            {item.language && (
-              <PublicTag>
-  {item.language.toUpperCase()}
-</PublicTag>
-            )}
-
-            <span style={voteTagStyle}>
-              👍 {yesPercent}% · {voteCount}{" "}
-              {lang === "de" && voteCount === 1
-                ? "Stimme"
-                : labels[lang].vote}
-            </span>
-          </div>
-
-          <h2 style={cardTitleStyle}>
-            {item.politician ? (
-              <a
-                href={`/politicians/${slugify(item.politician)}`}
-                style={politicianLinkStyle}
-              >
-                {item.politician}
-              </a>
-            ) : (
-              labels[lang].unknown
-            )}{" "}
-            – {getTopic(item, lang) || labels[lang].topic}
-          </h2>
-        </div>
-
-        <PublicButton href={`/contradictions/${cardSlug}`}>
-  {labels[lang].open} →
-</PublicButton>
-      </div>
-
-      <div style={compareGridStyle}>
-  <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
-    <strong>{labels[lang].old}</strong>
-    <p>{item.old_statement || labels[lang].noOldStatement}</p>
-    <small className={publicStyles.mutedText}>
-      {item.old_date || labels[lang].unknownDate}
-    </small>
-  </PublicCard>
-
-  <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
-    <strong>{labels[lang].now}</strong>
-    <p>{item.new_statement || labels[lang].noNewStatement}</p>
-    <small className={publicStyles.mutedText}>
-      {item.new_date || labels[lang].unknownDate}
-    </small>
-  </PublicCard>
-</div>
-
-      {summary && (
-        <PublicCard className="mt-4 bg-slate-50 shadow-none dark:bg-slate-900/60">
-  🤖 {summary}
-</PublicCard>
-      )}
-
-      <div style={footerStyle}>
-        <span>
-          {labels[lang].published}:{" "}
-          {item.published_at ? item.published_at.slice(0, 10) : "-"}
-        </span>
-
-        <span>👀 {item.views || 0}</span>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          {item.old_source && (
-            <a href={item.old_source} target="_blank" rel="noreferrer">
-              {labels[lang].oldSource}
-            </a>
-          )}
-
-          {item.new_source && (
-            <a href={item.new_source} target="_blank" rel="noreferrer">
-              {labels[lang].newSource}
-            </a>
-          )}
-        </div>
-      </div>
-    </PublicCard>
-  );
-}
 
 
 
