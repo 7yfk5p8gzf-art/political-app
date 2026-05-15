@@ -18,6 +18,7 @@ import DetailTopBar from "@/components/public/detail/DetailTopBar";
 import DetailTimeline from "@/components/public/detail/DetailTimeline";
 import DetailStatementCards from "@/components/public/detail/DetailStatementCards";
 import DetailAiAnalysis from "@/components/public/detail/DetailAiAnalysis";
+import DetailSources from "@/components/public/detail/DetailSources";
 
 type Item = {
   id: string;
@@ -425,9 +426,12 @@ export default function ContradictionDetailPage() {
   summary={getAiSummary(item, lang) || labels[lang].noAi}
 />
 
-<SourceCards
+<DetailSources
   oldSource={item.old_source}
   newSource={item.new_source}
+  oldLabel={labels[lang].oldTimeline}
+  newLabel={labels[lang].newTimeline}
+  noSourceLabel={labels[lang].noSource}
 />
 
 <RelatedContradictions
