@@ -20,6 +20,7 @@ import DetailStatementCards from "@/components/public/detail/DetailStatementCard
 import DetailAiAnalysis from "@/components/public/detail/DetailAiAnalysis";
 import DetailSources from "@/components/public/detail/DetailSources";
 import DetailVotes from "@/components/public/detail/DetailVotes";
+import DetailRelated from "@/components/public/detail/DetailRelated";
 
 type Item = {
   id: string;
@@ -435,7 +436,8 @@ export default function ContradictionDetailPage() {
   noSourceLabel={labels[lang].noSource}
 />
 
-<RelatedContradictions
+<DetailRelated
+  title={labels[lang].related}
   items={relatedItems}
 />
 
