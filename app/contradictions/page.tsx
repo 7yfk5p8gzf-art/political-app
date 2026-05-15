@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import { publicStyles } from "@/lib/publicStyles";
+import PoliticianMiniCard from "../../components/public/cards/PoliticianMiniCard";
 
 import ContradictionCard from "../../components/public/cards/ContradictionCard";
 
@@ -485,29 +486,15 @@ const mostVotedItems = [...items]
 
           <div style={politicianGridStyle}>
             {politicians.map((p) => (
-              <a
-                key={p.name}
-                href={`/politicians/${slugify(p.name)}`}
-                style={politicianCardStyle}
-              >
-                <div style={avatarStyle}>
-                  {p.name
-                    .split(" ")
-                    .map((x) => x[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </div>
-
-                <div style={{ display: "grid", gap: 4 }}>
-  <strong>{p.name}</strong>
-
-  <span style={{ color: "#64748b", fontSize: 14 }}>
-                    {p.count} {labels[lang].topic} · {p.votes}{" "}
-                    {labels[lang].vote}
-                  </span>
-                </div>
-              </a>
+              <PoliticianMiniCard
+  key={p.name}
+  href={`/politicians/${slugify(p.name)}`}
+  topic={`${p.count} ${labels[lang].topic}`}
+  votes={p.votes}
+  voteLabel={labels[lang].vote}
+  politician={p.name}
+  statement={null}
+/>
             ))}
           </div>
         </section>
