@@ -14,6 +14,7 @@ import StatementCards from "@/components/public/StatementCards";
 import StatementTimeline from "@/components/public/StatementTimeline";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import DetailHero from "@/components/public/detail/DetailHero";
+import DetailTopBar from "@/components/public/detail/DetailTopBar";
 
 type Item = {
   id: string;
@@ -382,26 +383,11 @@ export default function ContradictionDetailPage() {
   return (
   <PublicPageShell>
       <section style={containerStyle}>
-        <div style={topRowStyle}>
-          <a href="/contradictions" style={backStyle}>
-            ← {labels[lang].back}
-          </a>
-
-          <div style={langSwitcherStyle}>
-            {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => {
-                  setLang(l);
-                  saveLang(l);
-                }}
-                style={lang === l ? activeLangButtonStyle : langButtonStyle}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+        <DetailTopBar
+  lang={lang}
+  backLabel={labels[lang].back}
+  onLangChange={setLang}
+/>
 <DetailHero
   topic={item.topic || labels[lang].noTopic}
   language={item.language || lang}
