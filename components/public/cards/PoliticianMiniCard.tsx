@@ -20,7 +20,7 @@ export default function PoliticianMiniCard({
 }: Props) {
   return (
     <a href={href} className="block no-underline">
-      <PublicCard className="min-h-[150px] p-6 transition-all hover:-translate-y-0.5 hover:shadow-md">
+      <PublicCard className="group min-h-[180px] border-white/5 bg-slate-900/95 text-white hover:scale-[1.02]">
         <div className="flex flex-wrap gap-2">
           <PublicTag>{topic}</PublicTag>
           <PublicTag>
@@ -28,12 +28,12 @@ export default function PoliticianMiniCard({
           </PublicTag>
         </div>
 
-        <h3 className="mt-5 text-2xl font-black tracking-tight text-black dark:text-white">
+        <h3 className="mt-6 text-4xl font-black tracking-tight text-white transition-all duration-300 group-hover:text-slate-100">
           {politician || "Unknown"}
         </h3>
 
         {statement && (
-          <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">
+          <p className="mt-4 text-lg leading-8 text-slate-300 transition-all duration-300 group-hover:text-slate-200">
             {statement.slice(0, 140)}...
           </p>
         )}

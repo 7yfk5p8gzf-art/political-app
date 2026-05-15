@@ -69,7 +69,7 @@ export default function ContradictionCard({
     slugify(`${item.politician || "case"}-${item.topic || "topic"}`);
 
   return (
-    <PublicCard className="relative overflow-hidden p-6">
+    <PublicCard className="border-white/5 bg-slate-900/95 text-white">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap gap-2">
@@ -77,15 +77,19 @@ export default function ContradictionCard({
               {topicLabel || labels.noTopic} →
             </PublicTag>
 
-            {item.language && <PublicTag>{item.language.toUpperCase()}</PublicTag>}
+            {item.language && (
+              <PublicTag>{item.language.toUpperCase()}</PublicTag>
+            )}
 
             <PublicTag>
               👍 {yesPercent}% · {voteCount}{" "}
-              {lang === "de" && voteCount === 1 ? "Stimme" : labels.vote}
+              {lang === "de" && voteCount === 1
+                ? "Stimme"
+                : labels.vote}
             </PublicTag>
           </div>
 
-          <h2 className="mt-5 text-2xl font-black tracking-tight text-black dark:text-white">
+          <h2 className="mt-6 text-4xl font-black tracking-tight text-white">
             {item.politician ? (
               <a
                 href={`/politicians/${slugify(item.politician)}`}
@@ -96,7 +100,7 @@ export default function ContradictionCard({
             ) : (
               labels.unknown
             )}{" "}
-            <span className="text-slate-500 dark:text-slate-400">
+            <span className="text-slate-400">
               – {topicLabel || labels.topic}
             </span>
           </h2>
@@ -107,63 +111,79 @@ export default function ContradictionCard({
         </PublicButton>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <PublicCard className="bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
-          <strong>{labels.old}</strong>
-          <p className="mt-2 text-sm leading-6">
+      <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <PublicCard className="border-white/5 bg-[#071133] text-white shadow-none">
+          <strong className="text-2xl">{labels.old}</strong>
+
+          <p className="mt-4 text-base leading-7 text-slate-200">
             {item.old_statement || labels.noOldStatement}
           </p>
-          <small className="text-slate-500 dark:text-slate-400">
+
+          <small className="text-slate-400">
             {item.old_date || labels.unknownDate}
           </small>
         </PublicCard>
 
-        <PublicCard className="bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
-          <strong>{labels.now}</strong>
-          <p className="mt-2 text-sm leading-6">
+        <PublicCard className="border-white/5 bg-[#071133] text-white shadow-none">
+          <strong className="text-2xl">{labels.now}</strong>
+
+          <p className="mt-4 text-base leading-7 text-slate-200">
             {item.new_statement || labels.noNewStatement}
           </p>
-          <small className="text-slate-500 dark:text-slate-400">
+
+          <small className="text-slate-400">
             {item.new_date || labels.unknownDate}
           </small>
         </PublicCard>
       </div>
 
       {summary && (
-  <PublicCard className="mt-4 bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
-    <div className="flex items-start gap-3">
-      <span className="mt-1 text-lg">🤖</span>
+        <PublicCard className="mt-5 border-white/5 bg-[#101b46] text-white shadow-none">
+          <div className="flex items-start gap-4">
+            <span className="mt-1 text-2xl">🤖</span>
 
-      <div>
-        <div className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          AI Analysis
-        </div>
+            <div>
+              <div className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                AI Analysis
+              </div>
 
-        <p className="line-clamp-4 text-sm leading-7">
-          {summary}
-        </p>
-      </div>
-    </div>
-  </PublicCard>
-)}
+              <p className="text-base leading-8 text-slate-100">
+                {summary}
+              </p>
+            </div>
+          </div>
+        </PublicCard>
+      )}
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-400">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5 text-sm font-bold text-slate-400">
         <span>
           {labels.published}:{" "}
-          {item.published_at ? item.published_at.slice(0, 10) : "-"}
+          {item.published_at
+            ? item.published_at.slice(0, 10)
+            : "-"}
         </span>
 
         <span>👀 {item.views || 0}</span>
 
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           {item.old_source && (
-            <a href={item.old_source} target="_blank" rel="noreferrer">
+            <a
+              href={item.old_source}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
               {labels.oldSource}
             </a>
           )}
 
           {item.new_source && (
-            <a href={item.new_source} target="_blank" rel="noreferrer">
+            <a
+              href={item.new_source}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white"
+            >
               {labels.newSource}
             </a>
           )}
