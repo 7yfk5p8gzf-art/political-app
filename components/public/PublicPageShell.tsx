@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { publicStyles } from "@/lib/publicStyles";
 
 export default function PublicPageShell({
   children,
@@ -37,18 +38,20 @@ export default function PublicPageShell({
 
   return (
     <main
+    className={publicStyles.page}
       style={{
         minHeight: "100vh",
         padding: "32px 16px 64px",
       }}
     >
       <div
-        style={{
-          width: "100%",
-          maxWidth: "1120px",
-          margin: "0 auto",
-        }}
-      >
+  className={publicStyles.shell}
+  style={{
+    width: "100%",
+    maxWidth: "1120px",
+    margin: "0 auto",
+  }}
+>
         <div
           style={{
             position: "fixed",
@@ -58,15 +61,10 @@ export default function PublicPageShell({
           }}
         >
           <button
-            onClick={toggleDarkMode}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 14,
-              border: "1px solid var(--card-border)",
-              cursor: "pointer",
-              fontWeight: 900,
-              background: "var(--card-bg)",
-              color: "var(--text-main)",
+  onClick={toggleDarkMode}
+  className={publicStyles.buttonSecondary}
+  style={{
+              
               backdropFilter: "blur(10px)",
               boxShadow: "var(--shadow-main)",
             }}
