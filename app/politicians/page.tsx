@@ -8,6 +8,7 @@ import PublicCard from "../../components/public/ui/PublicCard";
 import PublicButton from "../../components/public/ui/PublicButton";
 import PublicTag from "../../components/public/ui/PublicTag";
 import PublicInput from "@/components/public/ui/PublicInput";
+import PublicGrid from "@/components/public/ui/PublicGrid";
 
 type Item = {
   id: string;
@@ -236,7 +237,7 @@ export default function PoliticiansPage() {
 />
         </PublicCard>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <PublicGrid columns="3">
           {filteredPoliticians.map((p) => (
             <PublicCard
               key={p.slug}
@@ -297,7 +298,7 @@ export default function PoliticiansPage() {
               </div>
             </PublicCard>
           ))}
-        </div>
+        </PublicGrid>
       </section>
     </PublicPageShell>
   );
