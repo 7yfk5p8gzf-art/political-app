@@ -9,6 +9,7 @@ import PublicButton from "../../components/public/ui/PublicButton";
 import PublicTag from "../../components/public/ui/PublicTag";
 import PublicInput from "@/components/public/ui/PublicInput";
 import PublicGrid from "@/components/public/ui/PublicGrid";
+import PublicSection from "@/components/public/ui/PublicSection";
 
 type Item = {
   id: string;
@@ -194,8 +195,9 @@ export default function PoliticiansPage() {
   );
 
   return (
-    <PublicPageShell>
-      <section className="mx-auto max-w-7xl">
+    
+      
+  <div className="mx-auto max-w-7xl">
         <PublicCard className="mb-8 p-8 md:p-10">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
@@ -299,7 +301,8 @@ export default function PoliticiansPage() {
             </PublicCard>
           ))}
         </PublicGrid>
-      </section>
-    </PublicPageShell>
+      </div>
+      
+    
   );
 }
