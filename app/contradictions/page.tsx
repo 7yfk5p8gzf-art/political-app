@@ -674,27 +674,27 @@ function ContradictionCard({
       </div>
 
       <div style={compareGridStyle}>
-        <div className={publicStyles.cardSoft}>
-          <strong>{labels[lang].old}</strong>
-          <p>{item.old_statement || labels[lang].noOldStatement}</p>
-          <small className={publicStyles.mutedText}>
-            {item.old_date || labels[lang].unknownDate}
-          </small>
-        </div>
+  <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
+    <strong>{labels[lang].old}</strong>
+    <p>{item.old_statement || labels[lang].noOldStatement}</p>
+    <small className={publicStyles.mutedText}>
+      {item.old_date || labels[lang].unknownDate}
+    </small>
+  </PublicCard>
 
-        <div className={publicStyles.cardSoft}>
-          <strong>{labels[lang].now}</strong>
-          <p>{item.new_statement || labels[lang].noNewStatement}</p>
-          <small className={publicStyles.mutedText}>
-            {item.new_date || labels[lang].unknownDate}
-          </small>
-        </div>
-      </div>
+  <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
+    <strong>{labels[lang].now}</strong>
+    <p>{item.new_statement || labels[lang].noNewStatement}</p>
+    <small className={publicStyles.mutedText}>
+      {item.new_date || labels[lang].unknownDate}
+    </small>
+  </PublicCard>
+</div>
 
       {summary && (
-        <p className={publicStyles.cardSoft} style={{ marginTop: 16 }}>
-          🤖 {summary}
-        </p>
+        <PublicCard className="mt-4 bg-slate-50 shadow-none dark:bg-slate-900/60">
+  🤖 {summary}
+</PublicCard>
       )}
 
       <div style={footerStyle}>
