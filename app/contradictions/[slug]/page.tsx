@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import type { CSSProperties } from "react";
+import { useParams } from "next/navigation";
+
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
-import AiAnalysisCard from "@/components/public/AiAnalysisCard";
-import SourceCards from "@/components/public/SourceCards";
-import VoteSection from "@/components/public/VoteSection";
-import RelatedContradictions from "@/components/public/RelatedContradictions";
-import StatementCards from "@/components/public/StatementCards";
-import StatementTimeline from "@/components/public/StatementTimeline";
+
 import PublicPageShell from "@/components/public/PublicPageShell";
 import DetailHero from "@/components/public/detail/DetailHero";
 import DetailTopBar from "@/components/public/detail/DetailTopBar";
@@ -453,22 +449,10 @@ export default function ContradictionDetailPage() {
 </PublicPageShell>
 );
 }
-
-
-
 const containerStyle: CSSProperties = {
   maxWidth: 1120,
   margin: "0 auto",
 };
-
-const topRowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 14,
-  alignItems: "center",
-  marginBottom: 26,
-  flexWrap: "wrap",
-};;
 
 const backStyle: CSSProperties = {
   color: "#0f172a",
@@ -476,120 +460,17 @@ const backStyle: CSSProperties = {
   textDecoration: "none",
   fontSize: 15,
   opacity: 0.82,
-  transition: "opacity 0.2s ease",
 };
 
-const langSwitcherStyle: CSSProperties = {
-  display: "flex",
-  gap: 6,
-};
-
-const langButtonStyle: CSSProperties = {
-  padding: "8px 13px",
-  border: "1px solid rgba(148,163,184,0.35)",
-  background: "rgba(255,255,255,0.7)",
-  borderRadius: 12,
-  cursor: "pointer",
-  fontWeight: 900,
-  color: "#334155",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  transition: "all 0.2s ease",
-};
-
-const activeLangButtonStyle: CSSProperties = {
-  ...langButtonStyle,
-  background:
-    "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-  color: "white",
-  border: "1px solid rgba(255,255,255,0.18)",
-  boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
-};
-
-const heroStyle: CSSProperties = {
-  position: "relative",
-  overflow: "hidden",
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(248,250,252,0.82))",
-  border: "1px solid rgba(255,255,255,0.75)",
-  borderRadius: 28,
-  padding: 34,
-  marginBottom: 26,
-  boxShadow:
-    "0 24px 70px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
-  backdropFilter: "blur(18px)",
-  WebkitBackdropFilter: "blur(18px)",
-};
-
-const badgeRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 10,
-  marginBottom: 18,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const darkBadgeStyle: CSSProperties = {
-  background:
-    "linear-gradient(135deg, #111827 0%, #1e293b 50%, #334155 100%)",
-  color: "white",
-  padding: "8px 14px",
-  borderRadius: 999,
-  fontSize: 12,
-  letterSpacing: 0.6,
-  fontWeight: 900,
-  boxShadow: "0 10px 24px rgba(15,23,42,0.18)",
-};
-
-const lightBadgeStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.7)",
-  color: "#0f172a",
-  padding: "8px 14px",
-  borderRadius: 999,
-  fontSize: 12,
-  letterSpacing: 0.6,
-  fontWeight: 900,
-  border: "1px solid rgba(255,255,255,0.8)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-};
-
-const titleStyle: CSSProperties = {
-  fontSize: "clamp(34px, 5vw, 58px)",
-  lineHeight: 1.02,
-  letterSpacing: "-1.8px",
-  margin: "0 0 14px",
-  fontWeight: 950,
-};
-
-const leadStyle: CSSProperties = {
-  fontSize: 18,
-  lineHeight: 1.65,
-  color: "#475569",
-  maxWidth: 860,
-  margin: "0 0 18px",
-};
-
-
-
-const videoLabelStyle: CSSProperties = {
-  marginTop: 14,
-  marginBottom: 8,
-  fontWeight: 900,
-  color: "#334155",
-  fontSize: 14,
-};
-
-const viewCounterStyle: CSSProperties = {
-  marginTop: 14,
-  fontWeight: 800,
-  color: "#64748b",
-  fontSize: 14,
-  letterSpacing: 0.2,
-};
 const emptyCardStyle: CSSProperties = {
   background: "white",
   border: "1px solid #dbe0e6",
   borderRadius: 18,
   padding: 28,
 };
+
+
+
+
+
+
