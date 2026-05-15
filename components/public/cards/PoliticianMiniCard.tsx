@@ -26,7 +26,7 @@ export default function PoliticianMiniCard({
           <PublicTag>👍 {votes} {voteLabel}</PublicTag>
         </div>
 
-        <h3 className="mt-4 text-2xl font-black text-slate-950 dark:text-slate-50">
+        <h3 className="mt-4 text-2xl font-black text-black dark:text-white">
           {politician || "Unknown"}
         </h3>
 

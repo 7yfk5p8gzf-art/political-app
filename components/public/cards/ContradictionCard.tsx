@@ -85,7 +85,7 @@ export default function ContradictionCard({
             </PublicTag>
           </div>
 
-          <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-950 dark:text-slate-50">
+          <h2 className="mt-4 text-2xl font-black tracking-tight text-black dark:text-white">
             {item.politician ? (
               <a
                 href={`/politicians/${slugify(item.politician)}`}
