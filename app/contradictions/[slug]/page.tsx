@@ -15,6 +15,7 @@ import StatementTimeline from "@/components/public/StatementTimeline";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import DetailHero from "@/components/public/detail/DetailHero";
 import DetailTopBar from "@/components/public/detail/DetailTopBar";
+import DetailTimeline from "@/components/public/detail/DetailTimeline";
 
 type Item = {
   id: string;
@@ -401,7 +402,9 @@ export default function ContradictionDetailPage() {
 
         
 
-        <StatementTimeline
+        <DetailTimeline
+  oldLabel={labels[lang].oldTimeline}
+  newLabel={labels[lang].newTimeline}
   oldDate={item.old_date}
   newDate={item.new_date}
   oldStatement={item.old_statement}
