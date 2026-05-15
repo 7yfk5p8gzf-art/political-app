@@ -130,10 +130,22 @@ export default function ContradictionCard({
       </div>
 
       {summary && (
-        <PublicCard className="mt-4 bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
-          🤖 {summary}
-        </PublicCard>
-      )}
+  <PublicCard className="mt-4 bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
+    <div className="flex items-start gap-3">
+      <span className="mt-1 text-lg">🤖</span>
+
+      <div>
+        <div className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          AI Analysis
+        </div>
+
+        <p className="line-clamp-4 text-sm leading-7">
+          {summary}
+        </p>
+      </div>
+    </div>
+  </PublicCard>
+)}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-400">
         <span>
