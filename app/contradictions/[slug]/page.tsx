@@ -19,6 +19,7 @@ import DetailTimeline from "@/components/public/detail/DetailTimeline";
 import DetailStatementCards from "@/components/public/detail/DetailStatementCards";
 import DetailAiAnalysis from "@/components/public/detail/DetailAiAnalysis";
 import DetailSources from "@/components/public/detail/DetailSources";
+import DetailVotes from "@/components/public/detail/DetailVotes";
 
 type Item = {
   id: string;
@@ -438,7 +439,7 @@ export default function ContradictionDetailPage() {
   items={relatedItems}
 />
 
-<VoteSection
+<DetailVotes
   yesPercent={yesPercent}
   noPercent={noPercent}
   totalVotes={totalVotes}
