@@ -7,6 +7,7 @@ import PublicPageShell from "@/components/public/PublicPageShell";
 import PublicCard from "../../components/public/ui/PublicCard";
 import PublicButton from "../../components/public/ui/PublicButton";
 import PublicTag from "../../components/public/ui/PublicTag";
+import PublicInput from "@/components/public/ui/PublicInput";
 
 type Item = {
   id: string;
@@ -228,12 +229,11 @@ export default function PoliticiansPage() {
             </div>
           </div>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={labels[lang].search}
-            className="mt-8 w-full rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-base outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-slate-950/50 dark:text-white"
-          />
+          <PublicInput
+  value={search}
+  onChange={setSearch}
+  placeholder={labels[lang].search}
+/>
         </PublicCard>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
