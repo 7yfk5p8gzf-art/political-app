@@ -9,6 +9,7 @@ import { publicStyles } from "@/lib/publicStyles";
 import PoliticianMiniCard from "../../components/public/cards/PoliticianMiniCard";
 import PublicHero from "../../components/public/layout/PublicHero";
 import ContradictionCard from "../../components/public/cards/ContradictionCard";
+import SpotlightCard from "../../components/public/cards/SpotlightCard";
 
 type Item = {
   id: string;
@@ -440,43 +441,32 @@ const mostVotedItems = [...items]
         </div>
       </section>
       {spotlightItem && (
-  <section style={spotlightStyle}>
-    <div style={spotlightBadgeStyle}>🔥 Spotlight</div>
-
-    <h2 style={spotlightTitleStyle}>
-      {spotlightItem.politician || labels[lang].unknown} –{" "}
-      {getTopic(spotlightItem, lang) || labels[lang].topic}
-    </h2>
-
-    <div style={compareGridStyle}>
-      <div style={oldBoxStyle}>
-        <strong>{labels[lang].old}</strong>
-        <p>{spotlightItem.old_statement || labels[lang].noOldStatement}</p>
-        <small>{spotlightItem.old_date || labels[lang].unknownDate}</small>
-      </div>
-
-      <div style={newBoxStyle}>
-        <strong>{labels[lang].now}</strong>
-        <p>{spotlightItem.new_statement || labels[lang].noNewStatement}</p>
-        <small>{spotlightItem.new_date || labels[lang].unknownDate}</small>
-      </div>
-    </div>
-
-    <div style={spotlightFooterStyle}>
-      <span>
-        👍 {yesPercent(spotlightItem.id)}% · {voteCount(spotlightItem.id)}{" "}
-        {labels[lang].vote}
-      </span>
-
-      <a
-        href={`/contradictions/${spotlightItem.slug}`}
-        style={openButtonStyle}
-      >
-        {labels[lang].open} →
-      </a>
-    </div>
-  </section>
+  <SpotlightCard
+    title={`${spotlightItem.politician || labels[lang].unknown} – ${
+      getTopic(spotlightItem, lang) || labels[lang].topic
+    }`}
+    oldLabel={labels[lang].old}
+    newLabel={labels[lang].now}
+    oldText={
+      spotlightItem.old_statement || labels[lang].noOldStatement
+    }
+    newText={
+      spotlightItem.new_statement || labels[lang].noNewStatement
+    }
+    oldDate={
+      spotlightItem.old_date || labels[lang].unknownDate
+    }
+    newDate={
+      spotlightItem.new_date || labels[lang].unknownDate
+    }
+    voteText={`👍 ${yesPercent(spotlightItem.id)}% · ${voteCount(
+      spotlightItem.id
+    )} ${labels[lang].vote}`}
+    openLabel={labels[lang].open}
+    href={`/contradictions/${spotlightItem.slug}`}
+  />
 )}
+
 
       {politicians.length > 0 && (
         <section style={sectionStyle}>
