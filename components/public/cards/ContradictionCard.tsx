@@ -69,7 +69,7 @@ export default function ContradictionCard({
     slugify(`${item.politician || "case"}-${item.topic || "topic"}`);
 
   return (
-    <PublicCard className="relative overflow-hidden">
+    <PublicCard className="relative overflow-hidden p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap gap-2">
@@ -85,7 +85,7 @@ export default function ContradictionCard({
             </PublicTag>
           </div>
 
-          <h2 className="mt-4 text-2xl font-black tracking-tight text-black dark:text-white">
+          <h2 className="mt-5 text-2xl font-black tracking-tight text-black dark:text-white">
             {item.politician ? (
               <a
                 href={`/politicians/${slugify(item.politician)}`}
@@ -96,7 +96,9 @@ export default function ContradictionCard({
             ) : (
               labels.unknown
             )}{" "}
-            – {topicLabel || labels.topic}
+            <span className="text-slate-500 dark:text-slate-400">
+              – {topicLabel || labels.topic}
+            </span>
           </h2>
         </div>
 
@@ -105,30 +107,30 @@ export default function ContradictionCard({
         </PublicButton>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <PublicCard className="bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
           <strong>{labels.old}</strong>
           <p className="mt-2 text-sm leading-6">
             {item.old_statement || labels.noOldStatement}
           </p>
-          <small className="text-slate-600 dark:text-slate-400">
+          <small className="text-slate-500 dark:text-slate-400">
             {item.old_date || labels.unknownDate}
           </small>
         </PublicCard>
 
-        <PublicCard className="bg-slate-50 shadow-none dark:bg-slate-900/60">
+        <PublicCard className="bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
           <strong>{labels.now}</strong>
           <p className="mt-2 text-sm leading-6">
             {item.new_statement || labels.noNewStatement}
           </p>
-          <small className="text-slate-600 dark:text-slate-400">
+          <small className="text-slate-500 dark:text-slate-400">
             {item.new_date || labels.unknownDate}
           </small>
         </PublicCard>
       </div>
 
       {summary && (
-        <PublicCard className="mt-4 bg-slate-50 shadow-none dark:bg-slate-900/60">
+        <PublicCard className="mt-4 bg-slate-100 text-slate-950 shadow-none dark:bg-slate-800 dark:text-slate-50">
           🤖 {summary}
         </PublicCard>
       )}

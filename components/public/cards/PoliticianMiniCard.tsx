@@ -20,19 +20,23 @@ export default function PoliticianMiniCard({
 }: Props) {
   return (
     <a href={href} className="block no-underline">
-      <PublicCard className="hover:-translate-y-0.5 transition-transform">
+      <PublicCard className="min-h-[150px] p-6 transition-all hover:-translate-y-0.5 hover:shadow-md">
         <div className="flex flex-wrap gap-2">
           <PublicTag>{topic}</PublicTag>
-          <PublicTag>👍 {votes} {voteLabel}</PublicTag>
+          <PublicTag>
+            👍 {votes} {voteLabel}
+          </PublicTag>
         </div>
 
-        <h3 className="mt-4 text-2xl font-black text-black dark:text-white">
+        <h3 className="mt-5 text-2xl font-black tracking-tight text-black dark:text-white">
           {politician || "Unknown"}
         </h3>
 
-        <p className="mt-2 text-slate-600 dark:text-slate-400">
-          {statement ? `${statement.slice(0, 120)}...` : ""}
-        </p>
+        {statement && (
+          <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">
+            {statement.slice(0, 140)}...
+          </p>
+        )}
       </PublicCard>
     </a>
   );
