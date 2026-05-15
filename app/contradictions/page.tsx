@@ -5,6 +5,10 @@ import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import PublicPageShell from "@/components/public/PublicPageShell";
+import { publicStyles } from "@/lib/publicStyles";
+import PublicCard from "../../components/public/ui/PublicCard";
+import PublicButton from "../../components/public/ui/PublicButton";
+import PublicTag from "../../components/public/ui/PublicTag";
 
 type Item = {
   id: string;
@@ -561,10 +565,11 @@ const mostVotedItems = [...items]
   <div style={gridStyle}>
     {mostVotedItems.map((item) => (
       <a
-        key={item.id}
-        href={`/contradictions/${item.slug}`}
-        style={cardStyle}
-      >
+  key={item.id}
+  href={`/contradictions/${item.slug}`}
+  className={publicStyles.card}
+  style={cardStyle}
+>
         <div style={tagRowStyle}>
           <span style={darkTagStyle}>
             {getTopic(item, lang) || labels[lang].noTopic}
@@ -621,23 +626,23 @@ function ContradictionCard({
   const summary = getAiSummary(item, lang);
 
   return (
-    <article style={cardStyle}>
+    <PublicCard className="relative overflow-hidden">
+  
       <div style={cardTopStyle}>
         <div>
           <div style={tagRowStyle}>
-            <a
-  href={`/topics/${slugify(getTopic(item, lang) || item.topic || "")}`}
-  style={{
-    ...darkTagLinkStyle,
-    border: "1px solid rgba(255,255,255,0.15)",
-  }}
-  title="Open topic page"
+            <PublicTag
+  href={`/topics/${slugify(
+    getTopic(item, lang) || item.topic || ""
+  )}`}
 >
   {getTopic(item, lang) || labels[lang].noTopic} →
-</a>
+</PublicTag>
 
             {item.language && (
-              <span style={lightTagStyle}>{item.language.toUpperCase()}</span>
+              <PublicTag>
+  {item.language.toUpperCase()}
+</PublicTag>
             )}
 
             <span style={voteTagStyle}>
@@ -663,34 +668,42 @@ function ContradictionCard({
           </h2>
         </div>
 
-        <a href={`/contradictions/${cardSlug}`} style={openButtonStyle}>
-          {labels[lang].open} →
-        </a>
+        <PublicButton href={`/contradictions/${cardSlug}`}>
+  {labels[lang].open} →
+</PublicButton>
       </div>
 
       <div style={compareGridStyle}>
-        <div style={oldBoxStyle}>
+        <div className={publicStyles.cardSoft}>
           <strong>{labels[lang].old}</strong>
           <p>{item.old_statement || labels[lang].noOldStatement}</p>
-          <small>{item.old_date || labels[lang].unknownDate}</small>
+          <small className={publicStyles.mutedText}>
+            {item.old_date || labels[lang].unknownDate}
+          </small>
         </div>
 
-        <div style={newBoxStyle}>
+        <div className={publicStyles.cardSoft}>
           <strong>{labels[lang].now}</strong>
           <p>{item.new_statement || labels[lang].noNewStatement}</p>
-          <small>{item.new_date || labels[lang].unknownDate}</small>
+          <small className={publicStyles.mutedText}>
+            {item.new_date || labels[lang].unknownDate}
+          </small>
         </div>
       </div>
 
-      {summary && <p style={summaryStyle}>🤖 {summary}</p>}
+      {summary && (
+        <p className={publicStyles.cardSoft} style={{ marginTop: 16 }}>
+          🤖 {summary}
+        </p>
+      )}
 
       <div style={footerStyle}>
         <span>
-  {labels[lang].published}:{" "}
-  {item.published_at ? item.published_at.slice(0, 10) : "-"}
-</span>
+          {labels[lang].published}:{" "}
+          {item.published_at ? item.published_at.slice(0, 10) : "-"}
+        </span>
 
-<span>👀 {item.views || 0}</span>
+        <span>👀 {item.views || 0}</span>
 
         <div style={{ display: "flex", gap: 10 }}>
           {item.old_source && (
@@ -706,13 +719,15 @@ function ContradictionCard({
           )}
         </div>
       </div>
-    </article>
+    </PublicCard>
   );
 }
 
 
 
-const topBarStyle: CSSProperties = {
+const topBarStyle: CSSProperties ={ 
+
+
   
   maxWidth: 1180,
   margin: "0 auto 18px",
@@ -723,8 +738,8 @@ const topBarStyle: CSSProperties = {
   alignItems: "center",
   padding: "12px 14px",
   borderRadius: 22,
-  background: "rgba(255,255,255,0.62)",
-  border: "1px solid rgba(255,255,255,0.72)",
+  background: "var(--card-bg)",
+border: "1px solid var(--card-border)",
   boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
   backdropFilter: "blur(14px)",
   WebkitBackdropFilter: "blur(14px)",
@@ -753,6 +768,7 @@ const heroStyle: CSSProperties = {
     : "1.4fr 0.8fr",
   gap: 22,
   background: "var(--hero-bg)",
+  color: "var(--text-main)",
   
   border: "1px solid var(--card-border)",
   borderRadius: 34,
@@ -819,7 +835,8 @@ const searchStyle: CSSProperties = {
   borderRadius: 18,
   fontSize: 16,
   outline: "none",
-  background: "rgba(255,255,255,0.78)",
+  background: "var(--card-bg)",
+color: "var(--text-main)",
   boxShadow: "0 14px 35px rgba(15,23,42,0.06)",
   backdropFilter: "blur(10px)",
   WebkitBackdropFilter: "blur(10px)",
@@ -919,16 +936,6 @@ const gridStyle: CSSProperties = {
 const cardStyle: CSSProperties = {
   position: "relative",
   overflow: "hidden",
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))",
-  border: "1px solid rgba(255,255,255,0.72)",
-  borderRadius: 28,
-  padding: 26,
-  boxShadow:
-    "0 18px 50px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
-  transition: "all 0.22s ease",
 };
 
 const cardTopStyle: CSSProperties = {

@@ -1,6 +1,6 @@
 export const publicStyles = {
   page:
-    "min-h-screen bg-slate-50 text-slate-950 transition-colors dark:bg-slate-950 dark:text-slate-50",
+  "min-h-screen transition-colors",
 
   shell:
     "mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8",

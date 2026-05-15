@@ -18,8 +18,10 @@ export default function PublicPageShell({
     setDarkMode(enabled);
 
     if (enabled) {
-      document.documentElement.classList.add("dark");
-    }
+  document.documentElement.classList.add("dark");
+} else {
+  document.documentElement.classList.remove("dark");
+}
   }, []);
 
   function toggleDarkMode() {
@@ -38,12 +40,14 @@ export default function PublicPageShell({
 
   return (
     <main
-    className={publicStyles.page}
-      style={{
-        minHeight: "100vh",
-        padding: "32px 16px 64px",
-      }}
-    >
+  className={publicStyles.page}
+  style={{
+    minHeight: "100vh",
+    padding: "32px 16px 64px",
+    background: "var(--page-bg)",
+    color: "var(--text-main)",
+  }}
+>
       <div
   className={publicStyles.shell}
   style={{
