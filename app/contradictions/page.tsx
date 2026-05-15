@@ -9,6 +9,7 @@ import { publicStyles } from "@/lib/publicStyles";
 import PublicCard from "../../components/public/ui/PublicCard";
 import PublicButton from "../../components/public/ui/PublicButton";
 import PublicTag from "../../components/public/ui/PublicTag";
+import ContradictionCard from "../../components/public/cards/ContradictionCard";
 
 type Item = {
   id: string;
@@ -594,13 +595,9 @@ const mostVotedItems = [...items]
 
         <div style={gridStyle}>
           {visibleItems.map((item) => (
-            <ContradictionCard
-              key={item.id}
-              item={item}
-              voteCount={voteCount(item.id)}
-              yesPercent={yesPercent(item.id)}
-              lang={lang}
-            />
+            <ContradictionCard />
+              
+            
           ))}
         </div>
       </section>
@@ -608,7 +605,7 @@ const mostVotedItems = [...items]
   );
 }
 
-function ContradictionCard({
+function OldContradictionCard({
   item,
   voteCount,
   yesPercent,
