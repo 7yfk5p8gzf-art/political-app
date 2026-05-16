@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { createSlug } from "@/lib/slug";
 
 type Contradiction = {
   id: string;
@@ -107,15 +108,10 @@ export default function EditContradictionPage() {
   async function generateSlug() {
   if (!item) return;
 
-  const slug = [
-    item.politician,
-    item.topic,
-  ]
-    .filter(Boolean)
-    .join("-")
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-_]/g, "");
+  const slug = createSlug([
+  item.politician,
+  item.topic,
+]);
 
   setItem({
     ...item,

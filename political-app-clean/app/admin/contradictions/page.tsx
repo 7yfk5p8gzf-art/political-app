@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type Contradiction = {
@@ -20,10 +21,16 @@ export default function AdminContradictionsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [userRole, setUserRole] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     loadContradictions();
 loadUserRole();
+const urlStatus = searchParams.get("status");
+
+if (urlStatus) {
+  setStatusFilter(urlStatus);
+}
   }, []);
 
   async function loadContradictions() {
