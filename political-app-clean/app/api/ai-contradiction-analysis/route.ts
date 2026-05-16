@@ -22,10 +22,26 @@ export async function POST(req: Request) {
         model: "gpt-5.3-chat-latest",
         input: [
           {
-            role: "system",
-            content:
-              "Te politikai ellentmondásokat elemzel. Rövid, semleges, admin szerkesztői elemzést írj magyarul. Ne találj ki tényeket.",
-          },
+  role: "system",
+  content: `Te politikai ellentmondásokat elemzel.
+
+Válaszolj JSON formátumban:
+
+{
+  "analysis": "...",
+  "strength": "weak",
+  "timeline_hint": "2017 NATO support → 2026 NATO criticism"
+}
+
+A strength csak ez lehet:
+- weak
+- medium
+- strong
+
+Az analysis rövid, semleges szerkesztői elemzés legyen magyarul.
+A timeline_hint rövid idővonal összefoglaló legyen.
+Ne találj ki tényeket.`,
+},
           {
             role: "user",
             content: `
@@ -38,7 +54,7 @@ ${old_statement}
 Új állítás:
 ${new_statement}
 
-Írj 3-5 mondatos elemzést arról, hogy van-e lehetséges ellentmondás, mennyire erős, és mire kell figyelni publikálás előtt.
+Írj rövid elemzést és strength értéket.
 `,
           },
         ],
@@ -46,6 +62,10 @@ ${new_statement}
     });
 
     if (!res.ok) {
+      const errorText = await res.text();
+
+      console.error("OpenAI error:", errorText);
+
       return NextResponse.json(
         { error: "AI request failed" },
         { status: 500 }
@@ -54,24 +74,39 @@ ${new_statement}
 
     const data = await res.json();
 
-    const analysis =
-  data.output_text ||
-  data.output
-    ?.flatMap((item: any) => item.content || [])
-    ?.map((content: any) => {
-      if (typeof content === "string") return content;
-      return content.text || content.value || "";
-    })
-    ?.join("\n")
-    ?.trim() ||
-  data.output
-    ?.map((item: any) => item.text || "")
-    ?.join("\n")
-    ?.trim() ||
-  "Nem sikerült AI elemzést készíteni.";
-  console.log("AI analysis result:", analysis);
+    const raw =
+      data.output_text ||
+      data.output
+        ?.flatMap((item: any) => item.content || [])
+        ?.map((content: any) => {
+          if (typeof content === "string") return content;
 
-    return NextResponse.json({ analysis });
+          return content.text || content.value || "";
+        })
+        ?.join("\n")
+        ?.trim() ||
+      "";
+
+    let analysis = "Nem sikerült AI elemzést készíteni.";
+    let strength = "weak";
+    let timeline_hint = "";
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      analysis = parsed.analysis || analysis;
+      strength = parsed.strength || strength;
+      timeline_hint =
+  parsed.timeline_hint || timeline_hint;
+    } catch {
+      analysis = raw || analysis;
+    }
+
+    return NextResponse.json({
+      analysis,
+      strength,
+      timeline_hint,
+    });
   } catch (error) {
     console.error(error);
 

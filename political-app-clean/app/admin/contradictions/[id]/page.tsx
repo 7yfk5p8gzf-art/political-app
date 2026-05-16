@@ -14,6 +14,7 @@ type Contradiction = {
   status: string | null;
   ai_summary: string | null;
   contradiction_strength: string | null;
+  timeline_hint: string | null;
 };
 
 export default function EditContradictionPage() {
@@ -63,6 +64,7 @@ export default function EditContradictionPage() {
         status: item.status,
         ai_summary: item.ai_summary,
         contradiction_strength: item.contradiction_strength,
+        timeline_hint: item.timeline_hint,
       })
       .eq("id", item.id);
 
@@ -135,9 +137,11 @@ async function generateAiAnalysis() {
     }
 
     setItem({
-      ...item,
-      ai_summary: data.analysis,
-    });
+  ...item,
+  ai_summary: data.analysis,
+  contradiction_strength: data.strength || "weak",
+  timeline_hint: data.timeline_hint || "",
+});
   } catch (error) {
     console.error(error);
     alert("AI analysis failed");
@@ -207,6 +211,18 @@ async function generateAiAnalysis() {
   }
   placeholder="AI analysis"
   rows={6}
+  className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+/>
+
+<input
+  value={item.timeline_hint || ""}
+  onChange={(e) =>
+    setItem({
+      ...item,
+      timeline_hint: e.target.value,
+    })
+  }
+  placeholder="Timeline hint"
   className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
 />
 <select

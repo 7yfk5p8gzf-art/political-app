@@ -19,9 +19,11 @@ export default function AdminContradictionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     loadContradictions();
+loadUserRole();
   }, []);
 
   async function loadContradictions() {
@@ -29,8 +31,9 @@ export default function AdminContradictionsPage() {
 
     const { data, error } = await supabase
       .from("contradictions")
-      .select("*")
-      .order("created_at", { ascending: false });
+.select("*")
+.is("deleted_at", null)
+.order("created_at", { ascending: false });
 
     if (error) {
       console.error(error);
@@ -55,6 +58,23 @@ export default function AdminContradictionsPage() {
 
   await loadContradictions();
 }
+async function loadUserRole() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  setUserRole(data?.role || null);
+}
+const canPublish =
+  userRole === "admin" || userRole === "main_admin" || userRole === "superadmin";
   const filteredItems = items.filter((item) => {
   const text = [
     item.slug,
@@ -74,6 +94,28 @@ const matchesStatus =
 
 return matchesSearch && matchesStatus;
 });
+async function deleteContradiction(id: string) {
+  const confirmed = confirm(
+    "Biztos törölni akarod ezt a contradictiont?"
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from("contradictions")
+    .update({
+      deleted_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    alert("Delete failed");
+    return;
+  }
+
+  await loadContradictions();
+}
 
   return (
     <main className="min-h-screen bg-black px-6 py-14 text-white">
@@ -87,6 +129,9 @@ return matchesSearch && matchesStatus;
         <p className="mt-3 text-neutral-400">
           Draft, review és publish folyamat a politikai ellentmondásokhoz.
         </p>
+        <div className="mt-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm text-neutral-300">
+  Current role: {userRole || "unknown"}
+</div>
         <input
   value={search}
   onChange={(e) => setSearch(e.target.value)}
@@ -172,18 +217,31 @@ return matchesSearch && matchesStatus;
     Review
   </button>
 
+  {canPublish && (
   <button
     onClick={() => updateStatus(item.id, "published")}
     className="rounded-full bg-green-500/20 px-4 py-2 text-sm text-green-200"
   >
     Publish
+  </button>
+)}
     <a
   href={`/admin/contradictions/${item.id}`}
   className="rounded-full bg-blue-500/20 px-4 py-2 text-sm text-blue-200"
 >
   Edit
 </a>
+
+{canPublish && (
+  <button
+    onClick={() => deleteContradiction(item.id)}
+    className="rounded-full bg-red-500/20 px-4 py-2 text-sm text-red-200"
+  >
+    Delete
   </button>
+)}
+
+  
 </div>
             </article>
           ))}
