@@ -12,6 +12,8 @@ type Contradiction = {
   old_statement: string | null;
   new_statement: string | null;
   status: string | null;
+  ai_summary: string | null;
+  contradiction_strength: string | null;
 };
 
 export default function EditContradictionPage() {
@@ -59,6 +61,8 @@ export default function EditContradictionPage() {
         old_statement: item.old_statement,
         new_statement: item.new_statement,
         status: item.status,
+        ai_summary: item.ai_summary,
+        contradiction_strength: item.contradiction_strength,
       })
       .eq("id", item.id);
 
@@ -105,6 +109,39 @@ export default function EditContradictionPage() {
     ...item,
     slug,
   });
+}
+async function generateAiAnalysis() {
+  if (!item) return;
+
+  try {
+    const res = await fetch("/api/ai-contradiction-analysis", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        politician: item.politician,
+        topic: item.topic,
+        old_statement: item.old_statement,
+        new_statement: item.new_statement,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("AI analysis failed");
+      return;
+    }
+
+    setItem({
+      ...item,
+      ai_summary: data.analysis,
+    });
+  } catch (error) {
+    console.error(error);
+    alert("AI analysis failed");
+  }
 }
 
   return (
@@ -163,6 +200,29 @@ export default function EditContradictionPage() {
             rows={5}
             className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
           />
+          <textarea
+  value={item.ai_summary || ""}
+  onChange={(e) =>
+    setItem({ ...item, ai_summary: e.target.value })
+  }
+  placeholder="AI analysis"
+  rows={6}
+  className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+/>
+<select
+  value={item.contradiction_strength || "weak"}
+  onChange={(e) =>
+    setItem({
+      ...item,
+      contradiction_strength: e.target.value,
+    })
+  }
+  className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+>
+  <option value="weak">weak</option>
+  <option value="medium">medium</option>
+  <option value="strong">strong</option>
+</select>
 
           <select
             value={item.status || "draft"}
@@ -173,6 +233,12 @@ export default function EditContradictionPage() {
             <option value="review">review</option>
             <option value="published">published</option>
           </select>
+          <button
+  onClick={generateAiAnalysis}
+  className="rounded-full bg-purple-500/20 px-6 py-3 font-bold text-purple-200"
+>
+  Generate AI analysis
+</button>
           <button
   onClick={generateSlug}
   className="rounded-full bg-blue-500/20 px-6 py-3 font-bold text-blue-200"
