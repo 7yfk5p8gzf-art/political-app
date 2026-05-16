@@ -65,6 +65,12 @@ async function saveSource(item: SearchResult) {
       </p>
 
       <h1 className="mt-3 text-4xl font-bold">
+        <a
+  href="/admin"
+  className="mt-5 inline-block rounded-full bg-white/10 px-4 py-2 text-sm text-white"
+>
+  ← Back to Admin Dashboard
+</a>
         AI Research Workspace
       </h1>
 

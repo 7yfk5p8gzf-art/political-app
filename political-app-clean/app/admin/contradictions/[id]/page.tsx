@@ -16,6 +16,14 @@ type Contradiction = {
   contradiction_strength: string | null;
   timeline_hint: string | null;
 };
+type RelatedContradiction = {
+  id: string;
+  slug: string | null;
+  politician: string | null;
+  topic: string | null;
+  contradiction_strength: string | null;
+  status: string | null;
+};
 
 export default function EditContradictionPage() {
   const params = useParams();
@@ -24,6 +32,7 @@ export default function EditContradictionPage() {
   const [item, setItem] = useState<Contradiction | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [relatedItems, setRelatedItems] = useState<RelatedContradiction[]>([]);
 
   useEffect(() => {
     loadItem();
@@ -39,11 +48,12 @@ export default function EditContradictionPage() {
       .single();
 
     if (error) {
-      console.error(error);
-      setItem(null);
-    } else {
-      setItem(data);
-    }
+  console.error(error);
+  setItem(null);
+} else {
+  setItem(data);
+  await loadRelatedItems(data);
+}
 
     setLoading(false);
   }
@@ -146,6 +156,27 @@ async function generateAiAnalysis() {
     console.error(error);
     alert("AI analysis failed");
   }
+}
+async function loadRelatedItems(current: Contradiction) {
+  const { data, error } = await supabase
+    .from("contradictions")
+    .select("id, slug, politician, topic, contradiction_strength, status")
+    .neq("id", current.id)
+    .is("deleted_at", null)
+    .or(
+      `politician.eq.${current.politician || ""},topic.eq.${
+        current.topic || ""
+      }`
+    )
+    .limit(5);
+
+  if (error) {
+    console.error(error);
+    setRelatedItems([]);
+    return;
+  }
+
+  setRelatedItems(data || []);
 }
 
   return (
@@ -269,6 +300,41 @@ async function generateAiAnalysis() {
           >
             {saving ? "Saving..." : "Save changes"}
           </button>
+          {relatedItems.length > 0 && (
+  <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.06] p-6">
+    <p className="mb-3 text-xs uppercase tracking-[0.3em] text-neutral-500">
+      Related contradictions
+    </p>
+
+    <div className="space-y-3">
+      {relatedItems.map((related) => (
+        <a
+          key={related.id}
+          href={`/admin/contradictions/${related.id}`}
+          className="block rounded-2xl border border-white/10 bg-black/40 p-4 hover:bg-white/10"
+        >
+          <div className="mb-2 flex flex-wrap gap-2">
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase">
+              {related.status || "draft"}
+            </span>
+
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase">
+              {related.contradiction_strength || "weak"}
+            </span>
+          </div>
+
+          <p className="font-semibold">
+            {related.slug || "Untitled contradiction"}
+          </p>
+
+          <p className="mt-1 text-sm text-neutral-400">
+            {related.politician || "Unknown"} · {related.topic || "No topic"}
+          </p>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
         </div>
       </div>
     </main>
