@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AdminShell from "@/components/admin/AdminShell";
 
 type Source = {
   id: string;
@@ -38,7 +39,7 @@ export default function EditSourcePage() {
       .single();
 
     if (error) {
-      console.error(error);
+      console.error("Source load error:", error);
       setSource(null);
     } else {
       setSource(data);
@@ -69,7 +70,7 @@ export default function EditSourcePage() {
     setSaving(false);
 
     if (error) {
-      console.error(error);
+      console.error("Source save error:", error);
       alert("Save failed");
       return;
     }
@@ -79,126 +80,117 @@ export default function EditSourcePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black px-6 py-14 text-white">
-        Loading...
-      </main>
+      <AdminShell eyebrow="Edit Source" title="Loading source...">
+        <p className="mt-10 text-neutral-400">Loading...</p>
+      </AdminShell>
     );
   }
 
   if (!source) {
     return (
-      <main className="min-h-screen bg-black px-6 py-14 text-white">
-        Source not found.
-      </main>
+      <AdminShell eyebrow="Edit Source" title="Source not found">
+        <p className="mt-10 text-neutral-400">Source not found.</p>
+      </AdminShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-14 text-white">
-      <div className="mx-auto max-w-4xl">
-        <a
-          href="/admin/sources"
-          className="rounded-full bg-white/10 px-4 py-2 text-sm text-white"
-        >
-          ← Back to sources
-        </a>
+    <AdminShell
+      eyebrow="Edit Source"
+      title="Edit source"
+      description="Mentett cikk vagy videó szerkesztése."
+    >
+      <div className="mt-10 space-y-5">
+        <input
+          value={source.title || ""}
+          onChange={(e) =>
+            setSource({ ...source, title: e.target.value })
+          }
+          placeholder="Title"
+          className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+        />
 
-        <p className="mt-8 mb-3 text-xs uppercase tracking-[0.35em] text-neutral-500">
-          Edit Source
-        </p>
+        <textarea
+          value={source.summary || ""}
+          onChange={(e) =>
+            setSource({ ...source, summary: e.target.value })
+          }
+          placeholder="Summary"
+          rows={6}
+          className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+        />
 
-        <h1 className="text-4xl font-bold">Edit source</h1>
+        <input
+          value={source.url || ""}
+          onChange={(e) =>
+            setSource({ ...source, url: e.target.value })
+          }
+          placeholder="URL"
+          className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+        />
 
-        <div className="mt-10 space-y-5">
+        <div className="grid gap-5 md:grid-cols-2">
           <input
-            value={source.title || ""}
+            value={source.politician || ""}
             onChange={(e) =>
-              setSource({ ...source, title: e.target.value })
+              setSource({ ...source, politician: e.target.value })
             }
-            placeholder="Title"
-            className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-          />
-
-          <textarea
-            value={source.summary || ""}
-            onChange={(e) =>
-              setSource({ ...source, summary: e.target.value })
-            }
-            placeholder="Summary"
-            rows={6}
+            placeholder="Politician"
             className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
           />
 
           <input
-            value={source.url || ""}
+            value={source.topic || ""}
             onChange={(e) =>
-              setSource({ ...source, url: e.target.value })
+              setSource({ ...source, topic: e.target.value })
             }
-            placeholder="URL"
+            placeholder="Topic"
+            className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+          />
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          <input
+            value={source.type || ""}
+            onChange={(e) =>
+              setSource({ ...source, type: e.target.value })
+            }
+            placeholder="Type"
             className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
           />
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <input
-              value={source.politician || ""}
-              onChange={(e) =>
-                setSource({ ...source, politician: e.target.value })
-              }
-              placeholder="Politician"
-              className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-            />
+          <input
+            value={source.timestamp || ""}
+            onChange={(e) =>
+              setSource({ ...source, timestamp: e.target.value })
+            }
+            placeholder="Timestamp"
+            className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+          />
 
-            <input
-              value={source.topic || ""}
-              onChange={(e) =>
-                setSource({ ...source, topic: e.target.value })
-              }
-              placeholder="Topic"
-              className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-            />
-          </div>
+          <input
+            value={source.video_id || ""}
+            onChange={(e) =>
+              setSource({ ...source, video_id: e.target.value })
+            }
+            placeholder="Video ID"
+            className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+          />
+        </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            <input
-              value={source.type || ""}
-              onChange={(e) =>
-                setSource({ ...source, type: e.target.value })
-              }
-              placeholder="Type"
-              className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-            />
+        {source.video_id && (
+          <iframe
+            width="100%"
+            height="315"
+            src={`https://www.youtube.com/embed/${source.video_id}`}
+            title={source.title || "Video source"}
+            frameBorder="0"
+            allowFullScreen
+            className="rounded-2xl"
+          />
+        )}
 
-            <input
-              value={source.timestamp || ""}
-              onChange={(e) =>
-                setSource({ ...source, timestamp: e.target.value })
-              }
-              placeholder="Timestamp"
-              className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-            />
-
-            <input
-              value={source.video_id || ""}
-              onChange={(e) =>
-                setSource({ ...source, video_id: e.target.value })
-              }
-              placeholder="Video ID"
-              className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-            />
-          </div>
-
-          {source.video_id && (
-            <iframe
-              width="100%"
-              height="315"
-              src={`https://www.youtube.com/embed/${source.video_id}`}
-              title={source.title || "Video source"}
-              frameBorder="0"
-              allowFullScreen
-              className="rounded-2xl"
-            />
-          )}
-
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={saveSource}
             disabled={saving}
@@ -206,8 +198,15 @@ export default function EditSourcePage() {
           >
             {saving ? "Saving..." : "Save source"}
           </button>
+
+          <a
+            href="/admin/sources"
+            className="rounded-full bg-white/10 px-6 py-3 font-bold text-white"
+          >
+            Back to sources
+          </a>
         </div>
       </div>
-    </main>
+    </AdminShell>
   );
 }

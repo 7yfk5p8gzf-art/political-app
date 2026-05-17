@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminBackButton from "@/components/admin/AdminBackButton";
 
 type SearchResult = {
   title: string;

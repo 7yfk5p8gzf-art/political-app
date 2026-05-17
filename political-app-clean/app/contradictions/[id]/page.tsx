@@ -1,23 +1,196 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import PublicShell from "@/components/public/PublicShell";
+import { supabase } from "@/lib/supabase";
+import ShareButtons from "@/components/public/ShareButtons";
+import VoteSection from "@/components/public/VoteSection";
+import RelatedContradictions from "@/components/public/RelatedContradictions";
+import SourceCards from "@/components/public/SourceCards";
+
+type Contradiction = {
+  id: string;
+  politician: string | null;
+  topic: string | null;
+  old_statement: string | null;
+  new_statement: string | null;
+  old_date: string | null;
+  new_date: string | null;
+  ai_summary: string | null;
+  views: number | null;
+  old_source: string | null;
+new_source: string | null;
+old_video_url: string | null;
+new_video_url: string | null;
+};
 
 export default function ContradictionDetailPage() {
   const params = useParams();
 
+  const [item, setItem] = useState<Contradiction | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadItem();
+  }, []);
+
+  async function loadItem() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("contradictions")
+      .select(`
+        old_source,
+new_source,
+old_video_url,
+new_video_url,
+        id,
+        politician,
+        topic,
+        old_statement,
+        new_statement,
+        old_date,
+        new_date,
+        ai_summary,
+        views
+      `)
+      .eq("id", params.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      setItem(null);
+    } else {
+      setItem(data);
+      if (data?.id) {
+  await supabase
+    .from("contradictions")
+    .update({ views: (data.views || 0) + 1 })
+    .eq("id", data.id);
+}
+    }
+
+    setLoading(false);
+  }
+
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 text-white">
-      <a href="/contradictions" className="text-sm text-neutral-400">
-        ← Back to contradictions
-      </a>
+    <PublicShell title="Contradiction detail">
+      {item && (
+  <ShareButtons
+    url={`/contradictions/${item.id}`}
+    title={`${item.politician || "Politician"} - ${item.topic || "Contradiction"}`}
+  />
+)}
+      <section className="mx-auto max-w-5xl px-4 py-10">
+        <Link
+          href="/contradictions"
+          className="inline-flex items-center text-sm text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+        >
+          ← Vissza az ellentmondásokhoz
+        </Link>
 
-      <h1 className="mt-8 text-4xl font-bold">
-        TEST DETAIL PAGE
-      </h1>
+        {loading ? (
+          <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <p className="text-slate-600 dark:text-slate-300">
+              Betöltés...
+            </p>
+          </div>
+        ) : !item ? (
+          <div className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
+            <p className="text-red-700 dark:text-red-300">
+              Nem található az oldal.
+            </p>
+          </div>
+        ) : (
+          <article className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+            <div className="flex flex-wrap gap-2">
+              {item.politician && (
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  {item.politician}
+                </span>
+              )}
 
-      <p className="mt-4 text-neutral-400">
-        ID: {String(params.id)}
-      </p>
-    </main>
+              {item.topic && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {item.topic}
+                </span>
+              )}
+
+              {typeof item.views === "number" && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {item.views} megtekintés
+                </span>
+              )}
+            </div>
+
+            <h1 className="mt-6 text-3xl font-bold text-slate-950 dark:text-white md:text-4xl">
+              Politikai ellentmondás
+            </h1>
+
+            <div className="mt-8 grid gap-5 md:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Korábban
+                </p>
+
+                <p className="text-sm leading-7 text-slate-900 dark:text-white">
+                  {item.old_statement || "Nincs régi állítás."}
+                </p>
+
+                {item.old_date && (
+                  <p className="mt-4 text-xs text-slate-500">
+                    {item.old_date}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Most
+                </p>
+
+                <p className="text-sm leading-7 text-slate-900 dark:text-white">
+                  {item.new_statement || "Nincs új állítás."}
+                </p>
+
+                {item.new_date && (
+                  <p className="mt-4 text-xs text-slate-500">
+                    {item.new_date}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {item.ai_summary && (
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  AI összegzés
+                </p>
+
+                <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">
+                  {item.ai_summary}
+                </p>
+              </div>
+            )}
+            <SourceCards
+  oldSource={item.old_source}
+  newSource={item.new_source}
+  oldVideoUrl={item.old_video_url}
+  newVideoUrl={item.new_video_url}
+/>
+            {item.id && (
+  <VoteSection contradictionId={item.id} />
+)}
+<RelatedContradictions
+  currentId={item.id}
+  politician={item.politician}
+  topic={item.topic}
+/>
+          </article>
+        )}
+      </section>
+    </PublicShell>
   );
 }
