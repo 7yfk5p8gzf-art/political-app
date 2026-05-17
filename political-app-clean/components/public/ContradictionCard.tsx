@@ -17,34 +17,38 @@ export default function ContradictionCard({
 }: ContradictionCardProps) {
   return (
     <Link
-  href={`/contradictions/${id}`}
-      className="block rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-white/20 hover:bg-white/10"
+      href={`/contradictions/${id}`}
+      className="block rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950"
     >
-      <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-neutral-300">
+      <div className="mb-5 flex flex-wrap gap-2">
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
           {politician || "Unknown"}
-        </div>
+        </span>
 
-        <div className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-neutral-300">
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
           {topic || "No topic"}
-        </div>
+        </span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl bg-red-500/10 p-4">
-          <p className="mb-2 text-xs uppercase tracking-wide text-red-300">
-            Older Statement
+        <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Korábban
           </p>
 
-          <p>{oldStatement || "No statement"}</p>
+          <p className="line-clamp-5 text-sm leading-7 text-slate-900 dark:text-white">
+            {oldStatement || "Nincs korábbi állítás"}
+          </p>
         </div>
 
-        <div className="rounded-xl bg-green-500/10 p-4">
-          <p className="mb-2 text-xs uppercase tracking-wide text-green-300">
-            Newer Statement
+        <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Most
           </p>
 
-          <p>{newStatement || "No statement"}</p>
+          <p className="line-clamp-5 text-sm leading-7 text-slate-900 dark:text-white">
+            {newStatement || "Nincs új állítás"}
+          </p>
         </div>
       </div>
     </Link>

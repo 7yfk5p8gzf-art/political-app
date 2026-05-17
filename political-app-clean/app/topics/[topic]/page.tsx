@@ -1,5 +1,7 @@
 import ContradictionCard from "@/components/public/ContradictionCard";
 import { supabase } from "../../../../lib/supabase";
+import PublicShell from "@/components/public/PublicShell";
+import TrendingContradictions from "@/components/public/TrendingContradictions";
 
 type PageProps = {
   params: Promise<{
@@ -34,16 +36,26 @@ export default async function TopicDetailPage({ params }: PageProps) {
   const items = (data || []) as Contradiction[];
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-        Topic
-      </p>
+  <PublicShell title={decodedTopic}>
+    <section className="mx-auto max-w-6xl px-4 py-10">
 
-      <h1 className="mt-3 text-4xl font-bold">
-        {decodedTopic}
-      </h1>
+      <TrendingContradictions />
 
-      <div className="mt-10 space-y-6">
+      <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+          Topic
+        </p>
+
+        <h1 className="mt-3 text-4xl font-bold text-slate-950 dark:text-white">
+          {decodedTopic}
+        </h1>
+
+        <p className="mt-4 max-w-3xl text-slate-600 dark:text-slate-300">
+          Politikai ellentmondások és állításváltozások ehhez a témához kapcsolódva.
+        </p>
+      </div>
+
+      <div className="space-y-6">
         {items.map((item) => (
           <ContradictionCard
             key={item.id}
@@ -55,6 +67,8 @@ export default async function TopicDetailPage({ params }: PageProps) {
           />
         ))}
       </div>
-    </main>
-  );
+
+    </section>
+  </PublicShell>
+);
 }

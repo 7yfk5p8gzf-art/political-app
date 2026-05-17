@@ -11,6 +11,7 @@ import RelatedContradictions from "@/components/public/RelatedContradictions";
 import SourceCards from "@/components/public/SourceCards";
 import AIAnalysisCard from "@/components/public/AIAnalysisCard";
 import TimelineBlock from "@/components/public/TimelineBlock";
+import VideoEmbed from "@/components/public/VideoEmbed";
 
 type Contradiction = {
   id: string;
@@ -182,6 +183,10 @@ new_video_url,
   confidenceScore={item.confidence_score}
   severityScore={item.severity_score}
   reviewStatus={item.review_status}
+/>
+<VideoEmbed
+  url={item.new_video_url || item.old_video_url}
+  title={`${item.politician || "Politician"} video evidence`}
 />
             <SourceCards
   oldSource={item.old_source}
