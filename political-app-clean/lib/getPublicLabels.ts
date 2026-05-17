@@ -23,7 +23,12 @@ export function detectBrowserLanguage(): PublicLang {
     return "en";
   }
 
-  const lang = navigator.language.toLowerCase();
+  const saved =
+    localStorage.getItem("lang") ||
+    localStorage.getItem("language") ||
+    localStorage.getItem("public-lang");
+
+  const lang = (saved || navigator.language || "en").toLowerCase();
 
   if (lang.startsWith("hu")) {
     return "hu";

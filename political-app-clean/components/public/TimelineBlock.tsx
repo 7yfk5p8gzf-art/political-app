@@ -1,4 +1,6 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type TimelineBlockProps = {
@@ -14,7 +16,23 @@ export default function TimelineBlock({
   oldStatement,
   newStatement,
 }: TimelineBlockProps) {
-    const labels = getPublicLabels(detectBrowserLanguage());
+    const [lang, setLang] = useState("en");
+
+useEffect(() => {
+  setLang(detectBrowserLanguage());
+
+  function handleLanguageChange() {
+    setLang(detectBrowserLanguage());
+  }
+
+  window.addEventListener("language-change", handleLanguageChange);
+
+  return () => {
+    window.removeEventListener("language-change", handleLanguageChange);
+  };
+}, []);
+
+const labels = getPublicLabels(lang);
   return (
     <section className="mt-8">
       <div className="mb-4">
@@ -43,7 +61,7 @@ export default function TimelineBlock({
 
           <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
             <p className="text-sm leading-7 text-slate-300">
-              {oldStatement || "Nincs korábbi állítás"}
+              {oldStatement || "{oldStatement || labels.noSource}"}
             </p>
           </div>
         </div>
@@ -63,7 +81,7 @@ export default function TimelineBlock({
 
           <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
             <p className="text-sm leading-7 text-slate-300">
-              {newStatement || "Nincs új állítás"}
+              {newStatement || "{newStatement || labels.noSource}"}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 "use client";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type AIAnalysisCardProps = {
   summary?: string | null;
@@ -16,11 +17,12 @@ export default function AIAnalysisCard({
   if (!summary && !confidenceScore && !severityScore && !reviewStatus) {
     return null;
   }
+  const labels = getPublicLabels(detectBrowserLanguage());
 
   return (
     <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        AI analysis
+        {labels.aiAnalysis}
       </p>
 
       <h2 className="text-2xl font-bold text-slate-950 dark:text-white">

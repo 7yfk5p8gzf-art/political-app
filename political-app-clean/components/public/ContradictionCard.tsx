@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+import { useEffect, useState } from "react";
 
 type ContradictionCardProps = {
   id: string;
@@ -15,6 +19,22 @@ export default function ContradictionCard({
   oldStatement,
   newStatement,
 }: ContradictionCardProps) {
+  const [lang, setLang] = useState("en");
+
+useEffect(() => {
+  setLang(detectBrowserLanguage());
+  function handleLanguageChange() {
+    setLang(detectBrowserLanguage());
+  }
+
+  window.addEventListener("language-change", handleLanguageChange);
+
+  return () => {
+    window.removeEventListener("language-change", handleLanguageChange);
+  };
+}, []);
+
+const labels = getPublicLabels(lang);
   return (
     <Link
       href={`/contradictions/${id}`}
@@ -33,21 +53,21 @@ export default function ContradictionCard({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Korábban
+            {labels.old}
           </p>
 
           <p className="line-clamp-5 text-sm leading-7 text-slate-900 dark:text-white">
-            {oldStatement || "Nincs korábbi állítás"}
+            {oldStatement || "{labels.noSource}"}
           </p>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Most
+            {labels.new}
           </p>
 
           <p className="line-clamp-5 text-sm leading-7 text-slate-900 dark:text-white">
-            {newStatement || "Nincs új állítás"}
+            {newStatement || "{labels.noSource}"}
           </p>
         </div>
       </div>

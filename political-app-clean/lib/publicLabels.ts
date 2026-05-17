@@ -14,6 +14,14 @@ export const publicLabels = {
     views: "megtekintés",
     noSource: "Nincs forrás",
     openVideo: "Videó megnyitása",
+    heroTitle: "Hasonlítsd össze a politikai állításokat. Találd meg az ellentmondásokat.",
+browseContradictions: "Ellentmondások böngészése",
+exploreTopics: "Témák böngészése",
+topContradictions: "Top ellentmondások",
+yes: "Igen",
+no: "Nem",
+totalVotes: "Összes szavazat",
+
   },
 
   en: {
@@ -29,6 +37,14 @@ export const publicLabels = {
     views: "views",
     noSource: "No source",
     openVideo: "Open video",
+    heroTitle: "Compare political statements. Find contradictions.",
+browseContradictions: "Browse contradictions",
+exploreTopics: "Explore topics",
+topContradictions: "Top contradictions",
+yes: "Yes",
+no: "No",
+totalVotes: "Total votes",
+
   },
 
   de: {
@@ -44,6 +60,14 @@ export const publicLabels = {
     views: "Aufrufe",
     noSource: "Keine Quelle",
     openVideo: "Video öffnen",
+    heroTitle: "Politische Aussagen vergleichen. Widersprüche finden.",
+browseContradictions: "Widersprüche ansehen",
+exploreTopics: "Themen entdecken",
+topContradictions: "Top-Widersprüche",
+yes: "Ja",
+no: "Nein",
+totalVotes: "Stimmen gesamt",
+
   },
 
   fr: {
@@ -59,5 +83,13 @@ export const publicLabels = {
     views: "vues",
     noSource: "Aucune source",
     openVideo: "Ouvrir la vidéo",
+    heroTitle: "Comparez les déclarations politiques. Trouvez les contradictions.",
+browseContradictions: "Parcourir les contradictions",
+exploreTopics: "Explorer les sujets",
+topContradictions: "Principales contradictions",
+yes: "Oui",
+no: "Non",
+totalVotes: "Votes au total",
+
   },
 };

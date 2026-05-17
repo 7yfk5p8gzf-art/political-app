@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type Item = {
   id: string;
@@ -24,6 +25,21 @@ export default function RelatedContradictions({
   topic,
 }: RelatedContradictionsProps) {
   const [items, setItems] = useState<Item[]>([]);
+  const [lang, setLang] = useState("en");
+
+  useEffect(() => {
+    setLang(detectBrowserLanguage());
+
+    function handleLanguageChange() {
+      setLang(detectBrowserLanguage());
+    }
+
+    window.addEventListener("language-change", handleLanguageChange);
+
+    return () => {
+      window.removeEventListener("language-change", handleLanguageChange);
+    };
+  }, []);
 
   useEffect(() => {
     loadItems();
@@ -53,6 +69,8 @@ export default function RelatedContradictions({
     setItems((data || []) as Item[]);
   }
 
+  const labels = getPublicLabels(lang);
+
   if (items.length === 0) {
     return null;
   }
@@ -61,11 +79,11 @@ export default function RelatedContradictions({
     <section className="mt-8">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Related contradictions
+          {labels.related}
         </p>
 
         <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
-          Hasonló esetek
+          {labels.related}
         </h2>
       </div>
 
@@ -93,21 +111,21 @@ export default function RelatedContradictions({
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">
-                  Korábban
+                  {labels.old}
                 </p>
 
                 <p className="line-clamp-3 text-sm text-slate-900 dark:text-white">
-                  {item.old_statement || "Nincs adat"}
+                  {item.old_statement || labels.noSource}
                 </p>
               </div>
 
               <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">
-                  Most
+                  {labels.new}
                 </p>
 
                 <p className="line-clamp-3 text-sm text-slate-900 dark:text-white">
-                  {item.new_statement || "Nincs adat"}
+                  {item.new_statement || labels.noSource}
                 </p>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type Vote = {
   id: string;
@@ -15,6 +16,21 @@ type VoteSectionProps = {
 export default function VoteSection({ contradictionId }: VoteSectionProps) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
+  const [lang, setLang] = useState("en");
+
+  useEffect(() => {
+    setLang(detectBrowserLanguage());
+
+    function handleLanguageChange() {
+      setLang(detectBrowserLanguage());
+    }
+
+    window.addEventListener("language-change", handleLanguageChange);
+
+    return () => {
+      window.removeEventListener("language-change", handleLanguageChange);
+    };
+  }, []);
 
   useEffect(() => {
     loadVotes();
@@ -45,6 +61,8 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
     await loadVotes();
   }
 
+  const labels = getPublicLabels(lang);
+
   const stats = useMemo(() => {
     const yes = votes.filter((vote) => vote.vote_type === "yes").length;
     const no = votes.filter((vote) => vote.vote_type === "no").length;
@@ -62,10 +80,10 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
   return (
     <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-5">
       <p className="mb-2 text-xs uppercase tracking-wide text-neutral-400">
-        Community vote
+        {labels.communityVote}
       </p>
 
-      <h2 className="text-2xl font-bold">Is this a contradiction?</h2>
+      <h2 className="text-2xl font-bold">{labels.contradictionQuestion}</h2>
 
       <div className="mt-5 flex gap-3">
         <button
@@ -73,7 +91,7 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
           disabled={hasVoted}
           className="rounded-xl bg-white px-5 py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Yes ({stats.yesPercent}%)
+          {labels.yes} ({stats.yesPercent}%)
         </button>
 
         <button
@@ -81,12 +99,12 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
           disabled={hasVoted}
           className="rounded-xl border border-white/20 px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
         >
-          No ({stats.noPercent}%)
+          {labels.no} ({stats.noPercent}%)
         </button>
       </div>
 
       <p className="mt-4 text-sm text-neutral-400">
-        Total votes: {stats.total}
+        {labels.totalVotes}: {stats.total}
       </p>
     </section>
   );

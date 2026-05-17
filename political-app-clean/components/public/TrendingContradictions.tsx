@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type Item = {
   id: string;
@@ -38,6 +39,7 @@ export default function TrendingContradictions() {
   if (items.length === 0) {
     return null;
   }
+  const labels = getPublicLabels(detectBrowserLanguage());
 
   return (
     <section className="mb-8">
@@ -48,7 +50,7 @@ export default function TrendingContradictions() {
           </p>
 
           <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
-            Népszerű ellentmondások
+            {labels.trending}
           </h2>
         </div>
       </div>
@@ -66,7 +68,7 @@ export default function TrendingContradictions() {
               </span>
 
               <span className="text-xs text-slate-500">
-                {item.views || 0} views
+                {item.views || 0} {labels.views}
               </span>
             </div>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import PublicShell from "@/components/public/PublicShell";
 import TrendingContradictions from "@/components/public/TrendingContradictions";
 import AIInsightPanel from "@/components/public/AIInsightPanel";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 
 type Contradiction = {
@@ -16,6 +17,7 @@ type Contradiction = {
 };
 
 export default async function HomePage() {
+  const labels = getPublicLabels(detectBrowserLanguage());
   const { data } = await supabase
     .from("contradictions")
     .select(`
@@ -41,7 +43,7 @@ export default async function HomePage() {
         </p>
 
         <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight text-slate-950 dark:text-white md:text-6xl">
-          Compare political statements. Find contradictions.
+          {labels.heroTitle}
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
@@ -54,14 +56,14 @@ export default async function HomePage() {
             href="/contradictions"
             className="rounded-2xl bg-slate-950 px-6 py-4 font-bold text-white transition hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
           >
-            Browse contradictions
+            {labels.browseContradictions}
           </Link>
 
           <Link
             href="/topics"
             className="rounded-2xl border border-slate-200 px-6 py-4 font-bold text-slate-900 transition hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:text-white dark:hover:border-blue-400 dark:hover:text-blue-400"
           >
-            Explore topics
+            {labels.exploreTopics}
           </Link>
         </div>
       </div>
@@ -106,7 +108,7 @@ export default async function HomePage() {
       <section className="mt-14">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-3xl font-bold text-slate-950 dark:text-white">
-            Top contradictions
+            {labels.topContradictions}
           </h2>
 
           <Link

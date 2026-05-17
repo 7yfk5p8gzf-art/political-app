@@ -1,4 +1,5 @@
 "use client";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type SourceCardsProps = {
   oldSource?: string | null;
@@ -13,6 +14,9 @@ export default function SourceCards({
   oldVideoUrl,
   newVideoUrl,
 }: SourceCardsProps) {
+  const labels = getPublicLabels(detectBrowserLanguage());
+
+  
   return (
     <section className="mt-8">
       <div className="mb-4">
@@ -21,7 +25,7 @@ export default function SourceCards({
         </p>
 
         <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
-          Források
+          {labels.sources}
         </h2>
       </div>
 
@@ -32,7 +36,7 @@ export default function SourceCards({
           </p>
 
           <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">
-            {oldSource || "Nincs forrás"}
+            {oldSource || labels.noSource}
           </p>
 
           {oldVideoUrl && (
@@ -41,7 +45,7 @@ export default function SourceCards({
               target="_blank"
               className="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              Videó megnyitása
+              {labels.openVideo}
             </a>
           )}
         </div>

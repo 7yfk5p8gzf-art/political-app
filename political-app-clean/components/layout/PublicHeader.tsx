@@ -42,7 +42,11 @@ export default function PublicHeader() {
             {languages.map((item) => (
               <button
                 key={item}
-                onClick={() => setLang(item)}
+                onClick={() => {
+  setLang(item);
+  localStorage.setItem("lang", item);
+  window.dispatchEvent(new Event("language-change"));
+}}
                 className={`rounded-lg px-2 py-1 text-xs font-bold uppercase transition ${
                   lang === item
                     ? "bg-white text-black"
