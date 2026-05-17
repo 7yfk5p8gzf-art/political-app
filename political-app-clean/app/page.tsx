@@ -3,6 +3,8 @@ import { supabase } from "../lib/supabase";
 import Link from "next/link";
 import PublicShell from "@/components/public/PublicShell";
 import TrendingContradictions from "@/components/public/TrendingContradictions";
+import AIInsightPanel from "@/components/public/AIInsightPanel";
+
 
 type Contradiction = {
   id: string;
@@ -63,10 +65,17 @@ export default async function HomePage() {
           </Link>
         </div>
       </div>
+      <div className="mt-10">
+  <AIInsightPanel
+    title="Miért érdekes ez a platform?"
+    summary="Az AI segít összekapcsolni a régi és új politikai állításokat, kiemelni a lehetséges ellentmondásokat, és gyorsabban megtalálni a fontos mintákat."
+  />
+</div>
 
       <div className="mt-10">
         <TrendingContradictions />
       </div>
+      
 
       {spotlight && (
         <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
