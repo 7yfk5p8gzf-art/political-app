@@ -13,6 +13,7 @@ import AIAnalysisCard from "@/components/public/AIAnalysisCard";
 import TimelineBlock from "@/components/public/TimelineBlock";
 import VideoEmbed from "@/components/public/VideoEmbed";
 
+
 type Contradiction = {
   id: string;
   politician: string | null;
@@ -197,6 +198,8 @@ new_video_url,
             {item.id && (
   <VoteSection contradictionId={item.id} />
 )}
+
+
 <RelatedContradictions
   currentId={item.id}
   politician={item.politician}
