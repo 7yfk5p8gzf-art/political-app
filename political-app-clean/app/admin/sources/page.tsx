@@ -42,22 +42,23 @@ export default function AdminSourcesPage() {
 
     setLoading(false);
   }
-  const filteredSources = sources.filter((source) => {
-  const text = [
-    source.title,
-    source.summary,
-    source.url,
-    source.type,
-    source.politician,
-    source.topic,
-    source.timestamp,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
 
-  return text.includes(search.toLowerCase());
-});
+  const filteredSources = sources.filter((source) => {
+    const text = [
+      source.title,
+      source.summary,
+      source.url,
+      source.type,
+      source.politician,
+      source.topic,
+      source.timestamp,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return text.includes(search.toLowerCase());
+  });
 
   return (
     <main className="min-h-screen bg-black px-6 py-14 text-white">
@@ -69,22 +70,22 @@ export default function AdminSourcesPage() {
         <h1 className="text-4xl font-bold">Saved Sources</h1>
 
         <p className="mt-3 text-neutral-400">
-  Elmentett cikkek és videók az AI Search Workspace-ből.
-</p>
-<input
-            
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-  placeholder="Search sources by title, politician, topic, type..."
-  className="mt-8 w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
-/>
+          Elmentett cikkek és videók az AI Search Workspace-ből.
+        </p>
 
-          
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search sources by title, politician, topic, type..."
+          className="mt-8 w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
+        />
 
         {loading && <p className="mt-10 text-neutral-400">Loading...</p>}
 
-        {!loading && sources.length === 0 && (
-          <p className="mt-10 text-neutral-400">Nincs még elmentett source.</p>
+        {!loading && filteredSources.length === 0 && (
+          <p className="mt-10 text-neutral-400">
+            Nincs találat vagy nincs még elmentett source.
+          </p>
         )}
 
         <div className="mt-10 space-y-6">
@@ -133,15 +134,24 @@ export default function AdminSourcesPage() {
                 />
               )}
 
-              {source.url && (
+              <div className="mt-5 flex flex-wrap gap-3">
+                {source.url && (
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    className="rounded-full bg-white/10 px-4 py-2 text-sm text-blue-300"
+                  >
+                    Open source
+                  </a>
+                )}
+
                 <a
-                  href={source.url}
-                  target="_blank"
-                  className="mt-5 inline-block text-sm text-blue-400 underline"
+                  href={`/admin/sources/${source.id}`}
+                  className="rounded-full bg-blue-500/20 px-4 py-2 text-sm text-blue-200"
                 >
-                  Open source
+                  Edit
                 </a>
-              )}
+              </div>
             </article>
           ))}
         </div>

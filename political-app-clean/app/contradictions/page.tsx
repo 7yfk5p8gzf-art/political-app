@@ -23,22 +23,37 @@ export default function ContradictionsPage() {
   async function load() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("contradictions")
-      .select(`
-        id,
-        politician,
-        topic,
-        old_statement,
-        new_statement
-      `)
-      .limit(20);
+    try {
+      const query = supabase
+        .from("contradictions")
+        .select(`
+          id,
+          politician,
+          topic,
+          old_statement,
+          new_statement
+        `)
+        .limit(20);
 
-    if (!error && data) {
-      setItems(data);
+      const timeout = new Promise<{ data: null; error: string }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: "timeout" }), 5000)
+      );
+
+      const result: any = await Promise.race([query, timeout]);
+
+      if (result.error) {
+        console.error("Contradictions load error:", result.error);
+        setItems([]);
+        return;
+      }
+
+      setItems(result.data || []);
+    } catch (error) {
+      console.error("Contradictions load crash:", error);
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
@@ -53,21 +68,25 @@ export default function ContradictionsPage() {
         </h1>
       </div>
 
-      {loading ? (
-        <div className="text-neutral-400">Loading...</div>
-      ) : (
+      {loading && <div className="text-neutral-400">Loading...</div>}
+
+      {!loading && items.length === 0 && (
+        <div className="text-neutral-400">
+          No contradictions found.
+        </div>
+      )}
+
+      {!loading && items.length > 0 && (
         <div className="space-y-6">
           {items.map((item) => (
-  <ContradictionCard
-    key={item.id}
-    id={item.id}
-    politician={item.politician}
-    topic={item.topic}
-    oldStatement={item.old_statement}
-    newStatement={item.new_statement}
-  />
-
-              
+            <ContradictionCard
+              key={item.id}
+              id={item.id}
+              politician={item.politician}
+              topic={item.topic}
+              oldStatement={item.old_statement}
+              newStatement={item.new_statement}
+            />
           ))}
         </div>
       )}

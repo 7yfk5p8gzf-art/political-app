@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type ContradictionCardProps = {
   id: string;
   politician: string | null;
@@ -14,8 +16,8 @@ export default function ContradictionCard({
   newStatement,
 }: ContradictionCardProps) {
   return (
-    <a
-      href={`/contradictions/${id}`}
+    <Link
+  href={`/contradictions/${id}`}
       className="block rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-white/20 hover:bg-white/10"
     >
       <div className="mb-4 flex items-center gap-3">
@@ -45,6 +47,6 @@ export default function ContradictionCard({
           <p>{newStatement || "No statement"}</p>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
