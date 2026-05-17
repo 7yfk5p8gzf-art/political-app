@@ -1,0 +1,63 @@
+export type PublicLang = "hu" | "en" | "de" | "fr";
+
+export const publicLabels = {
+  hu: {
+    trending: "Népszerű ellentmondások",
+    timeline: "Idővonal",
+    aiAnalysis: "AI elemzés",
+    sources: "Források",
+    related: "Hasonló esetek",
+    communityVote: "Közösségi szavazás",
+    contradictionQuestion: "Ez valódi ellentmondás?",
+    old: "Korábban",
+    new: "Most",
+    views: "megtekintés",
+    noSource: "Nincs forrás",
+    openVideo: "Videó megnyitása",
+  },
+
+  en: {
+    trending: "Trending contradictions",
+    timeline: "Timeline",
+    aiAnalysis: "AI analysis",
+    sources: "Sources",
+    related: "Related contradictions",
+    communityVote: "Community vote",
+    contradictionQuestion: "Is this a contradiction?",
+    old: "Earlier",
+    new: "Now",
+    views: "views",
+    noSource: "No source",
+    openVideo: "Open video",
+  },
+
+  de: {
+    trending: "Beliebte Widersprüche",
+    timeline: "Zeitlinie",
+    aiAnalysis: "KI Analyse",
+    sources: "Quellen",
+    related: "Ähnliche Fälle",
+    communityVote: "Community Abstimmung",
+    contradictionQuestion: "Ist das ein Widerspruch?",
+    old: "Früher",
+    new: "Jetzt",
+    views: "Aufrufe",
+    noSource: "Keine Quelle",
+    openVideo: "Video öffnen",
+  },
+
+  fr: {
+    trending: "Contradictions populaires",
+    timeline: "Chronologie",
+    aiAnalysis: "Analyse IA",
+    sources: "Sources",
+    related: "Cas similaires",
+    communityVote: "Vote de la communauté",
+    contradictionQuestion: "Est-ce une contradiction ?",
+    old: "Avant",
+    new: "Maintenant",
+    views: "vues",
+    noSource: "Aucune source",
+    openVideo: "Ouvrir la vidéo",
+  },
+};

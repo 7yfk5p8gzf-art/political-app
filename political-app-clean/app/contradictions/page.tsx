@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import PublicShell from "@/components/public/PublicShell";
 import { supabase } from "@/lib/supabase";
+import TrendingContradictions from "@/components/public/TrendingContradictions";
 
 type Contradiction = {
   id: string;
@@ -72,6 +73,7 @@ export default function PublicContradictionsPage() {
   return (
     <PublicShell title="Politikai ellentmondások">
       <section className="mx-auto max-w-6xl px-4 py-10">
+        <TrendingContradictions />
         <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
             Public contradictions

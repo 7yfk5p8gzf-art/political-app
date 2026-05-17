@@ -9,6 +9,8 @@ import ShareButtons from "@/components/public/ShareButtons";
 import VoteSection from "@/components/public/VoteSection";
 import RelatedContradictions from "@/components/public/RelatedContradictions";
 import SourceCards from "@/components/public/SourceCards";
+import AIAnalysisCard from "@/components/public/AIAnalysisCard";
+import TimelineBlock from "@/components/public/TimelineBlock";
 
 type Contradiction = {
   id: string;
@@ -24,6 +26,9 @@ type Contradiction = {
 new_source: string | null;
 old_video_url: string | null;
 new_video_url: string | null;
+confidence_score: number | null;
+severity_score: number | null;
+review_status: string | null;
 };
 
 export default function ContradictionDetailPage() {
@@ -43,6 +48,9 @@ export default function ContradictionDetailPage() {
       .from("contradictions")
       .select(`
         old_source,
+        confidence_score,
+severity_score,
+review_status,
 new_source,
 old_video_url,
 new_video_url,
@@ -162,18 +170,19 @@ new_video_url,
                 )}
               </div>
             </div>
+            <TimelineBlock
+  oldDate={item.old_date}
+  newDate={item.new_date}
+  oldStatement={item.old_statement}
+  newStatement={item.new_statement}
+/>
 
-            {item.ai_summary && (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  AI összegzés
-                </p>
-
-                <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">
-                  {item.ai_summary}
-                </p>
-              </div>
-            )}
+            <AIAnalysisCard
+  summary={item.ai_summary}
+  confidenceScore={item.confidence_score}
+  severityScore={item.severity_score}
+  reviewStatus={item.review_status}
+/>
             <SourceCards
   oldSource={item.old_source}
   newSource={item.new_source}
