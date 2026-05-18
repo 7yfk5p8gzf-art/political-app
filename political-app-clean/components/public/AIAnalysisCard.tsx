@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+import { getPublicLabels } from "@/lib/getPublicLabels";
+import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
 type AIAnalysisCardProps = {
   summary?: string | null;
@@ -16,21 +16,7 @@ export default function AIAnalysisCard({
   severityScore,
   reviewStatus,
 }: AIAnalysisCardProps) {
-  const [lang, setLang] = useState("en");
-
-  useEffect(() => {
-    setLang(detectBrowserLanguage());
-
-    function handleLanguageChange() {
-      setLang(detectBrowserLanguage());
-    }
-
-    window.addEventListener("language-change", handleLanguageChange);
-
-    return () => {
-      window.removeEventListener("language-change", handleLanguageChange);
-    };
-  }, []);
+  const lang = usePublicLanguage();
 
   if (!summary && !confidenceScore && !severityScore && !reviewStatus) {
     return null;

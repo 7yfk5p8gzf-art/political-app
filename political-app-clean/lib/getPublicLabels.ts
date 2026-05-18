@@ -1,4 +1,4 @@
-import { publicLabels, type PublicLang } from "./publicLabels";
+import { publicLabels,  type PublicLang} from "./publicLabels";
 
 export function getPublicLabels(lang?: string) {
   const normalized = (lang || "en").toLowerCase();
