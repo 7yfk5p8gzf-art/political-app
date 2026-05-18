@@ -12,7 +12,9 @@ import SourceCards from "@/components/public/SourceCards";
 import AIAnalysisCard from "@/components/public/AIAnalysisCard";
 import TimelineBlock from "@/components/public/TimelineBlock";
 import VideoEmbed from "@/components/public/VideoEmbed";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+
+import { getPublicLabels } from "@/lib/getPublicLabels";
+import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
 
 type Contradiction = {
@@ -38,25 +40,8 @@ export default function ContradictionDetailPage() {
   const params = useParams();
 
   const [item, setItem] = useState<Contradiction | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-
-  useEffect(() => {
-    loadItem();
-  }, []);
-  useEffect(() => {
-  setLang(detectBrowserLanguage());
-
-  function handleLanguageChange() {
-    setLang(detectBrowserLanguage());
-  }
-
-  window.addEventListener("language-change", handleLanguageChange);
-
-  return () => {
-    window.removeEventListener("language-change", handleLanguageChange);
-  };
-}, []);
+const [loading, setLoading] = useState(true);
+const lang = usePublicLanguage();
 
   async function loadItem() {
   setLoading(true);
@@ -99,7 +84,7 @@ export default function ContradictionDetailPage() {
 
     setLoading(false);
   }
-  const [lang, setLang] = useState("en");
+  
   const labels = getPublicLabels(lang);
 
   return (

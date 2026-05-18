@@ -35,6 +35,19 @@ export const publicLabels = {
 
     backToContradictions: "Vissza az ellentmondásokhoz",
     contradictionTitle: "Politikai ellentmondás",
+    platformName: "Politikai Összehasonlító Platform",
+
+heroDescription:
+  "Nyilvános platform régi és új politikai állítások összehasonlítására, közösségi szavazással, AI elemzésekkel és forrásalapú ellentmondásokkal.",
+
+aiInsightTitle: "Miért érdekes ez a platform?",
+
+aiInsightSummary:
+  "Az AI segít összekapcsolni a régi és új politikai állításokat, kiemelni a lehetséges ellentmondásokat, és gyorsabban megtalálni a fontos mintákat.",
+
+spotlight: "Kiemelt eset",
+
+viewAll: "Összes megtekintése →",
   },
 
   en: {
@@ -70,6 +83,14 @@ export const publicLabels = {
 
     backToContradictions: "Back to contradictions",
     contradictionTitle: "Political contradiction",
+    platformName: "Political Comparison Platform",
+heroDescription:
+  "Public platform for comparing old and new political statements, community voting, AI summaries and source-based contradictions.",
+aiInsightTitle: "Why is this platform interesting?",
+aiInsightSummary:
+  "AI helps connect old and new political statements, highlight possible contradictions, and find important patterns faster.",
+spotlight: "Spotlight",
+viewAll: "View all →",
   },
 
   de: {
@@ -105,6 +126,19 @@ export const publicLabels = {
 
     backToContradictions: "Zurück zu den Widersprüchen",
     contradictionTitle: "Politischer Widerspruch",
+    platformName: "Politische Vergleichsplattform",
+
+heroDescription:
+  "Öffentliche Plattform zum Vergleichen alter und neuer politischer Aussagen mit Community-Abstimmungen, KI-Analysen und quellenbasierten Widersprüchen.",
+
+aiInsightTitle: "Warum ist diese Plattform interessant?",
+
+aiInsightSummary:
+  "Die KI hilft dabei, alte und neue politische Aussagen zu verbinden, mögliche Widersprüche hervorzuheben und wichtige Muster schneller zu erkennen.",
+
+spotlight: "Im Fokus",
+
+viewAll: "Alle anzeigen →",
   },
 
   fr: {
@@ -141,5 +175,18 @@ export const publicLabels = {
 
     backToContradictions: "Retour aux contradictions",
     contradictionTitle: "Contradiction politique",
+    platformName: "Plateforme de comparaison politique",
+
+heroDescription:
+  "Plateforme publique pour comparer les anciennes et nouvelles déclarations politiques avec votes communautaires, analyses IA et contradictions basées sur des sources.",
+
+aiInsightTitle: "Pourquoi cette plateforme est-elle intéressante ?",
+
+aiInsightSummary:
+  "L'IA aide à relier les anciennes et nouvelles déclarations politiques, à mettre en évidence les contradictions possibles et à trouver plus rapidement les tendances importantes.",
+
+spotlight: "À la une",
+
+viewAll: "Voir tout →",
   },
 } as const;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import PublicShell from "@/components/public/PublicShell";
 import TrendingContradictions from "@/components/public/TrendingContradictions";
 import AIInsightPanel from "@/components/public/AIInsightPanel";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+import { getPublicLabels } from "@/lib/getPublicLabels";
 
 
 type Contradiction = {
@@ -17,7 +17,7 @@ type Contradiction = {
 };
 
 export default async function HomePage() {
-  const labels = getPublicLabels(detectBrowserLanguage());
+  const labels = getPublicLabels("en");
   const { data } = await supabase
     .from("contradictions")
     .select(`
@@ -35,7 +35,7 @@ export default async function HomePage() {
   const spotlight = topItems[0];
 
   return (
-  <PublicShell title="Political Comparison Platform">
+  <PublicShell title={labels.platformName}>
     <section className="mx-auto max-w-6xl px-4 py-10">
       <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950 md:p-10">
         <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
@@ -47,8 +47,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-          Public platform for comparing old and new political statements,
-          community voting, AI summaries and source-based contradictions.
+          {labels.heroDescription}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -69,8 +68,8 @@ export default async function HomePage() {
       </div>
       <div className="mt-10">
   <AIInsightPanel
-    title="Miért érdekes ez a platform?"
-    summary="Az AI segít összekapcsolni a régi és új politikai állításokat, kiemelni a lehetséges ellentmondásokat, és gyorsabban megtalálni a fontos mintákat."
+     title={labels.aiInsightTitle}
+summary={labels.aiInsightSummary}
   />
 </div>
 
@@ -82,7 +81,7 @@ export default async function HomePage() {
       {spotlight && (
         <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            Spotlight
+            {labels.spotlight}
           </p>
 
           <h2 className="mt-3 text-3xl font-bold text-slate-950 dark:text-white">
@@ -115,7 +114,7 @@ export default async function HomePage() {
             href="/contradictions"
             className="text-sm font-semibold text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
           >
-            View all →
+            {labels.viewAll}
           </Link>
         </div>
 
