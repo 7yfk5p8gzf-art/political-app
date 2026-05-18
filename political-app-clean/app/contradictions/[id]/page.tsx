@@ -43,6 +43,10 @@ export default function ContradictionDetailPage() {
 const [loading, setLoading] = useState(true);
 const lang = usePublicLanguage();
 
+useEffect(() => {
+  loadItem();
+}, []);
+
   async function loadItem() {
   setLoading(true);
 
