@@ -5,6 +5,7 @@ import PublicShell from "@/components/public/PublicShell";
 import TrendingContradictions from "@/components/public/TrendingContradictions";
 import AIInsightPanel from "@/components/public/AIInsightPanel";
 import { getPublicLabels } from "@/lib/getPublicLabels";
+import { publicText } from "@/lib/publicText";
 
 
 type Contradiction = {
@@ -18,6 +19,7 @@ type Contradiction = {
 
 export default async function HomePage() {
   const labels = getPublicLabels("en");
+  const text = publicText.en;
   const { data } = await supabase
     .from("contradictions")
     .select(`
@@ -47,7 +49,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-          {labels.heroDescription}
+          {text.heroDescription}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -68,8 +70,8 @@ export default async function HomePage() {
       </div>
       <div className="mt-10">
   <AIInsightPanel
-     title={labels.aiInsightTitle}
-summary={labels.aiInsightSummary}
+     title="Why is this platform interesting?"
+summary={text.aiInsightSummary}
   />
 </div>
 
