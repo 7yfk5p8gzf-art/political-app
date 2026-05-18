@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+import { getPublicLabels } from "@/lib/getPublicLabels";
+import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
 type Vote = {
   id: string;
@@ -16,21 +17,7 @@ type VoteSectionProps = {
 export default function VoteSection({ contradictionId }: VoteSectionProps) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
-  const [lang, setLang] = useState("en");
-
-  useEffect(() => {
-    setLang(detectBrowserLanguage());
-
-    function handleLanguageChange() {
-      setLang(detectBrowserLanguage());
-    }
-
-    window.addEventListener("language-change", handleLanguageChange);
-
-    return () => {
-      window.removeEventListener("language-change", handleLanguageChange);
-    };
-  }, []);
+  const lang = usePublicLanguage();
 
   useEffect(() => {
     loadVotes();

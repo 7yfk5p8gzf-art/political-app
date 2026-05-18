@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
+import { getPublicLabels } from "@/lib/getPublicLabels";
+import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
 type Item = {
   id: string;
@@ -25,21 +26,7 @@ export default function RelatedContradictions({
   topic,
 }: RelatedContradictionsProps) {
   const [items, setItems] = useState<Item[]>([]);
-  const [lang, setLang] = useState("en");
-
-  useEffect(() => {
-    setLang(detectBrowserLanguage());
-
-    function handleLanguageChange() {
-      setLang(detectBrowserLanguage());
-    }
-
-    window.addEventListener("language-change", handleLanguageChange);
-
-    return () => {
-      window.removeEventListener("language-change", handleLanguageChange);
-    };
-  }, []);
+  const lang = usePublicLanguage();
 
   useEffect(() => {
     loadItems();

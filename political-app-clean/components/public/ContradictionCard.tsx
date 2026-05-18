@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
-import { useEffect, useState } from "react";
+import { getPublicLabels } from "@/lib/getPublicLabels";
+import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
 type ContradictionCardProps = {
   id: string;
@@ -19,20 +19,7 @@ export default function ContradictionCard({
   oldStatement,
   newStatement,
 }: ContradictionCardProps) {
-  const [lang, setLang] = useState("en");
-
-useEffect(() => {
-  setLang(detectBrowserLanguage());
-  function handleLanguageChange() {
-    setLang(detectBrowserLanguage());
-  }
-
-  window.addEventListener("language-change", handleLanguageChange);
-
-  return () => {
-    window.removeEventListener("language-change", handleLanguageChange);
-  };
-}, []);
+  const lang = usePublicLanguage();
 
 const labels = getPublicLabels(lang);
   return (
