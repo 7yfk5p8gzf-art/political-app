@@ -1,4 +1,6 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type AIAnalysisCardProps = {
@@ -14,10 +16,27 @@ export default function AIAnalysisCard({
   severityScore,
   reviewStatus,
 }: AIAnalysisCardProps) {
+  const [lang, setLang] = useState("en");
+
+  useEffect(() => {
+    setLang(detectBrowserLanguage());
+
+    function handleLanguageChange() {
+      setLang(detectBrowserLanguage());
+    }
+
+    window.addEventListener("language-change", handleLanguageChange);
+
+    return () => {
+      window.removeEventListener("language-change", handleLanguageChange);
+    };
+  }, []);
+
   if (!summary && !confidenceScore && !severityScore && !reviewStatus) {
     return null;
   }
-  const labels = getPublicLabels(detectBrowserLanguage());
+
+  const labels = getPublicLabels(lang);
 
   return (
     <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -26,7 +45,7 @@ export default function AIAnalysisCard({
       </p>
 
       <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
-        AI elemzés
+        {labels.aiAnalysis}
       </h2>
 
       {summary && (
@@ -39,8 +58,9 @@ export default function AIAnalysisCard({
         {typeof confidenceScore === "number" && (
           <div className="rounded-xl bg-white p-4 dark:bg-slate-950">
             <p className="text-xs uppercase tracking-wide text-slate-500">
-              Confidence
+              {labels.confidence}
             </p>
+
             <p className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
               {confidenceScore}%
             </p>
@@ -50,8 +70,9 @@ export default function AIAnalysisCard({
         {typeof severityScore === "number" && (
           <div className="rounded-xl bg-white p-4 dark:bg-slate-950">
             <p className="text-xs uppercase tracking-wide text-slate-500">
-              Severity
+              {labels.severity}
             </p>
+
             <p className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
               {severityScore}%
             </p>
@@ -61,8 +82,9 @@ export default function AIAnalysisCard({
         {reviewStatus && (
           <div className="rounded-xl bg-white p-4 dark:bg-slate-950">
             <p className="text-xs uppercase tracking-wide text-slate-500">
-              Review status
+              {labels.reviewStatus}
             </p>
+
             <p className="mt-2 text-lg font-bold text-slate-950 dark:text-white">
               {reviewStatus}
             </p>

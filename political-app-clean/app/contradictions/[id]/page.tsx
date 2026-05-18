@@ -12,6 +12,7 @@ import SourceCards from "@/components/public/SourceCards";
 import AIAnalysisCard from "@/components/public/AIAnalysisCard";
 import TimelineBlock from "@/components/public/TimelineBlock";
 import VideoEmbed from "@/components/public/VideoEmbed";
+import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 
 type Contradiction = {
@@ -38,36 +39,50 @@ export default function ContradictionDetailPage() {
 
   const [item, setItem] = useState<Contradiction | null>(null);
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     loadItem();
   }, []);
+  useEffect(() => {
+  setLang(detectBrowserLanguage());
+
+  function handleLanguageChange() {
+    setLang(detectBrowserLanguage());
+  }
+
+  window.addEventListener("language-change", handleLanguageChange);
+
+  return () => {
+    window.removeEventListener("language-change", handleLanguageChange);
+  };
+}, []);
 
   async function loadItem() {
-    setLoading(true);
+  setLoading(true);
 
-    const { data, error } = await supabase
-      .from("contradictions")
-      .select(`
-        old_source,
-        confidence_score,
-severity_score,
-review_status,
-new_source,
-old_video_url,
-new_video_url,
-        id,
-        politician,
-        topic,
-        old_statement,
-        new_statement,
-        old_date,
-        new_date,
-        ai_summary,
-        views
-      `)
-      .eq("id", params.id)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from("contradictions")
+    .select(`
+      old_source,
+      confidence_score,
+      severity_score,
+      review_status,
+      new_source,
+      old_video_url,
+      new_video_url,
+      id,
+      politician,
+      topic,
+      old_statement,
+      new_statement,
+      old_date,
+      new_date,
+      ai_summary,
+      views
+    `)
+    .eq("id", params.id)
+    .maybeSingle();
 
     if (error) {
       console.error(error);
@@ -84,6 +99,8 @@ new_video_url,
 
     setLoading(false);
   }
+  const [lang, setLang] = useState("en");
+  const labels = getPublicLabels(lang);
 
   return (
     <PublicShell title="Contradiction detail">
@@ -98,7 +115,7 @@ new_video_url,
           href="/contradictions"
           className="inline-flex items-center text-sm text-slate-500 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
         >
-          ← Vissza az ellentmondásokhoz
+          ← {labels.backToContradictions}
         </Link>
 
         {loading ? (
@@ -130,19 +147,19 @@ new_video_url,
 
               {typeof item.views === "number" && (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {item.views} megtekintés
+                  {item.views} {labels.views}
                 </span>
               )}
             </div>
 
             <h1 className="mt-6 text-3xl font-bold text-slate-950 dark:text-white md:text-4xl">
-              Politikai ellentmondás
+              {labels.contradictionTitle}
             </h1>
 
             <div className="mt-8 grid gap-5 md:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Korábban
+                  {labels.old}
                 </p>
 
                 <p className="text-sm leading-7 text-slate-900 dark:text-white">
@@ -158,7 +175,7 @@ new_video_url,
 
               <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Most
+                  {labels.new}
                 </p>
 
                 <p className="text-sm leading-7 text-slate-900 dark:text-white">

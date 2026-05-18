@@ -1,4 +1,6 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { detectBrowserLanguage, getPublicLabels } from "@/lib/getPublicLabels";
 
 type SourceCardsProps = {
@@ -14,14 +16,29 @@ export default function SourceCards({
   oldVideoUrl,
   newVideoUrl,
 }: SourceCardsProps) {
-  const labels = getPublicLabels(detectBrowserLanguage());
+  const [lang, setLang] = useState("en");
 
-  
+  useEffect(() => {
+    setLang(detectBrowserLanguage());
+
+    function handleLanguageChange() {
+      setLang(detectBrowserLanguage());
+    }
+
+    window.addEventListener("language-change", handleLanguageChange);
+
+    return () => {
+      window.removeEventListener("language-change", handleLanguageChange);
+    };
+  }, []);
+
+  const labels = getPublicLabels(lang);
+
   return (
     <section className="mt-8">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Sources
+          {labels.sources}
         </p>
 
         <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">
@@ -32,7 +49,7 @@ export default function SourceCards({
       <div className="grid gap-5 md:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Korábbi forrás
+            {labels.oldSource}
           </p>
 
           <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">
@@ -52,11 +69,11 @@ export default function SourceCards({
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Új forrás
+            {labels.newSource}
           </p>
 
           <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">
-            {newSource || "Nincs forrás"}
+            {newSource || labels.noSource}
           </p>
 
           {newVideoUrl && (
@@ -65,7 +82,7 @@ export default function SourceCards({
               target="_blank"
               className="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              Videó megnyitása
+              {labels.openVideo}
             </a>
           )}
         </div>
