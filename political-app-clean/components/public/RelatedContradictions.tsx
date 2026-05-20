@@ -6,8 +6,11 @@ import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
+type Lang = "hu" | "de" | "en" | "fr";
+
 type Item = {
   id: string;
+  slug: string | null;
   politician: string | null;
   topic: string | null;
   old_statement: string | null;
@@ -26,7 +29,8 @@ export default function RelatedContradictions({
   topic,
 }: RelatedContradictionsProps) {
   const [items, setItems] = useState<Item[]>([]);
-  const lang = usePublicLanguage();
+  const lang = usePublicLanguage() as Lang;
+  const labels = getPublicLabels(lang);
 
   useEffect(() => {
     loadItems();
@@ -37,6 +41,7 @@ export default function RelatedContradictions({
       .from("contradictions")
       .select(`
         id,
+        slug,
         politician,
         topic,
         old_statement,
@@ -55,8 +60,6 @@ export default function RelatedContradictions({
 
     setItems((data || []) as Item[]);
   }
-
-  const labels = getPublicLabels(lang);
 
   if (items.length === 0) {
     return null;
@@ -78,7 +81,7 @@ export default function RelatedContradictions({
         {items.map((item) => (
           <Link
             key={item.id}
-            href={`/contradictions/${item.id}`}
+            href={`/contradictions/${item.slug || item.id}`}
             className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-950"
           >
             <div className="flex flex-wrap gap-2">

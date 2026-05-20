@@ -49,32 +49,41 @@ useEffect(() => {
 
   async function loadItem() {
   setLoading(true);
+  const rawId = String(params.id || "");
+const isUuid =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId);
 
-  const { data, error } = await supabase
-    .from("contradictions")
-    .select(`
-      old_source,
-      confidence_score,
-      severity_score,
-      review_status,
-      new_source,
-      old_video_url,
-      new_video_url,
-      id,
-      politician,
-      topic,
-      old_statement,
-      new_statement,
-      old_date,
-      new_date,
-      ai_summary,
-      views
-    `)
-    .eq("id", params.id)
-    .maybeSingle();
+  let query = supabase
+  .from("contradictions")
+  .select(`
+    old_source,
+    confidence_score,
+    severity_score,
+    review_status,
+    new_source,
+    old_video_url,
+    new_video_url,
+    id,
+    politician,
+    topic,
+    old_statement,
+    new_statement,
+    old_date,
+    new_date,
+    ai_summary,
+    views
+  `);
+
+if (isUuid) {
+  query = query.eq("id", rawId);
+} else {
+  query = query.eq("slug", rawId);
+}
+
+const { data, error } = await query.maybeSingle();
 
     if (error) {
-      console.error(error);
+      console.error("Contradiction detail load error:", error.message);
       setItem(null);
     } else {
       setItem(data);
@@ -92,7 +101,13 @@ useEffect(() => {
   const labels = getPublicLabels(lang);
 
   return (
-    <PublicShell title="Contradiction detail">
+    <PublicShell
+  title={
+    item?.politician
+      ? `${item.politician} - ${labels.contradictionTitle}`
+      : labels.contradictionTitle
+  }
+>
       {item && (
   <ShareButtons
     url={`/contradictions/${item.id}`}
@@ -141,9 +156,15 @@ useEffect(() => {
               )}
             </div>
 
-            <h1 className="mt-6 text-3xl font-bold text-slate-950 dark:text-white md:text-4xl">
-              {labels.contradictionTitle}
-            </h1>
+            <h1 className="text-4xl font-black leading-tight text-white md:text-6xl">
+  {item?.politician || labels.contradictionTitle}
+
+  {item?.topic ? (
+    <span className="block text-blue-400">
+      {item.topic}
+    </span>
+  ) : null}
+</h1>
 
             <div className="mt-8 grid gap-5 md:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-5 dark:bg-slate-900">
