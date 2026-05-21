@@ -2,15 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+
 import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
+import {
+  getTranslatedSummary,
+  getTranslatedTopic,
+  type PublicLang,
+} from "@/lib/publicTranslations";
 
 type Item = {
   id: string;
   slug: string | null;
   politician: string | null;
   topic: string | null;
+  topic_hu?: string | null;
+  topic_de?: string | null;
+  topic_en?: string | null;
+  topic_fr?: string | null;
   ai_summary: string | null;
   ai_summary_hu?: string | null;
   ai_summary_de?: string | null;
@@ -19,20 +29,8 @@ type Item = {
   views: number | null;
 };
 
-function getSummary(
-  item: Item,
-  lang: "hu" | "de" | "en" | "fr"
-) {
-  if (lang === "hu") return item.ai_summary_hu || item.ai_summary;
-  if (lang === "de") return item.ai_summary_de || item.ai_summary;
-  if (lang === "en") return item.ai_summary_en || item.ai_summary;
-  if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
-
-  return item.ai_summary;
-}
-
 export default function TrendingContradictions() {
-  const lang = usePublicLanguage() as "hu" | "de" | "en" | "fr";
+  const lang = usePublicLanguage() as PublicLang;
   const labels = getPublicLabels(lang);
 
   const [items, setItems] = useState<Item[]>([]);
@@ -49,6 +47,10 @@ export default function TrendingContradictions() {
         slug,
         politician,
         topic,
+        topic_hu,
+        topic_de,
+        topic_en,
+        topic_fr,
         ai_summary,
         ai_summary_hu,
         ai_summary_de,
@@ -82,7 +84,8 @@ export default function TrendingContradictions() {
 
       <div className="grid gap-5 md:grid-cols-3">
         {items.map((item, index) => {
-          const summary = getSummary(item, lang);
+          const summary = getTranslatedSummary(item, lang);
+          const topic = getTranslatedTopic(item, lang);
 
           return (
             <Link
@@ -107,9 +110,9 @@ export default function TrendingContradictions() {
                   </span>
                 )}
 
-                {item.topic && (
+                {topic && (
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    {item.topic}
+                    {topic}
                   </span>
                 )}
               </div>

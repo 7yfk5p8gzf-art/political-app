@@ -66,6 +66,8 @@ alreadyVoted: "Már szavaztál.",
 draft: "Vázlat",
 review: "Ellenőrzés alatt",
 published: "Publikálva",
+copyLink: "Link másolása",
+videoEvidence: "Videó bizonyíték",
 
 
 
@@ -139,6 +141,8 @@ alreadyVoted: "You have already voted.",
 draft: "Draft",
 review: "In review",
 published: "Published",
+copyLink: "Copy link",
+videoEvidence: "Video evidence",
 
 
 spotlight: "Spotlight",
@@ -210,6 +214,8 @@ alreadyVoted: "Du hast bereits abgestimmt.",
 draft: "Entwurf",
 review: "In Prüfung",
 published: "Veröffentlicht",
+copyLink: "Link kopieren",
+videoEvidence: "Videobeweis",
 
 
 
@@ -284,6 +290,8 @@ alreadyVoted: "Vous avez déjà voté.",
 draft: "Brouillon",
 review: "En révision",
 published: "Publié",
+copyLink: "Copier le lien",
+videoEvidence: "Preuve vidéo",
 
 
 spotlight: "À la une",

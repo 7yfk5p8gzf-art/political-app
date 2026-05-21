@@ -10,37 +10,43 @@ import TrendingContradictions from "@/components/public/TrendingContradictions";
 import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
-
-type Lang = "hu" | "de" | "en" | "fr";
+import {
+  getTranslatedNewStatement,
+  getTranslatedOldStatement,
+  getTranslatedTopic,
+  type PublicLang,
+} from "@/lib/publicTranslations";
 
 type Contradiction = {
   id: string;
   slug: string | null;
   politician: string | null;
+
   topic: string | null;
   topic_hu: string | null;
   topic_de: string | null;
   topic_en: string | null;
   topic_fr: string | null;
+
   old_statement: string | null;
+  old_statement_hu: string | null;
+  old_statement_de: string | null;
+  old_statement_en: string | null;
+  old_statement_fr: string | null;
+
   new_statement: string | null;
+  new_statement_hu: string | null;
+  new_statement_de: string | null;
+  new_statement_en: string | null;
+  new_statement_fr: string | null;
 };
-
-function getTopic(item: Contradiction, lang: Lang) {
-  if (lang === "hu") return item.topic_hu || item.topic;
-  if (lang === "de") return item.topic_de || item.topic;
-  if (lang === "en") return item.topic_en || item.topic;
-  if (lang === "fr") return item.topic_fr || item.topic;
-
-  return item.topic;
-}
 
 export default function TopicDetailPage() {
   const params = useParams();
   const rawTopic = String(params.topic || "");
   const decodedTopic = decodeURIComponent(rawTopic);
 
-  const lang = usePublicLanguage() as Lang;
+  const lang = usePublicLanguage() as PublicLang;
   const labels = getPublicLabels(lang);
 
   const [items, setItems] = useState<Contradiction[]>([]);
@@ -56,13 +62,24 @@ export default function TopicDetailPage() {
         id,
         slug,
         politician,
+
         topic,
         topic_hu,
         topic_de,
         topic_en,
         topic_fr,
+
         old_statement,
-        new_statement
+        old_statement_hu,
+        old_statement_de,
+        old_statement_en,
+        old_statement_fr,
+
+        new_statement,
+        new_statement_hu,
+        new_statement_de,
+        new_statement_en,
+        new_statement_fr
       `)
       .or(
         `topic.eq.${decodedTopic},topic_hu.eq.${decodedTopic},topic_de.eq.${decodedTopic},topic_en.eq.${decodedTopic},topic_fr.eq.${decodedTopic}`
@@ -71,7 +88,9 @@ export default function TopicDetailPage() {
     setItems((data || []) as Contradiction[]);
   }
 
-  const title = items[0] ? getTopic(items[0], lang) || decodedTopic : decodedTopic;
+  const title = items[0]
+    ? getTranslatedTopic(items[0], lang) || decodedTopic
+    : decodedTopic;
 
   return (
     <PublicShell>
@@ -98,9 +117,9 @@ export default function TopicDetailPage() {
               key={item.id}
               id={item.slug || item.id}
               politician={item.politician}
-              topic={getTopic(item, lang)}
-              oldStatement={item.old_statement}
-              newStatement={item.new_statement}
+              topic={getTranslatedTopic(item, lang) || null}
+oldStatement={getTranslatedOldStatement(item, lang) || null}
+newStatement={getTranslatedNewStatement(item, lang) || null}
             />
           ))}
         </div>

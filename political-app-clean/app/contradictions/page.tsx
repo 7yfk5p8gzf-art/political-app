@@ -2,44 +2,59 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
 import PublicShell from "@/components/public/PublicShell";
-import { supabase } from "@/lib/supabase";
 import TrendingContradictions from "@/components/public/TrendingContradictions";
+
+import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
-
-type Lang = "hu" | "de" | "en" | "fr";
+import {
+  getTranslatedNewStatement,
+  getTranslatedOldStatement,
+  getTranslatedSummary,
+  getTranslatedTopic,
+  type PublicLang,
+} from "@/lib/publicTranslations";
 
 type Contradiction = {
   id: string;
   slug: string | null;
   politician: string | null;
+
   topic: string | null;
+  topic_hu: string | null;
+  topic_de: string | null;
+  topic_en: string | null;
+  topic_fr: string | null;
+
   old_statement: string | null;
+  old_statement_hu: string | null;
+  old_statement_de: string | null;
+  old_statement_en: string | null;
+  old_statement_fr: string | null;
+
   new_statement: string | null;
-  old_date: string | null;
-  new_date: string | null;
+  new_statement_hu: string | null;
+  new_statement_de: string | null;
+  new_statement_en: string | null;
+  new_statement_fr: string | null;
+
   ai_summary: string | null;
   ai_summary_hu: string | null;
   ai_summary_de: string | null;
   ai_summary_en: string | null;
   ai_summary_fr: string | null;
+
+  old_date: string | null;
+  new_date: string | null;
   status: string | null;
   created_at: string | null;
   views: number | null;
 };
 
-function getSummary(item: Contradiction, lang: Lang) {
-  if (lang === "hu") return item.ai_summary_hu || item.ai_summary;
-  if (lang === "de") return item.ai_summary_de || item.ai_summary;
-  if (lang === "en") return item.ai_summary_en || item.ai_summary;
-  if (lang === "fr") return item.ai_summary_fr || item.ai_summary;
-
-  return item.ai_summary;
-}
-
 export default function PublicContradictionsPage() {
-  const lang = usePublicLanguage() as Lang;
+  const lang = usePublicLanguage() as PublicLang;
   const labels = getPublicLabels(lang);
 
   const [items, setItems] = useState<Contradiction[]>([]);
@@ -55,15 +70,41 @@ export default function PublicContradictionsPage() {
 
     const { data, error } = await supabase
       .from("contradictions")
-      .select(
-        "id, slug, politician, topic, old_statement, new_statement, old_date, new_date, ai_summary, ai_summary_hu, ai_summary_de, ai_summary_en, ai_summary_fr, status, created_at, views"
-      )
+      .select(`
+        id,
+        slug,
+        politician,
+
+        topic,
+        topic_hu,
+        topic_de,
+        topic_en,
+        topic_fr,
+
+        old_statement,
+        
+
+        new_statement,
+        
+
+        ai_summary,
+        ai_summary_hu,
+        ai_summary_de,
+        ai_summary_en,
+        ai_summary_fr,
+
+        old_date,
+        new_date,
+        status,
+        created_at,
+        views
+      `)
       .eq("status", "published")
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Public contradictions load error:", error);
+      console.error("Public contradictions load error:", error.message);
       setItems([]);
     } else {
       setItems((data || []) as Contradiction[]);
@@ -78,13 +119,16 @@ export default function PublicContradictionsPage() {
     if (!q) return items;
 
     return items.filter((item) => {
-      const summary = getSummary(item, lang);
+      const topic = getTranslatedTopic(item, lang);
+      const oldStatement = item.old_statement;
+const newStatement = item.new_statement;
+      const summary = getTranslatedSummary(item, lang);
 
       return [
         item.politician,
-        item.topic,
-        item.old_statement,
-        item.new_statement,
+        topic,
+        oldStatement,
+        newStatement,
         summary,
       ]
         .filter(Boolean)
@@ -135,7 +179,10 @@ export default function PublicContradictionsPage() {
                 ? `/contradictions/${item.slug}`
                 : `/contradictions/${item.id}`;
 
-              const summary = getSummary(item, lang);
+              const topic = getTranslatedTopic(item, lang);
+              const oldStatement = item.old_statement;
+const newStatement = item.new_statement;
+              const summary = getTranslatedSummary(item, lang);
 
               return (
                 <article
@@ -149,9 +196,9 @@ export default function PublicContradictionsPage() {
                       </span>
                     )}
 
-                    {item.topic && (
+                    {topic && (
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {item.topic}
+                        {topic}
                       </span>
                     )}
 
@@ -169,7 +216,7 @@ export default function PublicContradictionsPage() {
                       </p>
 
                       <p className="text-sm text-slate-900 dark:text-white">
-                        {item.old_statement || labels.noOldStatement}
+                        {oldStatement || labels.noOldStatement}
                       </p>
 
                       {item.old_date && (
@@ -185,7 +232,7 @@ export default function PublicContradictionsPage() {
                       </p>
 
                       <p className="text-sm text-slate-900 dark:text-white">
-                        {item.new_statement || labels.noNewStatement}
+                        {newStatement || labels.noNewStatement}
                       </p>
 
                       {item.new_date && (
