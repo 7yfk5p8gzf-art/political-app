@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
+
+type Lang = "hu" | "de" | "en" | "fr";
 
 type Vote = {
   id: string;
@@ -15,9 +17,12 @@ type VoteSectionProps = {
 };
 
 export default function VoteSection({ contradictionId }: VoteSectionProps) {
+  const lang = usePublicLanguage() as Lang;
+  const labels = getPublicLabels(lang);
+
   const [votes, setVotes] = useState<Vote[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
-  const lang = usePublicLanguage();
+  const [voting, setVoting] = useState(false);
 
   useEffect(() => {
     loadVotes();
@@ -36,19 +41,23 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
   }
 
   async function vote(type: "yes" | "no") {
-    if (hasVoted) return;
+    if (hasVoted || voting) return;
 
-    await supabase.from("contradiction_votes").insert({
+    setVoting(true);
+
+    const { error } = await supabase.from("contradiction_votes").insert({
       contradiction_id: contradictionId,
       vote_type: type,
     });
 
-    localStorage.setItem(`vote_${contradictionId}`, type);
-    setHasVoted(true);
-    await loadVotes();
-  }
+    if (!error) {
+      localStorage.setItem(`vote_${contradictionId}`, type);
+      setHasVoted(true);
+      await loadVotes();
+    }
 
-  const labels = getPublicLabels(lang);
+    setVoting(false);
+  }
 
   const stats = useMemo(() => {
     const yes = votes.filter((vote) => vote.vote_type === "yes").length;
@@ -65,34 +74,49 @@ export default function VoteSection({ contradictionId }: VoteSectionProps) {
   }, [votes]);
 
   return (
-    <section className="mt-8 rounded-xl border border-white/10 bg-black/30 p-5">
-      <p className="mb-2 text-xs uppercase tracking-wide text-neutral-400">
+    <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
         {labels.communityVote}
       </p>
 
-      <h2 className="text-2xl font-bold">{labels.contradictionQuestion}</h2>
+      <h2 className="text-2xl font-bold text-slate-950 dark:text-white">
+        {labels.contradictionQuestion}
+      </h2>
 
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         <button
           onClick={() => vote("yes")}
-          disabled={hasVoted}
-          className="rounded-xl bg-white px-5 py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={hasVoted || voting}
+          className="rounded-2xl bg-slate-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
         >
           {labels.yes} ({stats.yesPercent}%)
         </button>
 
         <button
           onClick={() => vote("no")}
-          disabled={hasVoted}
-          className="rounded-xl border border-white/20 px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={hasVoted || voting}
+          className="rounded-2xl border border-slate-200 px-5 py-4 text-sm font-semibold text-slate-900 transition hover:border-blue-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-white dark:hover:border-blue-400 dark:hover:text-blue-300"
         >
           {labels.no} ({stats.noPercent}%)
         </button>
       </div>
 
-      <p className="mt-4 text-sm text-neutral-400">
+      <div className="mt-5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div
+          className="h-2 rounded-full bg-blue-600 transition-all"
+          style={{ width: `${stats.yesPercent}%` }}
+        />
+      </div>
+
+      <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
         {labels.totalVotes}: {stats.total}
       </p>
+
+      {hasVoted && (
+        <p className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400">
+          {labels.alreadyVoted}
+        </p>
+      )}
     </section>
   );
 }

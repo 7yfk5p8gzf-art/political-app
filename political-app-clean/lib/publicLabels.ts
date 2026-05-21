@@ -62,6 +62,10 @@ topicDetailDescription: "Politikai ellentmondások és állításváltozások eh
 politicianDetailDescription: "Politikai ellentmondások és állításváltozások ehhez a politikushoz kapcsolódva.",
 unknownPolitician: "Ismeretlen politikus",
 noTopic: "Nincs téma",
+alreadyVoted: "Már szavaztál.",
+draft: "Vázlat",
+review: "Ellenőrzés alatt",
+published: "Publikálva",
 
 
 
@@ -131,6 +135,10 @@ topicDetailDescription: "Political contradictions and statement changes related 
 politicianDetailDescription: "Political contradictions and statement changes related to this politician.",
 unknownPolitician: "Unknown politician",
 noTopic: "No topic",
+alreadyVoted: "You have already voted.",
+draft: "Draft",
+review: "In review",
+published: "Published",
 
 
 spotlight: "Spotlight",
@@ -197,7 +205,11 @@ topicDetailDescription: "Politische Widersprüche und Aussageänderungen zu dies
 politicianDetailDescription: "Politische Widersprüche und Aussageänderungen zu diesem Politiker.",
 unknownPolitician: "Unbekannter Politiker",
 noTopic: "Kein Thema",
+alreadyVoted: "Du hast bereits abgestimmt.",
 
+draft: "Entwurf",
+review: "In Prüfung",
+published: "Veröffentlicht",
 
 
 
@@ -268,6 +280,10 @@ topicDetailDescription: "Contradictions politiques et changements de déclaratio
 politicianDetailDescription: "Contradictions politiques et changements de déclarations liés à ce politicien.",
 unknownPolitician: "Politicien inconnu",
 noTopic: "Aucun sujet",
+alreadyVoted: "Vous avez déjà voté.",
+draft: "Brouillon",
+review: "En révision",
+published: "Publié",
 
 
 spotlight: "À la une",

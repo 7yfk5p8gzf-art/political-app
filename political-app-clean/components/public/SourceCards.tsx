@@ -3,6 +3,8 @@
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
 
+type Lang = "hu" | "de" | "en" | "fr";
+
 type SourceCardsProps = {
   oldSource?: string | null;
   newSource?: string | null;
@@ -16,14 +18,13 @@ export default function SourceCards({
   oldVideoUrl,
   newVideoUrl,
 }: SourceCardsProps) {
-  const lang = usePublicLanguage();
-
+  const lang = usePublicLanguage() as Lang;
   const labels = getPublicLabels(lang);
 
   return (
     <section className="mt-8">
       <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
           {labels.sources}
         </p>
 
@@ -33,7 +34,7 @@ export default function SourceCards({
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {labels.oldSource}
           </p>
@@ -46,14 +47,15 @@ export default function SourceCards({
             <a
               href={oldVideoUrl}
               target="_blank"
-              className="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
             >
               {labels.openVideo}
             </a>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {labels.newSource}
           </p>
@@ -66,7 +68,8 @@ export default function SourceCards({
             <a
               href={newVideoUrl}
               target="_blank"
-              className="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
             >
               {labels.openVideo}
             </a>
