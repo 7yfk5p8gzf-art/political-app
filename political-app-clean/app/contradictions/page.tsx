@@ -82,9 +82,17 @@ export default function PublicContradictionsPage() {
         topic_fr,
 
         old_statement,
+        old_statement_hu,
+old_statement_de,
+old_statement_en,
+old_statement_fr,
         
 
         new_statement,
+        new_statement_hu,
+new_statement_de,
+new_statement_en,
+new_statement_fr,
         
 
         ai_summary,
@@ -120,8 +128,9 @@ export default function PublicContradictionsPage() {
 
     return items.filter((item) => {
       const topic = getTranslatedTopic(item, lang);
-      const oldStatement = item.old_statement;
-const newStatement = item.new_statement;
+      const oldStatement = getTranslatedOldStatement(item, lang);
+const newStatement = getTranslatedNewStatement(item, lang);
+      
       const summary = getTranslatedSummary(item, lang);
 
       return [
@@ -180,8 +189,8 @@ const newStatement = item.new_statement;
                 : `/contradictions/${item.id}`;
 
               const topic = getTranslatedTopic(item, lang);
-              const oldStatement = item.old_statement;
-const newStatement = item.new_statement;
+              const oldStatement = getTranslatedOldStatement(item, lang);
+const newStatement = getTranslatedNewStatement(item, lang);
               const summary = getTranslatedSummary(item, lang);
 
               return (

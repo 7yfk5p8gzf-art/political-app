@@ -1,4 +1,22 @@
 import { NextResponse } from "next/server";
+
+type BraveResult = {
+  title?: string;
+  url?: string;
+  description?: string;
+};
+
+type Lang = "hu" | "de" | "en" | "fr";
+
+function cleanText(text: string) {
+  return String(text || "")
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+}
+
 async function generateAiSummary({
   query,
   title,
@@ -13,65 +31,6 @@ async function generateAiSummary({
   if (!process.env.OPENAI_API_KEY) {
     return snippet || "Nincs AI összefoglaló.";
   }
-  async function generateVideoTimestamp({
-  title,
-  snippet,
-}: {
-  title: string;
-  snippet: string;
-}) {
-  if (!process.env.OPENAI_API_KEY) {
-    return null;
-  }
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-5.3-chat-latest",
-        input: [
-          {
-            role: "system",
-            content:
-              "Keress videó timestamp utalásokat. Csak timestampet adj vissza HH:MM:SS vagy MM:SS formátumban. Ha nincs, akkor NO_TIMESTAMP.",
-          },
-          {
-            role: "user",
-            content: `
-Video title:
-${title}
-
-Video snippet:
-${snippet}
-`,
-          },
-        ],
-      }),
-    });
-
-    const data = await res.json();
-
-    const text =
-      data.output_text ||
-      data.output?.[0]?.content?.[0]?.text ||
-      "";
-
-    if (
-      text.includes(":") &&
-      !text.includes("NO_TIMESTAMP")
-    ) {
-      return text.trim();
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
 
   try {
     const res = await fetch("https://api.openai.com/v1/responses", {
@@ -121,16 +80,57 @@ ${snippet}
       snippet ||
       "Nincs AI összefoglaló.";
 
-    return String(text)
-  .replace(/&#x27;/g, "'")
-  .replace(/&quot;/g, '"')
-  .replace(/&amp;/g, "&")
-  .replace(/<[^>]*>/g, "")
-  .trim();
+    return cleanText(text);
   } catch {
     return snippet || "AI összefoglaló nem sikerült.";
   }
 }
+
+async function translateSummary(text: string, language: Lang) {
+  if (!process.env.OPENAI_API_KEY) {
+    return text;
+  }
+
+  try {
+    const languageNames: Record<Lang, string> = {
+      hu: "Hungarian",
+      de: "German",
+      en: "English",
+      fr: "French",
+    };
+
+    const res = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-5.3-chat-latest",
+        input: [
+          {
+            role: "system",
+            content: `Translate this political summary to ${languageNames[language]}. Keep it neutral, concise and factual. Do not add new information.`,
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+      }),
+    });
+
+    const data = await res.json();
+
+    const translated =
+      data.output_text || data.output?.[0]?.content?.[0]?.text || text;
+
+    return cleanText(translated);
+  } catch {
+    return text;
+  }
+}
+
 async function generateVideoTimestamp({
   title,
   snippet,
@@ -173,10 +173,7 @@ ${snippet}
 
     const data = await res.json();
 
-    const text =
-      data.output_text ||
-      data.output?.[0]?.content?.[0]?.text ||
-      "";
+    const text = data.output_text || data.output?.[0]?.content?.[0]?.text || "";
 
     if (text.includes(":") && !text.includes("NO_TIMESTAMP")) {
       return text.trim();
@@ -186,7 +183,9 @@ ${snippet}
   } catch {
     return null;
   }
-}function extractYouTubeVideoId(url: string) {
+}
+
+function extractYouTubeVideoId(url: string) {
   if (!url) return null;
 
   if (url.includes("youtube.com/watch?v=")) {
@@ -204,11 +203,58 @@ ${snippet}
   return null;
 }
 
-type BraveResult = {
-  title?: string;
-  url?: string;
-  description?: string;
-};
+async function buildResult({
+  item,
+  query,
+  type,
+}: {
+  item: BraveResult;
+  query: string;
+  type: "article" | "video";
+}) {
+  const title = item.title || (type === "video" ? "Untitled video" : "Untitled result");
+  const url = item.url || "#";
+  const snippet = item.description || "No summary available.";
+
+  const baseSummary = await generateAiSummary({
+    query,
+    title,
+    url,
+    snippet,
+  });
+
+  const [summary_hu, summary_de, summary_en, summary_fr, timestamp] =
+    await Promise.all([
+      translateSummary(baseSummary, "hu"),
+      translateSummary(baseSummary, "de"),
+      translateSummary(baseSummary, "en"),
+      translateSummary(baseSummary, "fr"),
+      type === "video"
+        ? generateVideoTimestamp({
+            title,
+            snippet,
+          })
+        : Promise.resolve(null),
+    ]);
+
+  return {
+    type,
+    title,
+    url,
+    videoId: extractYouTubeVideoId(url),
+
+    summary: baseSummary,
+    summary_hu,
+    summary_de,
+    summary_en,
+    summary_fr,
+
+    politician: query.split(" ")[0] || "",
+    topic: query.split(" ").slice(1).join(" ") || "",
+
+    timestamp,
+  };
+}
 
 export async function POST(req: Request) {
   try {
@@ -243,74 +289,43 @@ export async function POST(req: Request) {
     );
 
     const json = await response.json();
+    const rawResults: BraveResult[] = json.web?.results || [];
 
-    const rawResults = json.web?.results || [];
-    const videoResults = rawResults.filter((item: BraveResult) =>
-  item.url?.includes("youtube.com") ||
-  item.url?.includes("youtu.be")
-);
+    const videoResults = rawResults.filter(
+      (item) =>
+        item.url?.includes("youtube.com") || item.url?.includes("youtu.be")
+    );
 
-const articleResults = rawResults.filter(
-  (item: BraveResult) =>
-    !item.url?.includes("youtube.com") &&
-    !item.url?.includes("youtu.be")
-);
+    const articleResults = rawResults.filter(
+      (item) =>
+        !item.url?.includes("youtube.com") && !item.url?.includes("youtu.be")
+    );
 
-const articles = await Promise.all(
-  articleResults.map(async (item: BraveResult) => ({
-    type: "article",
+    const articles = await Promise.all(
+      articleResults.map((item) =>
+        buildResult({
+          item,
+          query,
+          type: "article",
+        })
+      )
+    );
 
-    title: item.title || "Untitled result",
+    const videos = await Promise.all(
+      videoResults.map((item) =>
+        buildResult({
+          item,
+          query,
+          type: "video",
+        })
+      )
+    );
 
-    url: item.url || "#",
-    videoId: extractYouTubeVideoId(item.url || ""),
-
-    summary: await generateAiSummary({
-      query,
-      title: item.title || "",
-      url: item.url || "",
-      snippet: item.description || "No summary available.",
-    }),
-
-    politician: query.split(" ")[0] || "",
-
-    topic: query.split(" ").slice(1).join(" ") || "",
-  }))
-);
-
-const videos = await Promise.all(
-  videoResults.map(async (item: BraveResult) => ({
-    type: "video",
-
-    title: item.title || "Untitled video",
-
-    url: item.url || "#",
-
-    summary: await generateAiSummary({
-      query,
-      title: item.title || "",
-      url: item.url || "",
-      snippet: item.description || "No summary available.",
-    }),
-
-    politician: query.split(" ")[0] || "",
-
-    topic: query.split(" ").slice(1).join(" ") || "",
-    timestamp: await generateVideoTimestamp({
-  title: item.title || "",
-  snippet: item.description || "",
-}),
-
-  }))
-);
-
-const results = [...videos, ...articles];
-  
-    
-
-    return NextResponse.json({ results });
+    return NextResponse.json({
+      results: [...videos, ...articles],
+    });
   } catch (error) {
-    console.error(error);
+    console.error("AI search failed:", error);
 
     return NextResponse.json(
       { results: [], error: "AI search failed" },

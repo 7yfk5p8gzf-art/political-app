@@ -4,6 +4,12 @@ import Link from "next/link";
 import ContradictionCard from "@/components/public/ContradictionCard";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
+import {
+  getTranslatedTopic,
+  getTranslatedOldStatement,
+  getTranslatedNewStatement,
+  type PublicLang,
+} from "@/lib/publicTranslations";
 
 type Item = {
   id: string;
@@ -34,21 +40,33 @@ export default function HomeTopContradictions({ items }: { items: Item[] }) {
       </div>
 
       <div className="space-y-6">
-        {items.map((item) => (
-          <div key={item.id}>
-            <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">
-              {item.views || 0} {labels.views}
-            </div>
+        {items.map((item) => {
+          const translatedTopic = getTranslatedTopic(item, lang as PublicLang);
+          const translatedOldStatement = getTranslatedOldStatement(
+            item,
+            lang as PublicLang
+          );
+          const translatedNewStatement = getTranslatedNewStatement(
+            item,
+            lang as PublicLang
+          );
 
-            <ContradictionCard
-              id={item.id}
-              politician={item.politician}
-              topic={item.topic}
-              oldStatement={item.old_statement}
-              newStatement={item.new_statement}
-            />
-          </div>
-        ))}
+          return (
+            <div key={item.id}>
+              <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+                {item.views || 0} {labels.views}
+              </div>
+
+              <ContradictionCard
+                id={item.id}
+                politician={item.politician}
+                topic={translatedTopic || ""}
+                oldStatement={translatedOldStatement || ""}
+                newStatement={translatedNewStatement || ""}
+              />
+            </div>
+          );
+        })}
       </div>
     </section>
   );

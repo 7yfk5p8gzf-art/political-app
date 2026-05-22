@@ -3,6 +3,12 @@
 import ContradictionCard from "@/components/public/ContradictionCard";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
 import { getPublicLabels } from "@/lib/getPublicLabels";
+import {
+  getTranslatedTopic,
+  getTranslatedOldStatement,
+  getTranslatedNewStatement,
+  type PublicLang,
+} from "@/lib/publicTranslations";
 
 type Props = {
   item: {
@@ -18,6 +24,16 @@ type Props = {
 export default function HomeSpotlight({ item }: Props) {
   const lang = usePublicLanguage();
   const labels = getPublicLabels(lang);
+  const translatedTopic = getTranslatedTopic(item, lang as PublicLang);
+
+const translatedOldStatement =
+  getTranslatedOldStatement(item, lang as PublicLang);
+
+const translatedNewStatement =
+  getTranslatedNewStatement(item, lang as PublicLang);
+  
+
+
 
   return (
     <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -26,7 +42,7 @@ export default function HomeSpotlight({ item }: Props) {
       </p>
 
       <h2 className="mt-3 text-3xl font-bold text-slate-950 dark:text-white">
-        {item.politician} · {item.topic}
+        {item.politician} · {translatedTopic}
       </h2>
 
       <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
@@ -35,12 +51,12 @@ export default function HomeSpotlight({ item }: Props) {
 
       <div className="mt-6">
         <ContradictionCard
-          id={item.id}
-          politician={item.politician}
-          topic={item.topic}
-          oldStatement={item.old_statement}
-          newStatement={item.new_statement}
-        />
+  id={item.id}
+  politician={item.politician}
+  topic={translatedTopic || ""}
+  oldStatement={translatedOldStatement || ""}
+  newStatement={translatedNewStatement || ""}
+/>
       </div>
     </section>
   );

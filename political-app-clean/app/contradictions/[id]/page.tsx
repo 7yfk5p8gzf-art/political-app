@@ -300,7 +300,7 @@ export default function ContradictionDetailPage() {
             <RelatedContradictions
               currentId={item.id}
               politician={item.politician}
-              topic={item.topic}
+              topic={getTranslatedTopic(item, lang as PublicLang)}
             />
           </article>
         )}

@@ -210,6 +210,43 @@ async function deleteContradiction(id: string) {
                 </div>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
+                <button
+  onClick={async () => {
+    try {
+      const res = await fetch("/api/ai/translate-contradiction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: item.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Translation failed");
+        return;
+      }
+
+      alert("Translations generated!");
+    } catch (err) {
+      alert("Translation error");
+    }
+  }}
+  style={{
+    padding: "8px 12px",
+    borderRadius: 8,
+    border: "none",
+    cursor: "pointer",
+    background: "#2563eb",
+    color: "white",
+    fontWeight: 700,
+  }}
+>
+  AI Translate
+</button>
   <button
     onClick={() => updateStatus(item.id, "draft")}
     className="rounded-full bg-white/10 px-4 py-2 text-sm"

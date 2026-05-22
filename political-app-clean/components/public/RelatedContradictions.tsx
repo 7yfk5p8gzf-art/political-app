@@ -5,6 +5,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
+import {
+  getTranslatedTopic,
+} from "@/lib/publicTranslations";
 
 type Lang = "hu" | "de" | "en" | "fr";
 
@@ -93,7 +96,7 @@ export default function RelatedContradictions({
 
               {item.topic && (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  {item.topic}
+                  {getTranslatedTopic(item, lang)}
                 </span>
               )}
             </div>

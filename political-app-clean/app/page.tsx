@@ -24,6 +24,31 @@ export default async function HomePage() {
       topic,
       old_statement,
       new_statement,
+      politician,
+
+  topic,
+  topic_hu,
+  topic_de,
+  topic_en,
+  topic_fr,
+
+  old_statement,
+  old_statement_hu,
+  old_statement_de,
+  old_statement_en,
+  old_statement_fr,
+
+  new_statement,
+  new_statement_hu,
+  new_statement_de,
+  new_statement_en,
+  new_statement_fr,
+
+  ai_summary,
+  ai_summary_hu,
+  ai_summary_de,
+  ai_summary_en,
+  ai_summary_fr,
       views
     `)
     .order("views", { ascending: false })
