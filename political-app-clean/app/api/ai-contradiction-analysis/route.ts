@@ -31,7 +31,12 @@ Válaszolj JSON formátumban:
   "analysis": "...",
   "confidence_score": 0,
   "severity_score": 0,
-  "review_status": "approved"
+  "review_status": "approved",
+  "strength": "medium",
+  "timeline_hint": "...",
+  "transcript_quote": "...",
+  "timestamp": "00:00",
+  "quote_precision": "medium"
 }
 
 A strength csak ez lehet:
@@ -41,7 +46,17 @@ A strength csak ez lehet:
 
 Az analysis rövid, semleges szerkesztői elemzés legyen magyarul.
 A timeline_hint rövid idővonal összefoglaló legyen.
-Ne találj ki tényeket.`,
+Ne találj ki tényeket.
+
+Ha van videós vagy beszéd jellegű állítás,
+adj vissza egy rövid transcript_quote mezőt
+és hozzá egy timestampet MM:SS formátumban.
+
+A quote_precision csak ez lehet:
+- low
+- medium
+- high
+`,
 },
           {
             role: "user",
@@ -94,6 +109,13 @@ ${new_statement}
     let confidence_score = 0;
 let severity_score = 0;
 let review_status = "approved";
+let old_transcript_quote = "";
+let old_timestamp = "";
+let old_quote_precision = "medium";
+
+let new_transcript_quote = "";
+let new_timestamp = "";
+let new_quote_precision = "medium";
 
     try {
       const parsed = JSON.parse(raw);
@@ -102,6 +124,23 @@ let review_status = "approved";
       strength = parsed.strength || strength;
       timeline_hint =
   parsed.timeline_hint || timeline_hint;
+  old_transcript_quote =
+  parsed.old_transcript_quote || old_transcript_quote;
+
+old_timestamp =
+  parsed.old_timestamp || old_timestamp;
+
+old_quote_precision =
+  parsed.old_quote_precision || old_quote_precision;
+
+new_transcript_quote =
+  parsed.new_transcript_quote || new_transcript_quote;
+
+new_timestamp =
+  parsed.new_timestamp || new_timestamp;
+
+new_quote_precision =
+  parsed.new_quote_precision || new_quote_precision;
   confidence_score =
   parsed.confidence_score || confidence_score;
 
@@ -115,13 +154,22 @@ review_status =
     }
 
     return NextResponse.json({
-      analysis,
-      strength,
-      timeline_hint,
-      confidence_score,
-severity_score,
-review_status,
-    });
+  analysis,
+  strength,
+  timeline_hint,
+
+  confidence_score,
+  severity_score,
+  review_status,
+
+  old_transcript_quote,
+  old_timestamp,
+  old_quote_precision,
+
+  new_transcript_quote,
+  new_timestamp,
+  new_quote_precision,
+});
   } catch (error) {
     console.error(error);
 

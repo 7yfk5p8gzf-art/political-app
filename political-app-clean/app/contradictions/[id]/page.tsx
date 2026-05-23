@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import EvidenceQuoteCard from "@/components/public/EvidenceQuoteCard";
 
 import PublicShell from "@/components/public/PublicShell";
 import ShareButtons from "@/components/public/ShareButtons";
@@ -63,6 +64,9 @@ type Contradiction = {
   confidence_score: number | null;
   severity_score: number | null;
   review_status: string | null;
+  transcript_quote?: string | null;
+timestamp?: string | null;
+quote_precision?: string | null;
 };
 
 export default function ContradictionDetailPage() {
@@ -286,6 +290,11 @@ export default function ContradictionDetailPage() {
   newUrl={item.new_video_url}
   oldTitle={`${item.politician || labels.politician} - korábbi videó`}
   newTitle={`${item.politician || labels.politician} - új videó`}
+/>
+<EvidenceQuoteCard
+  quote={item.transcript_quote}
+  timestamp={item.timestamp}
+  precision={item.quote_precision}
 />
 
             <SourceCards

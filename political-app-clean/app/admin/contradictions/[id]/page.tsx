@@ -16,6 +16,13 @@ type Contradiction = {
   ai_summary: string | null;
   contradiction_strength: string | null;
   timeline_hint: string | null;
+  confidence_score?: number | null;
+severity_score?: number | null;
+review_status?: string | null;
+
+transcript_quote?: string | null;
+timestamp?: string | null;
+quote_precision?: string | null;
 };
 type RelatedContradiction = {
   id: string;
@@ -76,6 +83,13 @@ export default function EditContradictionPage() {
         ai_summary: item.ai_summary,
         contradiction_strength: item.contradiction_strength,
         timeline_hint: item.timeline_hint,
+        confidence_score: item.confidence_score,
+severity_score: item.severity_score,
+review_status: item.review_status,
+
+transcript_quote: item.transcript_quote,
+timestamp: item.timestamp,
+quote_precision: item.quote_precision,
       })
       .eq("id", item.id);
 
@@ -147,6 +161,13 @@ async function generateAiAnalysis() {
   ai_summary: data.analysis,
   contradiction_strength: data.strength || "weak",
   timeline_hint: data.timeline_hint || "",
+  confidence_score: data.confidence_score || 0,
+severity_score: data.severity_score || 0,
+review_status: data.review_status || "approved",
+
+transcript_quote: data.transcript_quote || "",
+timestamp: data.timestamp || "",
+quote_precision: data.quote_precision || "medium",
 });
   } catch (error) {
     console.error(error);
