@@ -30,6 +30,7 @@ old_quote_precision?: string | null;
 new_transcript_quote?: string | null;
 new_timestamp?: string | null;
 new_quote_precision?: string | null;
+evidence_summary?: string | null;
 };
 type RelatedContradiction = {
   id: string;
@@ -88,15 +89,21 @@ export default function EditContradictionPage() {
         new_statement: item.new_statement,
         status: item.status,
         ai_summary: item.ai_summary,
+        evidence_summary: item.evidence_summary,
         contradiction_strength: item.contradiction_strength,
         timeline_hint: item.timeline_hint,
         confidence_score: item.confidence_score,
 severity_score: item.severity_score,
 review_status: item.review_status,
+old_transcript_quote: item.old_transcript_quote,
+old_timestamp: item.old_timestamp,
+old_quote_precision: item.old_quote_precision,
 
-transcript_quote: item.transcript_quote,
-timestamp: item.timestamp,
-quote_precision: item.quote_precision,
+new_transcript_quote: item.new_transcript_quote,
+new_timestamp: item.new_timestamp,
+new_quote_precision: item.new_quote_precision,
+
+
       })
       .eq("id", item.id);
 
@@ -166,6 +173,7 @@ async function generateAiAnalysis() {
     setItem({
   ...item,
   ai_summary: data.analysis,
+  evidence_summary: data.evidence_summary || "",
   contradiction_strength: data.strength || "weak",
   timeline_hint: data.timeline_hint || "",
   confidence_score: data.confidence_score || 0,
@@ -273,6 +281,59 @@ async function loadRelatedItems(current: Contradiction) {
   rows={6}
   className="w-full rounded-2xl border border-white/10 bg-black px-5 py-4 text-white outline-none"
 />
+<div className="grid gap-4 md:grid-cols-2">
+  <textarea
+    value={item.old_transcript_quote || ""}
+    onChange={(e) =>
+      setItem({
+        ...item,
+        old_transcript_quote: e.target.value,
+      })
+    }
+    placeholder="Old transcript quote"
+    rows={4}
+    className="w-full rounded-2xl border border-blue-500/30 bg-black px-5 py-4 text-white outline-none"
+  />
+
+  <textarea
+    value={item.new_transcript_quote || ""}
+    onChange={(e) =>
+      setItem({
+        ...item,
+        new_transcript_quote: e.target.value,
+      })
+    }
+    placeholder="New transcript quote"
+    rows={4}
+    className="w-full rounded-2xl border border-red-500/30 bg-black px-5 py-4 text-white outline-none"
+  />
+</div>
+
+<div className="mt-4 grid gap-4 md:grid-cols-2">
+  <input
+    value={item.old_timestamp || ""}
+    onChange={(e) =>
+      setItem({
+        ...item,
+        old_timestamp: e.target.value,
+      })
+    }
+    placeholder="Old timestamp (00:00)"
+    className="w-full rounded-2xl border border-blue-500/30 bg-black px-5 py-4 text-white outline-none"
+  />
+
+  <input
+    value={item.new_timestamp || ""}
+    onChange={(e) =>
+      setItem({
+        ...item,
+        new_timestamp: e.target.value,
+      })
+    }
+    placeholder="New timestamp (00:00)"
+    className="w-full rounded-2xl border border-red-500/30 bg-black px-5 py-4 text-white outline-none"
+  />
+</div>
 
 <input
   value={item.timeline_hint || ""}

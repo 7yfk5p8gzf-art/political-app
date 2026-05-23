@@ -74,6 +74,7 @@ old_quote_precision?: string | null;
 new_transcript_quote?: string | null;
 new_timestamp?: string | null;
 new_quote_precision?: string | null;
+evidence_summary?: string | null;
 };
 
 export default function ContradictionDetailPage() {
@@ -277,6 +278,23 @@ export default function ContradictionDetailPage() {
                 )}
               </div>
             </div>
+            <section className="mt-4 mb-8 flex flex-wrap gap-3">
+  <div className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-300">
+    🧠 AI confidence: {item.confidence_score || 0}%
+  </div>
+
+  <div className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300">
+    ⚠ Severity: {(item.severity_score || 0) > 70 ? "HIGH" : (item.severity_score || 0) > 40 ? "MEDIUM" : "LOW"}
+  </div>
+
+  <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-300">
+    🎥 Video evidence
+  </div>
+
+  <div className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-semibold text-yellow-300">
+    📚 Sources linked
+  </div>
+</section>
 
             <TimelineBlock
               oldDate={item.old_date}
@@ -291,6 +309,21 @@ export default function ContradictionDetailPage() {
               severityScore={item.severity_score}
               reviewStatus={item.review_status}
             />
+            {item.evidence_summary && (
+  <section className="mt-6 rounded-3xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+    <p className="text-xs font-bold uppercase tracking-wide text-yellow-400">
+      Evidence summary
+    </p>
+
+    <h2 className="mt-2 text-2xl font-bold text-white">
+      Mi változott?
+    </h2>
+
+    <p className="mt-4 text-base leading-8 text-slate-200">
+      {item.evidence_summary}
+    </p>
+  </section>
+)}
 
             <VideoEmbed
   oldUrl={item.old_video_url}

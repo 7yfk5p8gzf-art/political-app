@@ -18,6 +18,7 @@ type Item = {
   topic: string | null;
   old_statement: string | null;
   new_statement: string | null;
+  contradiction_strength?: string | null;
 };
 
 type RelatedContradictionsProps = {
@@ -102,6 +103,15 @@ export default function RelatedContradictions({
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="mb-3 flex flex-wrap gap-2">
+  <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-bold text-red-400">
+    ⚠ {item.contradiction_strength || "medium"}
+  </span>
+
+  <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-400">
+    🧠 AI reviewed
+  </span>
+</div>
               <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
                 <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">
                   {labels.old}

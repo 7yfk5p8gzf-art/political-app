@@ -29,6 +29,8 @@ Válaszolj JSON formátumban:
 
 {
   "analysis": "...",
+  "evidence_summary": "...",
+
   "confidence_score": 0,
   "severity_score": 0,
   "review_status": "approved",
@@ -47,6 +49,8 @@ A strength csak ez lehet:
 Az analysis rövid, semleges szerkesztői elemzés legyen magyarul.
 A timeline_hint rövid idővonal összefoglaló legyen.
 Ne találj ki tényeket.
+Az evidence_summary rövid, ütős összefoglaló legyen arról,
+mi változott a politikus álláspontjában és miért fontos ez.
 
 Ha van videós vagy beszéd jellegű állítás,
 adj vissza egy rövid transcript_quote mezőt
@@ -116,11 +120,14 @@ let old_quote_precision = "medium";
 let new_transcript_quote = "";
 let new_timestamp = "";
 let new_quote_precision = "medium";
+let evidence_summary = "";
 
     try {
       const parsed = JSON.parse(raw);
 
       analysis = parsed.analysis || analysis;
+      evidence_summary =
+  parsed.evidence_summary || evidence_summary;
       strength = parsed.strength || strength;
       timeline_hint =
   parsed.timeline_hint || timeline_hint;
@@ -169,6 +176,7 @@ review_status =
   new_transcript_quote,
   new_timestamp,
   new_quote_precision,
+  evidence_summary,
 });
   } catch (error) {
     console.error(error);
