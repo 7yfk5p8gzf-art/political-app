@@ -67,6 +67,13 @@ type Contradiction = {
   transcript_quote?: string | null;
 timestamp?: string | null;
 quote_precision?: string | null;
+old_transcript_quote?: string | null;
+old_timestamp?: string | null;
+old_quote_precision?: string | null;
+
+new_transcript_quote?: string | null;
+new_timestamp?: string | null;
+new_quote_precision?: string | null;
 };
 
 export default function ContradictionDetailPage() {
@@ -292,9 +299,13 @@ export default function ContradictionDetailPage() {
   newTitle={`${item.politician || labels.politician} - új videó`}
 />
 <EvidenceQuoteCard
-  quote={item.transcript_quote}
-  timestamp={item.timestamp}
-  precision={item.quote_precision}
+  oldQuote={item.old_transcript_quote}
+oldTimestamp={item.old_timestamp}
+oldPrecision={item.old_quote_precision}
+
+newQuote={item.new_transcript_quote}
+newTimestamp={item.new_timestamp}
+newPrecision={item.new_quote_precision}
 />
 
             <SourceCards

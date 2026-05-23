@@ -23,6 +23,13 @@ review_status?: string | null;
 transcript_quote?: string | null;
 timestamp?: string | null;
 quote_precision?: string | null;
+old_transcript_quote?: string | null;
+old_timestamp?: string | null;
+old_quote_precision?: string | null;
+
+new_transcript_quote?: string | null;
+new_timestamp?: string | null;
+new_quote_precision?: string | null;
 };
 type RelatedContradiction = {
   id: string;
@@ -164,10 +171,15 @@ async function generateAiAnalysis() {
   confidence_score: data.confidence_score || 0,
 severity_score: data.severity_score || 0,
 review_status: data.review_status || "approved",
+old_transcript_quote: data.old_transcript_quote || "",
+old_timestamp: data.old_timestamp || "",
+old_quote_precision: data.old_quote_precision || "medium",
 
-transcript_quote: data.transcript_quote || "",
-timestamp: data.timestamp || "",
-quote_precision: data.quote_precision || "medium",
+new_transcript_quote: data.new_transcript_quote || "",
+new_timestamp: data.new_timestamp || "",
+new_quote_precision: data.new_quote_precision || "medium",
+
+
 });
   } catch (error) {
     console.error(error);
