@@ -282,11 +282,11 @@ export default function ContradictionDetailPage() {
             />
 
             <VideoEmbed
-              url={item.new_video_url || item.old_video_url}
-              title={`${item.politician || labels.politician} ${
-                labels.videoEvidence
-              }`}
-            />
+  oldUrl={item.old_video_url}
+  newUrl={item.new_video_url}
+  oldTitle={`${item.politician || labels.politician} - korábbi videó`}
+  newTitle={`${item.politician || labels.politician} - új videó`}
+/>
 
             <SourceCards
               oldSource={item.old_source}

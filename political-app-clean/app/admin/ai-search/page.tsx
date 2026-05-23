@@ -39,21 +39,39 @@ export default function AiSearchPage() {
   setLoading(false);
 }
 async function saveSource(item: SearchResult) {
-  const { error } = await supabase.from("sources").insert({
-    title: item.title,
-    url: item.url,
-    article_url: item.url,
-    summary: item.summary,
-    ai_summary: item.summary,
-    politician: item.politician || null,
-    topic: item.topic || null,
-    status: "draft",
-    source_type: "article",
-  });
+  const { data, error } = await supabase
+    .from("sources")
+    .insert({
+      title: item.title,
+      url: item.url,
+      article_url: item.url,
+      summary: item.summary,
+      ai_summary: item.summary,
+      politician: item.politician || null,
+      topic: item.topic || null,
+      status: "draft",
+      source_type: "article",
+    })
+    .select()
+    .single();
 
   if (error) {
     alert(error.message);
     return;
+  }
+
+  try {
+    await fetch("/api/ai/translate-source", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: data.id,
+      }),
+    });
+  } catch (err) {
+    console.error("Source translation failed", err);
   }
 
   alert("Source saved.");

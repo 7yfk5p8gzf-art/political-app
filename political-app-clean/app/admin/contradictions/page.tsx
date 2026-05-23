@@ -52,6 +52,21 @@ if (urlStatus) {
     setLoading(false);
   }
   async function updateStatus(id: string, status: string) {
+    if (status === "published") {
+  try {
+    await fetch("/api/ai/translate-contradiction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id,
+      }),
+    });
+  } catch (err) {
+    console.error("Auto translation failed", err);
+  }
+}
   const { error } = await supabase
     .from("contradictions")
     .update({ status })

@@ -66,7 +66,8 @@ export default function AIAnalysisCard({
       )}
 
       <div className="mt-5 grid gap-4 md:grid-cols-3">
-        {typeof confidenceScore === "number" && (
+        {typeof confidenceScore === "number" &&
+confidenceScore > 0 && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {labels.confidence}
@@ -78,7 +79,8 @@ export default function AIAnalysisCard({
           </div>
         )}
 
-        {typeof severityScore === "number" && (
+        {typeof severityScore === "number" &&
+severityScore > 0 && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {labels.severity}
@@ -89,6 +91,34 @@ export default function AIAnalysisCard({
             </p>
           </div>
         )}
+        {typeof severityScore === "number" &&
+severityScore > 0 && (
+  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      Contradiction strength
+    </p>
+
+    <div className="mt-3">
+      {severityScore >= 80 ? (
+        <div className="inline-flex rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white">
+          🔴 Strong contradiction
+        </div>
+      ) : severityScore >= 55 ? (
+        <div className="inline-flex rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white">
+          🟠 Possible contradiction
+        </div>
+      ) : severityScore >= 30 ? (
+        <div className="inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white">
+          🔵 Position shift
+        </div>
+      ) : (
+        <div className="inline-flex rounded-full bg-slate-500 px-4 py-2 text-sm font-bold text-white">
+          ⚪ Context changed
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
         {reviewStatus && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">

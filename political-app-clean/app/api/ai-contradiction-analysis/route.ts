@@ -29,8 +29,9 @@ Válaszolj JSON formátumban:
 
 {
   "analysis": "...",
-  "strength": "weak",
-  "timeline_hint": "2017 NATO support → 2026 NATO criticism"
+  "confidence_score": 0,
+  "severity_score": 0,
+  "review_status": "approved"
 }
 
 A strength csak ez lehet:
@@ -90,6 +91,9 @@ ${new_statement}
     let analysis = "Nem sikerült AI elemzést készíteni.";
     let strength = "weak";
     let timeline_hint = "";
+    let confidence_score = 0;
+let severity_score = 0;
+let review_status = "approved";
 
     try {
       const parsed = JSON.parse(raw);
@@ -98,6 +102,14 @@ ${new_statement}
       strength = parsed.strength || strength;
       timeline_hint =
   parsed.timeline_hint || timeline_hint;
+  confidence_score =
+  parsed.confidence_score || confidence_score;
+
+severity_score =
+  parsed.severity_score || severity_score;
+
+review_status =
+  parsed.review_status || review_status;
     } catch {
       analysis = raw || analysis;
     }
@@ -106,6 +118,9 @@ ${new_statement}
       analysis,
       strength,
       timeline_hint,
+      confidence_score,
+severity_score,
+review_status,
     });
   } catch (error) {
     console.error(error);

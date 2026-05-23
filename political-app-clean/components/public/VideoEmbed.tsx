@@ -6,9 +6,11 @@ import { usePublicLanguage } from "@/lib/usePublicLanguage";
 type Lang = "hu" | "de" | "en" | "fr";
 
 type VideoEmbedProps = {
-  url?: string | null;
-  title?: string;
-};
+  oldUrl?: string | null;
+  newUrl?: string | null;
+  oldTitle?: string;
+  newTitle?: string;
+};;
 
 function getYoutubeEmbedUrl(url: string) {
   try {
@@ -43,19 +45,26 @@ function getYoutubeEmbedUrl(url: string) {
   }
 }
 
-export default function VideoEmbed({ url, title }: VideoEmbedProps) {
+export default function VideoEmbed({
+  oldUrl,
+  newUrl,
+  oldTitle,
+  newTitle,
+}: VideoEmbedProps) {
   const lang = usePublicLanguage() as Lang;
   const labels = getPublicLabels(lang);
 
-  if (!url) {
-    return null;
-  }
+  const oldEmbedUrl = oldUrl
+  ? getYoutubeEmbedUrl(oldUrl)
+  : null;
 
-  const embedUrl = getYoutubeEmbedUrl(url);
+const newEmbedUrl = newUrl
+  ? getYoutubeEmbedUrl(newUrl)
+  : null;
 
-  if (!embedUrl) {
-    return null;
-  }
+if (!oldEmbedUrl && !newEmbedUrl) {
+  return null;
+}
 
   return (
     <section className="mt-8">
@@ -69,16 +78,39 @@ export default function VideoEmbed({ url, title }: VideoEmbedProps) {
         </h2>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-black shadow-sm dark:border-slate-800">
-        <div className="aspect-video">
-          <iframe
-            src={embedUrl}
-            title={title || labels.videoEvidence}
-            allowFullScreen
-            className="h-full w-full"
-          />
-        </div>
+      <div className="grid gap-4 md:grid-cols-2">
+  {oldEmbedUrl && (
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-black shadow-sm dark:border-slate-800">
+      <div className="bg-slate-950 px-4 py-3 text-xs font-bold uppercase tracking-wide text-blue-300">
+        Korábbi videó
       </div>
+      <div className="aspect-video">
+        <iframe
+          src={oldEmbedUrl}
+          title={oldTitle || labels.videoEvidence}
+          allowFullScreen
+          className="h-full w-full"
+        />
+      </div>
+    </div>
+  )}
+
+  {newEmbedUrl && (
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-black shadow-sm dark:border-slate-800">
+      <div className="bg-slate-950 px-4 py-3 text-xs font-bold uppercase tracking-wide text-blue-300">
+        Új videó
+      </div>
+      <div className="aspect-video">
+        <iframe
+          src={newEmbedUrl}
+          title={newTitle || labels.videoEvidence}
+          allowFullScreen
+          className="h-full w-full"
+        />
+      </div>
+    </div>
+  )}
+</div>
     </section>
   );
 }

@@ -44,8 +44,14 @@ async function generateAiSummary({
         input: [
           {
             role: "system",
-            content:
-              "Te politikai forrásokat elemzel. Rövid, semleges, magyar nyelvű összefoglalót írsz. Ne találj ki semmit, csak a kapott cím, link és snippet alapján dolgozz.",
+            content: `
+Te politikai forrásokat elemzel. Rövid, semleges, magyar nyelvű összefoglalót írsz.
+Minden admin felületen megjelenő szöveg magyar legyen.
+A title mezőt is fordítsd magyarra.
+A topic mezőt is magyarul add vissza.
+Politikus neveket ne fordíts.
+URL-eket ne módosíts.
+`,
           },
           {
             role: "user",

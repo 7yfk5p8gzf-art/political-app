@@ -21,6 +21,24 @@ export default function SourceCards({
   const lang = usePublicLanguage() as Lang;
   const labels = getPublicLabels(lang);
 
+  const oldSourceUrl = oldSource?.startsWith("http")
+    ? oldSource
+    : oldVideoUrl;
+
+  const newSourceUrl = newSource?.startsWith("http")
+    ? newSource
+    : newVideoUrl;
+
+  const oldSourceIsYoutube = !!oldSourceUrl && (
+    oldSourceUrl.includes("youtube.com") ||
+    oldSourceUrl.includes("youtu.be")
+  );
+
+  const newSourceIsYoutube = !!newSourceUrl && (
+    newSourceUrl.includes("youtube.com") ||
+    newSourceUrl.includes("youtu.be")
+  );
+
   return (
     <section className="mt-8">
       <div className="mb-4">
@@ -43,14 +61,14 @@ export default function SourceCards({
             {oldSource || labels.noSource}
           </p>
 
-          {oldVideoUrl && (
+          {oldSourceUrl && (
             <a
-              href={oldVideoUrl}
+              href={oldSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
             >
-              {labels.openVideo}
+              {oldSourceIsYoutube ? labels.openVideo : "Forrás megnyitása"}
             </a>
           )}
         </div>
@@ -64,14 +82,14 @@ export default function SourceCards({
             {newSource || labels.noSource}
           </p>
 
-          {newVideoUrl && (
+          {newSourceUrl && (
             <a
-              href={newVideoUrl}
+              href={newSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200"
             >
-              {labels.openVideo}
+              {newSourceIsYoutube ? labels.openVideo : "Forrás megnyitása"}
             </a>
           )}
         </div>
