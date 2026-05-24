@@ -387,10 +387,15 @@ export async function POST(req: Request) {
 });
 
   const semanticTopicCluster = getSemanticTopicCluster(item.topic);
-  const bestOldStatement = findBestOldStatement(
+  const oldStatementResult = findBestOldStatement(
   existingSources || [],
-  item.topic
+  item.topic,
+  item.politician
 );
+
+const bestOldStatement = oldStatementResult?.match || null;
+
+const oldStatementScore = oldStatementResult?.score || 0;
 
 const { oldStatementQueries, oldStatementHint } =
   buildOldStatementSearch({
@@ -431,6 +436,7 @@ return {
 oldStatementQueries,
 oldStatementHint,
 bestOldStatement,
+oldStatementScore,
 
     semanticIntent,
 contradictionCandidate,

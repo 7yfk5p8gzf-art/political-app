@@ -41,6 +41,7 @@ contradictionCandidate?: {
   politician?: string | null;
   topic?: string | null;
 } | null;
+oldStatementScore?: number;
 
 };
 
@@ -202,177 +203,126 @@ return (
     </div>
 
     <div className="mt-10 space-y-6">
-     {results.map((item, index) => (
-        <div key={index}>
-          <SourcePreviewCard
-  title={item.title}
-  summary={item.summary}
-  source={item.politician || item.topic || "AI Search"}
-  type={item.type === "video" ? "video" : "article"}
-  url={item.url}
-/>
+  {results.map((item, index) => (
+    <div key={index}>
+      <SourcePreviewCard
+        title={item.title}
+        summary={item.summary}
+        source={item.politician || item.topic || "AI Search"}
+        type={item.type === "video" ? "video" : "article"}
+        url={item.url}
+      />
 
-{item.hasVideo && (
-  <div className="mt-3 text-xs text-purple-200">
-    🎥 Video source detected
-  </div>
-)}
+      {item.possibleContradictionHint && (
+        <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
+          <div>⚠️ {item.possibleContradictionHint}</div>
 
-{item.detectedLanguage && (
-  <div className="mt-1 text-xs text-blue-200">
-    🌍 Detected language: {item.detectedLanguage.toUpperCase()}
-  </div>
-)}
-
-{item.transcriptReady === false && (
-  <div className="mt-1 text-xs text-neutral-400">
-    Transcript analysis not ready yet
-  </div>
-)}
-
-{item.detectedQuote && (
-  <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-neutral-200">
-    💬 Detected quote: "{item.detectedQuote}"
-  </div>
-)}
-
-{item.detectedTimestamp && (
-  <div className="mt-1 text-xs text-red-200">
-    ⏱ Suggested timestamp: {item.detectedTimestamp}
-  </div>
-)}
-
-
- {item.possibleContradictionHint && (
-  <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
-    <div>⚠️ {item.possibleContradictionHint}</div>
-
-    {typeof item.contradictionProbability === "number" && (
-      <div className="mt-2 text-xs font-bold text-yellow-100">
-        Possible contradiction probability:{" "}
-        {item.contradictionProbability}%
-      </div>
-    )}
-
-    {item.contradictionCandidate && (
-      <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3">
-        <div className="text-xs font-bold text-orange-200">
-          AI contradiction candidate
-        </div>
-
-        <div className="mt-1 text-xs text-orange-100">
-          Candidate strength:{" "}
-          {item.contradictionCandidate.candidateStrength}%
-        </div>
-
-        <div className="mt-1 text-xs text-orange-200/80">
-          {item.contradictionCandidate.candidateReason}
-        </div>
-      </div>
-    )}
-
-    {item.stanceDirection && (
-      <div className="mt-3 text-xs font-bold text-cyan-200">
-        Stance direction: {item.stanceDirection}
-      </div>
-    )}
-
-    {typeof item.stanceConfidence === "number" && (
-      <div className="mt-1 text-xs text-cyan-100/80">
-        Stance confidence: {item.stanceConfidence}%
-      </div>
-    )}
-
-    {item.supportMatches &&
-      item.supportMatches.length > 0 && (
-        <div className="mt-2 text-xs text-emerald-200">
-          Support signals: {item.supportMatches.join(", ")}
-        </div>
-      )}
-
-    {item.opposeMatches &&
-      item.opposeMatches.length > 0 && (
-        <div className="mt-2 text-xs text-red-200">
-          Oppose signals: {item.opposeMatches.join(", ")}
-        </div>
-      )}
-
-    <div className="mt-3 space-y-1 text-xs text-yellow-100/80">
-      {item.contradictionReasons?.map((reason, index) => (
-        <div key={index}>• {reason}</div>
-      ))}
+          {typeof item.contradictionProbability === "number" && (
+            <div className="mt-2 text-xs font-bold text-yellow-100">
+              Possible contradiction probability: {item.contradictionProbability}%
+            </div>
+          )}
+          {item.contradictionCandidate && (
+  <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3">
+    <div className="text-xs font-bold text-orange-200">
+      AI contradiction candidate
     </div>
 
-    {item.possibleContradictionSearch && (
-      <button
-        onClick={() =>
-          setQuery(item.possibleContradictionSearch || "")
-        }
-        className="mt-3 rounded-xl border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-100 hover:bg-yellow-400/10"
-      >
-        {item.bestOldStatement && (
-  <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3">
-    <div className="text-xs font-bold text-cyan-200">
-      Possible old statement match
+    <div className="mt-1 text-xs text-orange-100">
+      Candidate strength: {item.contradictionCandidate.candidateStrength}%
     </div>
 
-    <div className="mt-2 text-sm text-cyan-100">
-      {item.bestOldStatement.title}
+    <div className="mt-1 text-xs text-orange-200/80">
+      {item.contradictionCandidate.candidateReason}
     </div>
-
-    {item.bestOldStatement.summary && (
-      <div className="mt-1 text-xs text-cyan-100/80">
-        {item.bestOldStatement.summary}
-      </div>
-    )}
   </div>
 )}
-        Search Older Statements
-      </button>
-    )}
-  </div>
-)}         
 
-          {item.timestamp && (
-            <div className="mt-3 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
-              ⏱ Suggested timestamp: {item.timestamp}
+{item.stanceDirection && (
+  <div className="mt-3 text-xs font-bold text-cyan-200">
+    Stance direction: {item.stanceDirection}
+  </div>
+)}
+
+{typeof item.stanceConfidence === "number" && (
+  <div className="mt-1 text-xs text-cyan-100/80">
+    Stance confidence: {item.stanceConfidence}%
+  </div>
+)}
+
+{item.supportMatches && item.supportMatches.length > 0 && (
+  <div className="mt-2 text-xs text-emerald-200">
+    Support signals: {item.supportMatches.join(", ")}
+  </div>
+)}
+
+{item.opposeMatches && item.opposeMatches.length > 0 && (
+  <div className="mt-2 text-xs text-red-200">
+    Oppose signals: {item.opposeMatches.join(", ")}
+  </div>
+)}
+
+{item.contradictionReasons && item.contradictionReasons.length > 0 && (
+  <div className="mt-3 space-y-1 text-xs text-yellow-100/80">
+    {item.contradictionReasons.map((reason, index) => (
+      <div key={index}>• {reason}</div>
+    ))}
+  </div>
+)}
+
+          {item.bestOldStatement && (
+            <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3">
+              <div className="text-xs font-bold text-cyan-200">
+                Possible old statement match
+              </div>
+
+              <div className="mt-2 text-sm text-cyan-100">
+                {item.bestOldStatement.title}
+              </div>
+
+              {item.bestOldStatement.summary && (
+                <div className="mt-1 text-xs text-cyan-100/80">
+                  {item.bestOldStatement.summary}
+                </div>
+              )}
+
+              {typeof item.oldStatementScore === "number" && (
+                <div className="mt-2 text-xs text-cyan-200/80">
+                  Match score: {item.oldStatementScore}%
+                </div>
+              )}
             </div>
           )}
 
-          {item.type === "video" && (
-            <iframe
-              width="100%"
-              height="315"
-              src={`https://www.youtube.com/embed/${
-                item.url.includes("v=")
-                  ? item.url.split("v=")[1].split("&")[0]
-                  : item.url.split("/").pop()
-              }`}
-              title={item.title}
-              frameBorder="0"
-              allowFullScreen
-              className="mt-4 mb-4 rounded-2xl"
-            />
-          )}
-
-          <div className="mt-4 flex gap-4">
+          {item.possibleContradictionSearch && (
             <button
-              onClick={() => saveSource(item)}
-              className="rounded-2xl bg-white px-5 py-3 font-bold text-black"
+              onClick={() => setQuery(item.possibleContradictionSearch || "")}
+              className="mt-3 rounded-xl border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-100 hover:bg-yellow-400/10"
             >
-              Save Source
+              Search Older Statements
             </button>
-
-            <button
-  onClick={() => createContradictionDraft(item)}
-  className="rounded-2xl border border-white/20 px-5 py-3 font-bold"
->
-  Create Contradiction Draft
-</button>
-          </div>
+          )}
         </div>
-      ))}
+      )}
+
+      <div className="mt-4 flex gap-4">
+        <button
+          onClick={() => saveSource(item)}
+          className="rounded-2xl bg-white px-5 py-3 font-bold text-black"
+        >
+          Save Source
+        </button>
+
+        <button
+          onClick={() => createContradictionDraft(item)}
+          className="rounded-2xl border border-white/20 px-5 py-3 font-bold"
+        >
+          Create Contradiction Draft
+        </button>
+      </div>
     </div>
+  ))}
+</div>
   </main>
 );
   
