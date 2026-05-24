@@ -351,7 +351,51 @@ export async function POST(req: Request) {
     (hasTopic ? 25 : 0) +
     (hasSummary ? 25 : 0) +
     (hasStrongTitle ? 25 : 0);
+    
     const contradictionReasons = [];
+    const analysisText = `
+${item.title || ""}
+${item.summary || ""}
+${item.url || ""}
+`.toLowerCase();
+
+const supportWords = [
+  "support",
+  "approve",
+  "back",
+  "defend",
+  "promote",
+  "allow",
+  "encourage",
+];
+
+const opposeWords = [
+  "oppose",
+  "ban",
+  "block",
+  "criticize",
+  "reject",
+  "stop",
+  "fight",
+];
+
+const supportMatches = supportWords.filter((word) =>
+  analysisText.includes(word)
+);
+
+const opposeMatches = opposeWords.filter((word) =>
+  analysisText.includes(word)
+);
+
+let stanceDirection = "neutral";
+
+if (supportMatches.length > opposeMatches.length) {
+  stanceDirection = "support";
+}
+
+if (opposeMatches.length > supportMatches.length) {
+  stanceDirection = "oppose";
+}
 
 if (hasPolitician) {
   contradictionReasons.push("Known politician detected");
@@ -374,6 +418,29 @@ if (hasStrongTitle) {
 
     contradictionProbability,
     contradictionReasons,
+    stanceDirection,
+supportMatches,
+opposeMatches,
+stanceConfidence:
+  Math.max(supportMatches.length, opposeMatches.length) * 25,
+  hasVideo: item.url?.includes("youtube") || item.url?.includes("youtu.be"),
+
+transcriptReady: false,
+
+detectedLanguage:
+  analysisText.includes(" der ") ||
+  analysisText.includes(" die ") ||
+  analysisText.includes(" und ")
+    ? "de"
+    : "en",
+
+detectedQuote:
+  item.summary?.split(".")[0] || null,
+
+detectedTimestamp:
+  item.url?.includes("youtube")
+    ? "00:00"
+    : null,
 
     possibleContradictionSearch:
       `${item.politician || ""} ${item.topic || ""} older statement`,

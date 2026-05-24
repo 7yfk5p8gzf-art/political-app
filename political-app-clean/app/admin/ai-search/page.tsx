@@ -18,6 +18,15 @@ type SearchResult = {
 possibleContradictionHint?: string;
 contradictionProbability?: number;
 contradictionReasons?: string[];
+stanceDirection?: string;
+supportMatches?: string[];
+opposeMatches?: string[];
+stanceConfidence?: number;
+hasVideo?: boolean;
+transcriptReady?: boolean;
+detectedLanguage?: string;
+detectedQuote?: string | null;
+detectedTimestamp?: string | null;
 };
 
 export default function AiSearchPage() {
@@ -153,7 +162,7 @@ return (
     </div>
 
     <div className="mt-10 space-y-6">
-      {results.map((item, index) => (
+     {results.map((item, index) => (
         <div key={index}>
           <SourcePreviewCard
   title={item.title}
@@ -163,6 +172,37 @@ return (
   url={item.url}
 />
 
+{item.hasVideo && (
+  <div className="mt-3 text-xs text-purple-200">
+    🎥 Video source detected
+  </div>
+)}
+
+{item.detectedLanguage && (
+  <div className="mt-1 text-xs text-blue-200">
+    🌍 Detected language: {item.detectedLanguage.toUpperCase()}
+  </div>
+)}
+
+{item.transcriptReady === false && (
+  <div className="mt-1 text-xs text-neutral-400">
+    Transcript analysis not ready yet
+  </div>
+)}
+
+{item.detectedQuote && (
+  <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-neutral-200">
+    💬 Detected quote: "{item.detectedQuote}"
+  </div>
+)}
+
+{item.detectedTimestamp && (
+  <div className="mt-1 text-xs text-red-200">
+    ⏱ Suggested timestamp: {item.detectedTimestamp}
+  </div>
+)}
+
+
  {item.possibleContradictionHint && (
   <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
     <div>⚠️ {item.possibleContradictionHint}</div>
@@ -171,6 +211,32 @@ return (
     Possible contradiction probability: {item.contradictionProbability}%
   </div>
 )}
+{item.stanceDirection && (
+  <div className="mt-3 text-xs font-bold text-cyan-200">
+    Stance direction: {item.stanceDirection}
+  </div>
+)}
+
+{typeof item.stanceConfidence === "number" && (
+  <div className="mt-1 text-xs text-cyan-100/80">
+    Stance confidence: {item.stanceConfidence}%
+  </div>
+)}
+
+{item.supportMatches &&
+  item.supportMatches.length > 0 && (
+    <div className="mt-2 text-xs text-emerald-200">
+      Support signals: {item.supportMatches.join(", ")}
+    </div>
+)}
+
+{item.opposeMatches &&
+  item.opposeMatches.length > 0 && (
+    <div className="mt-2 text-xs text-red-200">
+      Oppose signals: {item.opposeMatches.join(", ")}
+    </div>
+)}
+
 {item.contradictionReasons &&
   item.contradictionReasons.length > 0 && (
     <div className="mt-3 space-y-1 text-xs text-yellow-100/80">
