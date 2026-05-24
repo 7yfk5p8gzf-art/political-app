@@ -9,6 +9,7 @@ import {
 } from "@/lib/ai/oldStatementSearch";
 import { buildContradictionCandidate } from "@/lib/ai/contradictionCandidate";
 import { supabase } from "@/lib/supabase";
+import { detectPoliticalEvolution } from "@/lib/ai/politicalEvolution";
 
 
 type BraveResult = {
@@ -440,6 +441,17 @@ oldStatementScore,
 
     semanticIntent,
 contradictionCandidate,
+timelineResult: {
+  yearsBetween: null,
+  timelineStrength: 0,
+  timelineCategory: "unknown",
+  reasoning: "No timeline information available",
+},
+politicalEvolution: detectPoliticalEvolution({
+  semanticIntent,
+  timelineCategory: "unknown",
+  stanceConfidence,
+}),
 
     possibleContradictionSearch:
       `${item.politician || ""} ${item.topic || ""} older statement`,

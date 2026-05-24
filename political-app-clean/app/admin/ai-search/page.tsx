@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import AdminBackButton from "@/components/admin/AdminBackButton";
 import SourcePreviewCard from "@/components/public/SourcePreviewCard";
 import { compareSemantics } from "@/lib/ai/semanticComparison";
+import { analyzeTimelineReasoning } from "@/lib/ai/timelineReasoning";
 
 type SearchResult = {
   title: string;
@@ -42,8 +43,26 @@ contradictionCandidate?: {
   topic?: string | null;
 } | null;
 oldStatementScore?: number;
-
+timelineResult?: {
+  yearsBetween: number | null;
+  timelineStrength: number;
+  timelineCategory: "recent" | "medium" | "long" | "unknown";
+  reasoning: string;
 };
+
+politicalEvolution?: {
+  evolutionType:
+    | "strategic_shift"
+    | "ideological_shift"
+    | "crisis_reaction"
+    | "rhetoric_escalation"
+    | "unclear";
+  evolutionStrength: number;
+  explanation: string;
+};
+};
+
+
 
 
 export default function AiSearchPage() {
@@ -113,6 +132,10 @@ async function createContradictionDraft(item: SearchResult) {
   oldStatement: "",
   newStatement: item.title,
 });
+const timelineResult = analyzeTimelineReasoning({
+  oldDate: null,
+  newDate: null,
+});
 const slug =
     `${item.politician || "unknown"}-${item.topic || "topic"}-${Date.now()}`
       .toLowerCase()
@@ -144,11 +167,18 @@ AI candidate:
 - Strength: ${item.contradictionCandidate?.candidateStrength ?? 0}%
 - Reason: ${
   item.contradictionCandidate?.candidateReason ||
-  "No candidate reason"
-}`,
+  "No candidate reason"}
+
+Timeline reasoning:
+- Category: ${timelineResult.timelineCategory}
+- Strength: ${timelineResult.timelineStrength}%
+- Years between: ${timelineResult.yearsBetween ?? "unknown"}
+- Reasoning: ${timelineResult.reasoning}`,
 review_status: "draft",
 confidence_score: item.contradictionCandidate?.candidateStrength ?? 0,
-severity_score: semanticResult.similarityScore,
+severity_score:
+  semanticResult.similarityScore +
+  timelineResult.timelineStrength,
 status: "draft",
     })
     .select()
@@ -259,6 +289,49 @@ return (
 {item.opposeMatches && item.opposeMatches.length > 0 && (
   <div className="mt-2 text-xs text-red-200">
     Oppose signals: {item.opposeMatches.join(", ")}
+  </div>
+)}
+{item.timelineResult && (
+  <div className="mt-3 rounded-xl border border-violet-500/20 bg-violet-500/10 p-3">
+    <div className="text-xs font-bold text-violet-200">
+      Timeline reasoning
+    </div>
+
+    <div className="mt-1 text-xs text-violet-100">
+      Category: {item.timelineResult.timelineCategory}
+    </div>
+
+    <div className="mt-1 text-xs text-violet-100">
+      Timeline strength: {item.timelineResult.timelineStrength}%
+    </div>
+
+    <div className="mt-1 text-xs text-violet-100">
+      Years between:{" "}
+      {item.timelineResult.yearsBetween ?? "unknown"}
+    </div>
+
+    <div className="mt-2 text-xs text-violet-200/80">
+      {item.timelineResult.reasoning}
+    </div>
+  </div>
+)}
+{item.politicalEvolution && (
+  <div className="mt-3 rounded-xl border border-pink-500/20 bg-pink-500/10 p-3">
+    <div className="text-xs font-bold text-pink-200">
+      Political evolution
+    </div>
+
+    <div className="mt-1 text-xs text-pink-100">
+      Type: {item.politicalEvolution.evolutionType}
+    </div>
+
+    <div className="mt-1 text-xs text-pink-100">
+      Strength: {item.politicalEvolution.evolutionStrength}%
+    </div>
+
+    <div className="mt-2 text-xs text-pink-200/80">
+      {item.politicalEvolution.explanation}
+    </div>
   </div>
 )}
 
