@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminBackButton from "@/components/admin/AdminBackButton";
 import SourcePreviewCard from "@/components/public/SourcePreviewCard";
+import { compareSemantics } from "@/lib/ai/semanticComparison";
 
 type SearchResult = {
   title: string;
@@ -29,7 +30,20 @@ detectedQuote?: string | null;
 detectedTimestamp?: string | null;
 semanticTopicCluster?: string | null;
 semanticIntent?: string;
+contradictionCandidate?: {
+  isCandidate: boolean;
+  candidateStrength: number;
+  candidateReason: string;};
+  bestOldStatement?: {
+  title?: string | null;
+  summary?: string | null;
+  url?: string | null;
+  politician?: string | null;
+  topic?: string | null;
+} | null;
+
 };
+
 
 export default function AiSearchPage() {
   const [query, setQuery] = useState("");
@@ -93,7 +107,12 @@ async function saveSource(item: SearchResult) {
   alert("Source saved.");
 }
 async function createContradictionDraft(item: SearchResult) {
-  const slug =
+  
+  const semanticResult = compareSemantics({
+  oldStatement: "",
+  newStatement: item.title,
+});
+const slug =
     `${item.politician || "unknown"}-${item.topic || "topic"}-${Date.now()}`
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -105,12 +124,31 @@ async function createContradictionDraft(item: SearchResult) {
       slug,
       politician: item.politician || null,
       topic: item.topic || null,
-      old_statement: "",
-      new_statement: item.title,
-      old_source: "",
-      new_source: item.url,
-      ai_summary: item.summary,
-      status: "draft",
+      old_statement: item.bestOldStatement?.title || "",
+          new_statement: item.title,
+          old_source: item.bestOldStatement?.url || "",
+
+          new_source: item.url,
+      ai_summary: `${item.summary}
+
+
+
+Semantic comparison:
+- Possible contradiction: ${semanticResult.possibleContradiction ? "yes" : "no"}
+- Detected shift: ${semanticResult.detectedShift}
+- Similarity score: ${semanticResult.similarityScore}%
+
+AI candidate:
+- Candidate: ${item.contradictionCandidate?.isCandidate ? "yes" : "no"}
+- Strength: ${item.contradictionCandidate?.candidateStrength ?? 0}%
+- Reason: ${
+  item.contradictionCandidate?.candidateReason ||
+  "No candidate reason"
+}`,
+review_status: "draft",
+confidence_score: item.contradictionCandidate?.candidateStrength ?? 0,
+severity_score: semanticResult.similarityScore,
+status: "draft",
     })
     .select()
     .single();
@@ -208,56 +246,92 @@ return (
  {item.possibleContradictionHint && (
   <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
     <div>⚠️ {item.possibleContradictionHint}</div>
+
     {typeof item.contradictionProbability === "number" && (
-  <div className="mt-2 text-xs font-bold text-yellow-100">
-    Possible contradiction probability: {item.contradictionProbability}%
-  </div>
-)}
-{item.stanceDirection && (
-  <div className="mt-3 text-xs font-bold text-cyan-200">
-    Stance direction: {item.stanceDirection}
-  </div>
-)}
+      <div className="mt-2 text-xs font-bold text-yellow-100">
+        Possible contradiction probability:{" "}
+        {item.contradictionProbability}%
+      </div>
+    )}
 
-{typeof item.stanceConfidence === "number" && (
-  <div className="mt-1 text-xs text-cyan-100/80">
-    Stance confidence: {item.stanceConfidence}%
-  </div>
-)}
+    {item.contradictionCandidate && (
+      <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3">
+        <div className="text-xs font-bold text-orange-200">
+          AI contradiction candidate
+        </div>
 
-{item.supportMatches &&
-  item.supportMatches.length > 0 && (
-    <div className="mt-2 text-xs text-emerald-200">
-      Support signals: {item.supportMatches.join(", ")}
-    </div>
-)}
+        <div className="mt-1 text-xs text-orange-100">
+          Candidate strength:{" "}
+          {item.contradictionCandidate.candidateStrength}%
+        </div>
 
-{item.opposeMatches &&
-  item.opposeMatches.length > 0 && (
-    <div className="mt-2 text-xs text-red-200">
-      Oppose signals: {item.opposeMatches.join(", ")}
-    </div>
-)}
+        <div className="mt-1 text-xs text-orange-200/80">
+          {item.contradictionCandidate.candidateReason}
+        </div>
+      </div>
+    )}
 
-{item.contradictionReasons &&
-  item.contradictionReasons.length > 0 && (
+    {item.stanceDirection && (
+      <div className="mt-3 text-xs font-bold text-cyan-200">
+        Stance direction: {item.stanceDirection}
+      </div>
+    )}
+
+    {typeof item.stanceConfidence === "number" && (
+      <div className="mt-1 text-xs text-cyan-100/80">
+        Stance confidence: {item.stanceConfidence}%
+      </div>
+    )}
+
+    {item.supportMatches &&
+      item.supportMatches.length > 0 && (
+        <div className="mt-2 text-xs text-emerald-200">
+          Support signals: {item.supportMatches.join(", ")}
+        </div>
+      )}
+
+    {item.opposeMatches &&
+      item.opposeMatches.length > 0 && (
+        <div className="mt-2 text-xs text-red-200">
+          Oppose signals: {item.opposeMatches.join(", ")}
+        </div>
+      )}
+
     <div className="mt-3 space-y-1 text-xs text-yellow-100/80">
-      {item.contradictionReasons.map((reason, index) => (
+      {item.contradictionReasons?.map((reason, index) => (
         <div key={index}>• {reason}</div>
       ))}
     </div>
-)}
 
     {item.possibleContradictionSearch && (
       <button
-        onClick={() => setQuery(item.possibleContradictionSearch || "")}
+        onClick={() =>
+          setQuery(item.possibleContradictionSearch || "")
+        }
         className="mt-3 rounded-xl border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-100 hover:bg-yellow-400/10"
       >
+        {item.bestOldStatement && (
+  <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3">
+    <div className="text-xs font-bold text-cyan-200">
+      Possible old statement match
+    </div>
+
+    <div className="mt-2 text-sm text-cyan-100">
+      {item.bestOldStatement.title}
+    </div>
+
+    {item.bestOldStatement.summary && (
+      <div className="mt-1 text-xs text-cyan-100/80">
+        {item.bestOldStatement.summary}
+      </div>
+    )}
+  </div>
+)}
         Search Older Statements
       </button>
     )}
   </div>
-)}          
+)}         
 
           {item.timestamp && (
             <div className="mt-3 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">

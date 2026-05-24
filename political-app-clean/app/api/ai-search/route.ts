@@ -3,6 +3,13 @@ import { analyzeStance } from "@/lib/ai/stanceAnalysis";
 import { getSemanticTopicCluster } from "@/lib/ai/semanticTopics";
 import { scoreContradiction } from "@/lib/ai/contradictionScoring";
 import { analyzeVideoIntelligence } from "@/lib/ai/videoIntelligence";
+import {
+  buildOldStatementSearch,
+  findBestOldStatement,
+} from "@/lib/ai/oldStatementSearch";
+import { buildContradictionCandidate } from "@/lib/ai/contradictionCandidate";
+import { supabase } from "@/lib/supabase";
+
 
 type BraveResult = {
   title?: string;
@@ -314,6 +321,10 @@ export async function POST(req: Request) {
 
     const json = await response.json();
     const rawResults: BraveResult[] = json.web?.results || [];
+    const { data: existingSources } = await supabase
+  .from("sources")
+  .select("title, summary, url, politician, topic")
+  .limit(50);
 
     const videoResults = rawResults.filter(
       (item) =>
@@ -375,7 +386,37 @@ export async function POST(req: Request) {
   analysisText,
 });
 
-  return {
+  const semanticTopicCluster = getSemanticTopicCluster(item.topic);
+  const bestOldStatement = findBestOldStatement(
+  existingSources || [],
+  item.topic
+);
+
+const { oldStatementQueries, oldStatementHint } =
+  buildOldStatementSearch({
+    politician: item.politician,
+    topic: item.topic,
+    semanticTopicCluster,
+  });
+
+const semanticIntent =
+  supportMatches.length > opposeMatches.length
+    ? "support"
+    : opposeMatches.length > supportMatches.length
+    ? "oppose"
+    : "neutral";
+
+const contradictionCandidate = buildContradictionCandidate({
+  semanticIntent,
+  semanticTopicCluster,
+  oldStatementQueries,
+  contradictionProbability,
+});
+
+
+
+return {
+  ...item,
     ...item,
     contradictionProbability,
     contradictionReasons,
@@ -386,15 +427,13 @@ export async function POST(req: Request) {
 
     
 
-    semanticTopicCluster:
-  getSemanticTopicCluster(item.topic),
+    semanticTopicCluster,
+oldStatementQueries,
+oldStatementHint,
+bestOldStatement,
 
-    semanticIntent:
-      supportMatches.length > opposeMatches.length
-        ? "support"
-        : opposeMatches.length > supportMatches.length
-        ? "oppose"
-        : "neutral",
+    semanticIntent,
+contradictionCandidate,
 
     possibleContradictionSearch:
       `${item.politician || ""} ${item.topic || ""} older statement`,
