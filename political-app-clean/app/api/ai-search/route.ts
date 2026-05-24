@@ -340,10 +340,52 @@ export async function POST(req: Request) {
         })
       )
     );
+    const combinedResults = [...videos, ...articles].map((item) => {
+  const hasPolitician = Boolean(item.politician);
+  const hasTopic = Boolean(item.topic);
+  const hasSummary = Boolean(item.summary && item.summary.length > 80);
+  const hasStrongTitle = Boolean(item.title && item.title.length > 30);
+
+  const contradictionProbability =
+    (hasPolitician ? 25 : 0) +
+    (hasTopic ? 25 : 0) +
+    (hasSummary ? 25 : 0) +
+    (hasStrongTitle ? 25 : 0);
+    const contradictionReasons = [];
+
+if (hasPolitician) {
+  contradictionReasons.push("Known politician detected");
+}
+
+if (hasTopic) {
+  contradictionReasons.push("Topic identified");
+}
+
+if (hasSummary) {
+  contradictionReasons.push("Detailed summary available");
+}
+
+if (hasStrongTitle) {
+  contradictionReasons.push("Strong statement title");
+}
+
+  return {
+    ...item,
+
+    contradictionProbability,
+    contradictionReasons,
+
+    possibleContradictionSearch:
+      `${item.politician || ""} ${item.topic || ""} older statement`,
+
+    possibleContradictionHint:
+      `Search older statements about ${item.topic || "this topic"}`,
+  };
+});
 
     return NextResponse.json({
-      results: [...videos, ...articles],
-    });
+  results: combinedResults,
+});
   } catch (error) {
     console.error("AI search failed:", error);
 

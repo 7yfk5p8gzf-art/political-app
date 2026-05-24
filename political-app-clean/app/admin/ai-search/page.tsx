@@ -14,6 +14,10 @@ type SearchResult = {
   type: string;
   timestamp?: string | null;
   videoId?: string | null;
+  possibleContradictionSearch?: string;
+possibleContradictionHint?: string;
+contradictionProbability?: number;
+contradictionReasons?: string[];
 };
 
 export default function AiSearchPage() {
@@ -21,18 +25,18 @@ export default function AiSearchPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
 
-  async function search() {
-  if (!query) return;
+  async function search(searchQuery = query) {
+  if (!searchQuery) return;
 
   setLoading(true);
 
   const response = await fetch("/api/ai-search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query }),
-  });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ query: searchQuery }),
+});
 
   const data = await response.json();
 
@@ -84,22 +88,39 @@ async function createContradictionDraft(item: SearchResult) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-  const { error } = await supabase.from("contradictions").insert({
-    slug,
-    politician: item.politician || null,
-    topic: item.topic || null,
-    old_statement: "",
-    new_statement: item.title,
-    old_source: "",
-    new_source: item.url,
-    ai_summary: item.summary,
-    status: "draft",
-  });
+  const { data, error } = await supabase
+    .from("contradictions")
+    .insert({
+      slug,
+      politician: item.politician || null,
+      topic: item.topic || null,
+      old_statement: "",
+      new_statement: item.title,
+      old_source: "",
+      new_source: item.url,
+      ai_summary: item.summary,
+      status: "draft",
+    })
+    .select()
+    .single();
 
   if (error) {
     alert(error.message);
     return;
   }
+  try {
+  await fetch("/api/ai/translate-contradiction", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: data.id,
+    }),
+  });
+} catch (err) {
+  console.error("Contradiction translation failed", err);
+}
 
   alert("Contradiction draft created.");
 }
@@ -123,7 +144,7 @@ return (
       />
 
       <button
-        onClick={search}
+        onClick={() => search()}
         disabled={loading}
         className="rounded-2xl bg-white px-6 py-4 font-bold text-black transition hover:opacity-90 disabled:opacity-40"
       >
@@ -135,12 +156,40 @@ return (
       {results.map((item, index) => (
         <div key={index}>
           <SourcePreviewCard
-            title={item.title}
-            summary={item.summary}
-            source={item.politician || item.topic || "AI Search"}
-            type={item.type === "video" ? "video" : "article"}
-            url={item.url}
-          />
+  title={item.title}
+  summary={item.summary}
+  source={item.politician || item.topic || "AI Search"}
+  type={item.type === "video" ? "video" : "article"}
+  url={item.url}
+/>
+
+ {item.possibleContradictionHint && (
+  <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
+    <div>⚠️ {item.possibleContradictionHint}</div>
+    {typeof item.contradictionProbability === "number" && (
+  <div className="mt-2 text-xs font-bold text-yellow-100">
+    Possible contradiction probability: {item.contradictionProbability}%
+  </div>
+)}
+{item.contradictionReasons &&
+  item.contradictionReasons.length > 0 && (
+    <div className="mt-3 space-y-1 text-xs text-yellow-100/80">
+      {item.contradictionReasons.map((reason, index) => (
+        <div key={index}>• {reason}</div>
+      ))}
+    </div>
+)}
+
+    {item.possibleContradictionSearch && (
+      <button
+        onClick={() => setQuery(item.possibleContradictionSearch || "")}
+        className="mt-3 rounded-xl border border-yellow-400/30 px-4 py-2 text-xs font-bold text-yellow-100 hover:bg-yellow-400/10"
+      >
+        Search Older Statements
+      </button>
+    )}
+  </div>
+)}          
 
           {item.timestamp && (
             <div className="mt-3 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
