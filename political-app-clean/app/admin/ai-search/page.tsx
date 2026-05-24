@@ -27,6 +27,8 @@ transcriptReady?: boolean;
 detectedLanguage?: string;
 detectedQuote?: string | null;
 detectedTimestamp?: string | null;
+semanticTopicCluster?: string | null;
+semanticIntent?: string;
 };
 
 export default function AiSearchPage() {

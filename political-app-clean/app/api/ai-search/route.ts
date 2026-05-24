@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import { analyzeStance } from "@/lib/ai/stanceAnalysis";
+import { getSemanticTopicCluster } from "@/lib/ai/semanticTopics";
+import { scoreContradiction } from "@/lib/ai/contradictionScoring";
+import { analyzeVideoIntelligence } from "@/lib/ai/videoIntelligence";
 
 type BraveResult = {
   title?: string;
@@ -341,106 +345,56 @@ export async function POST(req: Request) {
       )
     );
     const combinedResults = [...videos, ...articles].map((item) => {
-  const hasPolitician = Boolean(item.politician);
-  const hasTopic = Boolean(item.topic);
-  const hasSummary = Boolean(item.summary && item.summary.length > 80);
-  const hasStrongTitle = Boolean(item.title && item.title.length > 30);
+  const { contradictionProbability, contradictionReasons } = scoreContradiction({
+  politician: item.politician,
+  topic: item.topic,
+  title: item.title,
+  summary: item.summary,
+});
 
-  const contradictionProbability =
-    (hasPolitician ? 25 : 0) +
-    (hasTopic ? 25 : 0) +
-    (hasSummary ? 25 : 0) +
-    (hasStrongTitle ? 25 : 0);
-    
-    const contradictionReasons = [];
-    const analysisText = `
-${item.title || ""}
-${item.summary || ""}
-${item.url || ""}
-`.toLowerCase();
-
-const supportWords = [
-  "support",
-  "approve",
-  "back",
-  "defend",
-  "promote",
-  "allow",
-  "encourage",
-];
-
-const opposeWords = [
-  "oppose",
-  "ban",
-  "block",
-  "criticize",
-  "reject",
-  "stop",
-  "fight",
-];
-
-const supportMatches = supportWords.filter((word) =>
-  analysisText.includes(word)
-);
-
-const opposeMatches = opposeWords.filter((word) =>
-  analysisText.includes(word)
-);
-
-let stanceDirection = "neutral";
-
-if (supportMatches.length > opposeMatches.length) {
-  stanceDirection = "support";
-}
-
-if (opposeMatches.length > supportMatches.length) {
-  stanceDirection = "oppose";
-}
-
-if (hasPolitician) {
-  contradictionReasons.push("Known politician detected");
-}
-
-if (hasTopic) {
-  contradictionReasons.push("Topic identified");
-}
-
-if (hasSummary) {
-  contradictionReasons.push("Detailed summary available");
-}
-
-if (hasStrongTitle) {
-  contradictionReasons.push("Strong statement title");
-}
+  const {
+    stanceDirection,
+    supportMatches,
+    opposeMatches,
+    stanceConfidence,
+    analysisText,
+  } = analyzeStance({
+    title: item.title,
+    summary: item.summary,
+    url: item.url,
+  });
+  const {
+  hasVideo,
+  transcriptReady,
+  detectedLanguage,
+  detectedQuote,
+  detectedTimestamp,
+} = analyzeVideoIntelligence({
+  url: item.url,
+  summary: item.summary,
+  analysisText,
+});
 
   return {
     ...item,
-
     contradictionProbability,
     contradictionReasons,
     stanceDirection,
-supportMatches,
-opposeMatches,
-stanceConfidence:
-  Math.max(supportMatches.length, opposeMatches.length) * 25,
-  hasVideo: item.url?.includes("youtube") || item.url?.includes("youtu.be"),
+    supportMatches,
+    opposeMatches,
+    stanceConfidence,
 
-transcriptReady: false,
+    
 
-detectedLanguage:
-  analysisText.includes(" der ") ||
-  analysisText.includes(" die ") ||
-  analysisText.includes(" und ")
-    ? "de"
-    : "en",
+    semanticTopicCluster:
+  getSemanticTopicCluster(item.topic),
 
-detectedQuote:
-  item.summary?.split(".")[0] || null,
-
-detectedTimestamp:
-  item.url?.includes("youtube")
-    ? "00:00"
-    : null,
+    semanticIntent:
+      supportMatches.length > opposeMatches.length
+        ? "support"
+        : opposeMatches.length > supportMatches.length
+        ? "oppose"
+        : "neutral",
 
     possibleContradictionSearch:
       `${item.politician || ""} ${item.topic || ""} older statement`,
@@ -448,7 +402,8 @@ detectedTimestamp:
     possibleContradictionHint:
       `Search older statements about ${item.topic || "this topic"}`,
   };
-});
+}); 
+    
 
     return NextResponse.json({
   results: combinedResults,
