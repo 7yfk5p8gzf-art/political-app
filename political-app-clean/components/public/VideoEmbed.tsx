@@ -65,6 +65,12 @@ const newEmbedUrl = newUrl
 if (!oldEmbedUrl && !newEmbedUrl) {
   return null;
 }
+const addTimestamp = (url: string, seconds?: number) => {
+  if (!seconds) return url;
+
+  const hasQuery = url.includes("?");
+  return `${url}${hasQuery ? "&" : "?"}start=${seconds}`;
+};
 
   return (
     <section className="mt-8">
@@ -86,11 +92,11 @@ if (!oldEmbedUrl && !newEmbedUrl) {
       </div>
       <div className="aspect-video">
         <iframe
-          src={oldEmbedUrl}
-          title={oldTitle || labels.videoEvidence}
-          allowFullScreen
-          className="h-full w-full"
-        />
+  src={oldEmbedUrl}
+  title={oldTitle || labels.videoEvidence}
+  allowFullScreen
+  className="h-full w-full"
+/>
       </div>
     </div>
   )}
@@ -102,11 +108,11 @@ if (!oldEmbedUrl && !newEmbedUrl) {
       </div>
       <div className="aspect-video">
         <iframe
-          src={newEmbedUrl}
-          title={newTitle || labels.videoEvidence}
-          allowFullScreen
-          className="h-full w-full"
-        />
+  src={newEmbedUrl}
+  title={newTitle || labels.videoEvidence}
+  allowFullScreen
+  className="h-full w-full"
+/>
       </div>
     </div>
   )}

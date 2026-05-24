@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getPublicLabels } from "@/lib/getPublicLabels";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
+import { publicStyles } from "@/lib/publicStyles";
 
 type Lang = "hu" | "de" | "en" | "fr";
 
@@ -27,14 +28,14 @@ export default function ContradictionCard({
   return (
     <Link
       href={`/contradictions/${id}`}
-      className="block rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950"
+      className={`${publicStyles.card} block transition hover:-translate-y-1 hover:shadow-lg`}
     >
       <div className="mb-5 flex flex-wrap gap-2">
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+        <span className={publicStyles.badge}>
           {politician || labels.unknownPolitician}
         </span>
 
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        <span className={publicStyles.badge}>
           {topic || labels.noTopic}
         </span>
       </div>

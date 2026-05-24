@@ -3,6 +3,7 @@
 import Link from "next/link";
 import ContradictionCard from "@/components/public/ContradictionCard";
 import { getPublicLabels } from "@/lib/getPublicLabels";
+import { publicStyles } from "@/lib/publicStyles";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
 import {
   getTranslatedTopic,
@@ -27,7 +28,7 @@ export default function HomeTopContradictions({ items }: { items: Item[] }) {
   return (
     <section className="mt-14">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 className="text-3xl font-bold text-slate-950 dark:text-white">
+        <h2 className={publicStyles.title}>
           {labels.topContradictions}
         </h2>
 

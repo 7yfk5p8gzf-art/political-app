@@ -75,6 +75,14 @@ new_transcript_quote?: string | null;
 new_timestamp?: string | null;
 new_quote_precision?: string | null;
 evidence_summary?: string | null;
+video_context?: {
+  has_video?: boolean;
+  start_timestamp?: string;
+  best_timestamp?: string;
+  end_timestamp?: string;
+  reason?: string;
+  confidence?: string;
+} | null;
 };
 
 export default function ContradictionDetailPage() {
@@ -331,6 +339,22 @@ export default function ContradictionDetailPage() {
   oldTitle={`${item.politician || labels.politician} - korábbi videó`}
   newTitle={`${item.politician || labels.politician} - új videó`}
 />
+{item.video_context?.start_timestamp && (
+  <button
+    onClick={() => {
+      const el = document.getElementById("video-player");
+
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+
+      console.log("🎬 Clip data:", item.video_context);
+    }}
+    className="mt-4 rounded-full bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:bg-purple-500 transition"
+  >
+    🎬 Play evidence clip
+  </button>
+)}
 <EvidenceQuoteCard
   oldQuote={item.old_transcript_quote}
 oldTimestamp={item.old_timestamp}

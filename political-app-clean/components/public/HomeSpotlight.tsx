@@ -3,6 +3,7 @@
 import ContradictionCard from "@/components/public/ContradictionCard";
 import { usePublicLanguage } from "@/lib/usePublicLanguage";
 import { getPublicLabels } from "@/lib/getPublicLabels";
+import { publicStyles } from "@/lib/publicStyles";
 import {
   getTranslatedTopic,
   getTranslatedOldStatement,
@@ -36,8 +37,8 @@ const translatedNewStatement =
 
 
   return (
-    <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-      <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+    <section className={publicStyles.card}>
+      <p className={publicStyles.title}>
         {labels.spotlight}
       </p>
 

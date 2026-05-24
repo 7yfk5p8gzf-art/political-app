@@ -31,6 +31,7 @@ new_transcript_quote?: string | null;
 new_timestamp?: string | null;
 new_quote_precision?: string | null;
 evidence_summary?: string | null;
+video_context?: any | null;
 };
 type RelatedContradiction = {
   id: string;
@@ -177,6 +178,7 @@ async function generateAiAnalysis() {
   contradiction_strength: data.strength || "weak",
   timeline_hint: data.timeline_hint || "",
   confidence_score: data.confidence_score || 0,
+  video_context: data.video_context || null,
 severity_score: data.severity_score || 0,
 review_status: data.review_status || "approved",
 old_transcript_quote: data.old_transcript_quote || "",

@@ -3,6 +3,7 @@
 import { useLanguage, type Lang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPublicLabels } from "@/lib/getPublicLabels";
+import { publicStyles } from "@/lib/publicStyles";
 
 const languages: Lang[] = ["hu", "en", "de", "fr"];
 
@@ -66,7 +67,7 @@ export default function PublicHeader() {
 
               <button
                 onClick={logout}
-                className="rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/10"
+                className={publicStyles.secondaryButton}
               >
                 {labels.logout}
               </button>
@@ -74,7 +75,7 @@ export default function PublicHeader() {
           ) : (
             <a
               href="/login"
-              className="rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/10"
+              className={publicStyles.secondaryButton}
             >
               {labels.login}
             </a>

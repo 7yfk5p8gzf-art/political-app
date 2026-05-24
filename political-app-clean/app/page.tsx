@@ -5,6 +5,7 @@ import TrendingContradictions from "@/components/public/TrendingContradictions";
 import HomeHero from "@/components/public/HomeHero";
 import HomeTopContradictions from "@/components/public/HomeTopContradictions";
 import HomeSpotlight from "@/components/public/HomeSpotlight";
+import PublicPageShell from "@/components/layout/PublicPageShell";
 
 type Contradiction = {
   id: string;
@@ -58,7 +59,7 @@ export default async function HomePage() {
   const spotlight = topItems[0];
 
   return (
-    <PublicShell>
+    <PublicPageShell>
       <section className="mx-auto max-w-6xl px-4 py-10">
         <HomeHero />
 
@@ -70,6 +71,6 @@ export default async function HomePage() {
 
         <HomeTopContradictions items={topItems} />
       </section>
-    </PublicShell>
+        </PublicPageShell>
   );
 }

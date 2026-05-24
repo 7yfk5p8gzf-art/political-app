@@ -39,12 +39,52 @@ Válaszolj JSON formátumban:
   "transcript_quote": "...",
   "timestamp": "00:00",
   "quote_precision": "medium"
+  video_context: {
+  has_video: false,
+  start_timestamp: "",
+  best_timestamp: "",
+  end_timestamp: "",
+  reason: "",
+  confidence: "medium"
+}
 }
 
 A strength csak ez lehet:
 - weak
 - medium
 - strong
+A weak contradiction:
+- kisebb retorikai változás
+- eltérő hangsúly
+- részleges pozíció módosítás
+
+A medium contradiction:
+- jól látható álláspont változás
+- policy shift
+- korábbi állítás gyengítése vagy módosítása
+
+A strong contradiction:
+- egyértelműen ellentétes álláspont
+- nyílt fordulat
+- korábbi kijelentés tagadása
+- teljes policy reversal
+
+Ne jelölj strong contradictiont csak azért,
+mert a megfogalmazás eltérő.
+
+Figyelj a kontextusra és az időbeli változásra is.
+Egy álláspont változás nem mindig jelent valódi ellentmondást.
+
+Vedd figyelembe:
+- történelmi eseményeket
+- háborús helyzetet
+- gazdasági válságot
+- választási kampányt
+- koalíciós politikát
+- nemzetközi eseményeket
+
+Ha a változás részben kontextus miatt érthető,
+akkor ezt jelezd az analysis mezőben.
 
 Az analysis rövid, semleges szerkesztői elemzés legyen magyarul.
 A timeline_hint rövid idővonal összefoglaló legyen.
@@ -60,6 +100,22 @@ A quote_precision csak ez lehet:
 - low
 - medium
 - high
+Ha videó tartalom elérhető, határozd meg a legfontosabb “konfliktus pillanatot”.
+
+Ez az a rész, ahol:
+- a politikus álláspontja változik
+- vagy ellentmond a korábbi kijelentésnek
+- vagy a legerősebb bizonyíték elhangzik
+
+Adj vissza:
+- best_timestamp (MM:SS formátumban)
+- video_context.confidence (low / medium / high)
+- start_timestamp (MM:SS formátum) → hol kezdődik a bizonyíték pillanat
+- end_timestamp (MM:SS formátum) → hol ér véget a bizonyíték pillanat
+- reason → rövid indoklás, miért ez a clip (1-2 mondat)
+
+Ne a videó elejét válaszd automatikusan,
+hanem a legerősebb bizonyíték pillanatát.
 `,
 },
           {

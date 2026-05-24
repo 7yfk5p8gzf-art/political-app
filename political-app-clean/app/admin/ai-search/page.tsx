@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminBackButton from "@/components/admin/AdminBackButton";
+import SourcePreviewCard from "@/components/public/SourcePreviewCard";
 
 type SearchResult = {
   title: string;
@@ -76,108 +77,112 @@ async function saveSource(item: SearchResult) {
 
   alert("Source saved.");
 }
+async function createContradictionDraft(item: SearchResult) {
+  const slug =
+    `${item.politician || "unknown"}-${item.topic || "topic"}-${Date.now()}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
 
-  return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-        Admin AI Search
-      </p>
+  const { error } = await supabase.from("contradictions").insert({
+    slug,
+    politician: item.politician || null,
+    topic: item.topic || null,
+    old_statement: "",
+    new_statement: item.title,
+    old_source: "",
+    new_source: item.url,
+    ai_summary: item.summary,
+    status: "draft",
+  });
 
-      <h1 className="mt-3 text-4xl font-bold">
-        <a
-  href="/admin"
-  className="mt-5 inline-block rounded-full bg-white/10 px-4 py-2 text-sm text-white"
->
-  ← Back to Admin Dashboard
-</a>
-        AI Research Workspace
-      </h1>
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
-      <div className="mt-8 flex gap-4">
-        <input
-          type="text"
-          placeholder="Search politician, topic, contradiction..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-5 py-4 outline-none focus:border-white/30"
-        />
+  alert("Contradiction draft created.");
+}
+return (
+  <main className="mx-auto max-w-6xl px-6 py-10">
+    <AdminBackButton />
 
-        <button
-          onClick={search}
-          disabled={loading}
-          className="rounded-2xl bg-white px-6 py-4 font-bold text-black transition hover:opacity-90 disabled:opacity-40"
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </div>
+    <p className="mt-6 text-sm uppercase tracking-[0.3em] text-neutral-500">
+      Admin AI Search
+    </p>
 
-      <div className="mt-10 space-y-6">
-        {results.map((item, index) => (
-          <article
-            key={index}
-            className="rounded-3xl border border-white/10 bg-white/5 p-8"
-          >
-            <div className="mb-4 flex gap-3">
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase text-neutral-300">
-                {item.politician || "Unknown"}
-              </span>
+    <h1 className="mt-3 text-4xl font-bold">AI Research Workspace</h1>
 
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase text-neutral-300">
-                {item.topic || "No topic"}
-              </span>
+    <div className="mt-8 flex gap-4">
+      <input
+        type="text"
+        placeholder="Search politician, topic, contradiction..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-5 py-4 outline-none focus:border-white/30"
+      />
+
+      <button
+        onClick={search}
+        disabled={loading}
+        className="rounded-2xl bg-white px-6 py-4 font-bold text-black transition hover:opacity-90 disabled:opacity-40"
+      >
+        {loading ? "Searching..." : "Search"}
+      </button>
+    </div>
+
+    <div className="mt-10 space-y-6">
+      {results.map((item, index) => (
+        <div key={index}>
+          <SourcePreviewCard
+            title={item.title}
+            summary={item.summary}
+            source={item.politician || item.topic || "AI Search"}
+            type={item.type === "video" ? "video" : "article"}
+            url={item.url}
+          />
+
+          {item.timestamp && (
+            <div className="mt-3 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
+              ⏱ Suggested timestamp: {item.timestamp}
             </div>
+          )}
 
-            <h2 className="text-2xl font-bold">
-              {item.title}
-            </h2>
+          {item.type === "video" && (
+            <iframe
+              width="100%"
+              height="315"
+              src={`https://www.youtube.com/embed/${
+                item.url.includes("v=")
+                  ? item.url.split("v=")[1].split("&")[0]
+                  : item.url.split("/").pop()
+              }`}
+              title={item.title}
+              frameBorder="0"
+              allowFullScreen
+              className="mt-4 mb-4 rounded-2xl"
+            />
+          )}
 
-            <p className="mt-4 text-neutral-300">
-              {item.summary}
-            </p>
-            {item.timestamp && (
-  <div className="mt-3 inline-block rounded-full bg-red-500/20 px-3 py-1 text-sm text-red-300">
-    ⏱ Suggested timestamp: {item.timestamp}
-  </div>
-)}
-            {item.type === "video" && (
-  <iframe
-    width="100%"
-    height="315"
-    src={`https://www.youtube.com/embed/${
-      item.url.includes("v=")
-        ? item.url.split("v=")[1].split("&")[0]
-        : item.url.split("/").pop()
-    }`}
-    title={item.title}
-    frameBorder="0"
-    allowFullScreen
-    className="rounded-2xl mb-4"
-  />
-)}
-
-            <a
-              href={item.url}
-              target="_blank"
-              className="mt-6 inline-block text-sm text-blue-400 underline"
+          <div className="mt-4 flex gap-4">
+            <button
+              onClick={() => saveSource(item)}
+              className="rounded-2xl bg-white px-5 py-3 font-bold text-black"
             >
-              Open source
-            </a>
+              Save Source
+            </button>
 
-            <div className="mt-8 flex gap-4">
-              <button
-  onClick={() => saveSource(item)}
-  className="rounded-2xl bg-white px-5 py-3 font-bold text-black"
+            <button
+  onClick={() => createContradictionDraft(item)}
+  className="rounded-2xl border border-white/20 px-5 py-3 font-bold"
 >
-  Save Source
+  Create Contradiction Draft
 </button>
-
-              <button className="rounded-2xl border border-white/20 px-5 py-3 font-bold">
-                Create Contradiction Draft
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </main>
-  );
+          </div>
+        </div>
+      ))}
+    </div>
+  </main>
+);
+  
 }

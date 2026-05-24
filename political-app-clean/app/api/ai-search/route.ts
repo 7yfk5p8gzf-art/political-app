@@ -51,6 +51,20 @@ A title mezőt is fordítsd magyarra.
 A topic mezőt is magyarul add vissza.
 Politikus neveket ne fordíts.
 URL-eket ne módosíts.
+Törekedj több nézőpontból származó források elemzésére.
+
+Részesítsd előnyben:
+- helyi nyelvű forrásokat
+- videós interjúkat
+- teljes beszélgetéseket
+- nemzetközi sajtót
+- fact-check jellegű oldalakat
+- eltérő politikai nézőpontokat
+
+Ne csak egyetlen politikai oldal narratíváját kövesd.
+
+A cél:
+bizonyíték alapú, kiegyensúlyozott elemzés.
 `,
           },
           {
