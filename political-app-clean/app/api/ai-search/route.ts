@@ -10,6 +10,12 @@ import {
 import { buildContradictionCandidate } from "@/lib/ai/contradictionCandidate";
 import { supabase } from "@/lib/supabase";
 import { detectPoliticalEvolution } from "@/lib/ai/politicalEvolution";
+import { extractDateSignals } from "@/lib/ai/dateExtraction";
+import {
+  rankContradiction,
+  type ContradictionRankingResult,
+} from "@/lib/ai/contradictionRanking";
+
 
 
 type BraveResult = {
@@ -308,31 +314,137 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await fetch(
+    
+      const balancedQuery = `
+${query}
+(
+  conservative OR right wing OR government
+  OR opposition OR left wing
+  OR independent OR neutral
+  OR fact check OR analysis
+)
+`;
+let localBias = "";
+
+const q = query.toLowerCase();
+
+if (
+  q.includes("orbán") ||
+  q.includes("gyurcsány") ||
+  q.includes("magyar")
+) {
+  localBias =
+  "site:telex.hu OR site:444.hu OR site:index.hu OR site:mandiner.hu OR site:hvg.hu";
+}
+
+if (
+  q.includes("merz") ||
+  q.includes("scholz") ||
+  q.includes("afd") ||
+  q.includes("deutschland")
+) {
+  localBias =
+  "site:welt.de OR site:spiegel.de OR site:focus.de OR site:zeit.de";
+}
+
+if (
+  q.includes("trump") ||
+  q.includes("biden") ||
+  q.includes("usa")
+) {
+  if (
+  q.includes("trump") ||
+  q.includes("biden") ||
+  q.includes("usa")
+) {
+  localBias =
+    "site:cnn.com OR site:foxnews.com OR site:nytimes.com OR site:apnews.com";
+}
+}
+let localTerms = "";
+
+if (
+  q.includes("orbán") ||
+  q.includes("gyurcsány") ||
+  q.includes("magyar")
+) {
+  localTerms =
+  "migráció bevándorlás magyar politika orbán viktor fidesz";
+}
+
+if (
+  q.includes("merz") ||
+  q.includes("scholz") ||
+  q.includes("afd")
+) {
+  localTerms = "migration deutschland politik";
+}
+
+if (
+  q.includes("trump") ||
+  q.includes("biden")
+) {
+  localTerms = "immigration american politics";
+}
+const sourceQueries = [
+  `${query} ${localTerms} site:telex.hu`,
+  `${query} ${localTerms} site:444.hu`,
+  `${query} ${localTerms} site:index.hu`,
+  `${query} ${localTerms} site:hvg.hu`,
+  `${query} ${localTerms} site:mandiner.hu`,
+];
+
+const searchResponses = await Promise.all(
+  sourceQueries.map((searchQuery) =>
+    fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
-        query
-      )}&count=5`,
+        searchQuery
+      )}&count=3`,
       {
         headers: {
           Accept: "application/json",
           "X-Subscription-Token": apiKey,
         },
       }
-    );
+    )
+  )
+);
 
-    const json = await response.json();
-    const rawResults: BraveResult[] = json.web?.results || [];
+const searchJsons = await Promise.all(
+  searchResponses.map((response) => response.json())
+);
+
+const rawResults: BraveResult[] = searchJsons.flatMap(
+  (json) => json.web?.results || []
+);
+const seenDomains = new Set<string>();
+
+const diversifiedResults = rawResults.filter((item) => {
+  try {
+    const domain = new URL(item.url || "").hostname.replace("www.", "");
+
+    if (seenDomains.has(domain)) {
+      return false;
+    }
+
+    seenDomains.add(domain);
+
+    return true;
+  } catch {
+    return false;
+  }
+});
     const { data: existingSources } = await supabase
   .from("sources")
   .select("title, summary, url, politician, topic")
   .limit(50);
 
-    const videoResults = rawResults.filter(
-      (item) =>
+    const videoResults = diversifiedResults.filter(
+           (item) =>
         item.url?.includes("youtube.com") || item.url?.includes("youtu.be")
     );
 
-    const articleResults = rawResults.filter(
+    const articleResults = diversifiedResults.filter(
       (item) =>
         !item.url?.includes("youtube.com") && !item.url?.includes("youtu.be")
     );
@@ -371,10 +483,25 @@ export async function POST(req: Request) {
     stanceConfidence,
     analysisText,
   } = analyzeStance({
-    title: item.title,
-    summary: item.summary,
-    url: item.url,
+  title: item.title,
+  summary: item.summary,
+  url: item.url,
+});
+
+const dateSignals = extractDateSignals({
+  title: item.title,
+  summary: item.summary,
+  url: item.url,
+
   });
+  const ranking = rankContradiction({
+  contradictionProbability,
+  candidateStrength: stanceConfidence,
+  oldStatementScore: Math.min((supportMatches?.length || 0) * 25, 100),
+  timelineStrength: dateSignals.detectedYear ? 70 : 20,
+  dateConfidence: dateSignals.dateConfidence || 0,
+  evolutionStrength: 50,
+});
   const {
   hasVideo,
   transcriptReady,
@@ -441,12 +568,23 @@ oldStatementScore,
 
     semanticIntent,
 contradictionCandidate,
-timelineResult: {
-  yearsBetween: null,
-  timelineStrength: 0,
-  timelineCategory: "unknown",
-  reasoning: "No timeline information available",
-},
+dateSignals,
+overallRankScore: ranking.overallRankScore,
+rankLabel: ranking.rankLabel,
+rankReason: ranking.rankReason,
+timelineResult: dateSignals.detectedDate
+  ? {
+      yearsBetween: null,
+      timelineStrength: dateSignals.dateConfidence,
+      timelineCategory: "unknown",
+      reasoning: `Date signal detected: ${dateSignals.detectedDate}`,
+    }
+  : {
+      yearsBetween: null,
+      timelineStrength: 0,
+      timelineCategory: "unknown",
+      reasoning: "No timeline information available",
+    },
 politicalEvolution: detectPoliticalEvolution({
   semanticIntent,
   timelineCategory: "unknown",

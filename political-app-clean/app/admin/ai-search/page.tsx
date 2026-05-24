@@ -31,6 +31,9 @@ detectedQuote?: string | null;
 detectedTimestamp?: string | null;
 semanticTopicCluster?: string | null;
 semanticIntent?: string;
+overallRankScore?: number;
+rankLabel?: string;
+rankReason?: string;
 contradictionCandidate?: {
   isCandidate: boolean;
   candidateStrength: number;
@@ -40,7 +43,7 @@ contradictionCandidate?: {
   summary?: string | null;
   url?: string | null;
   politician?: string | null;
-  topic?: string | null;
+  
 } | null;
 oldStatementScore?: number;
 timelineResult?: {
@@ -60,6 +63,13 @@ politicalEvolution?: {
   evolutionStrength: number;
   explanation: string;
 };
+dateSignals?: {
+  detectedYear: number | null;
+  detectedDate: string | null;
+  dateConfidence: number;
+  dateReason: string;
+};
+
 };
 
 
@@ -85,7 +95,11 @@ export default function AiSearchPage() {
 
   const data = await response.json();
 
-  setResults(data.results || []);
+  const sortedResults = [...(data.results || [])].sort(
+  (a, b) => (b.overallRankScore || 0) - (a.overallRankScore || 0)
+);
+
+setResults(sortedResults);
   setLoading(false);
 }
 async function saveSource(item: SearchResult) {
@@ -173,7 +187,13 @@ Timeline reasoning:
 - Category: ${timelineResult.timelineCategory}
 - Strength: ${timelineResult.timelineStrength}%
 - Years between: ${timelineResult.yearsBetween ?? "unknown"}
-- Reasoning: ${timelineResult.reasoning}`,
+- Reasoning: ${timelineResult.reasoning}
+
+Date detection:
+- Detected year: ${item.dateSignals?.detectedYear ?? "unknown"}
+- Detected date: ${item.dateSignals?.detectedDate ?? "unknown"}
+- Date confidence: ${item.dateSignals?.dateConfidence ?? 0}%
+- Date reason: ${item.dateSignals?.dateReason || "No date reason"}`,
 review_status: "draft",
 confidence_score: item.contradictionCandidate?.candidateStrength ?? 0,
 severity_score:
@@ -204,6 +224,45 @@ status: "draft",
 
   alert("Contradiction draft created.");
 }
+
+
+function getRankStyle(label?: string) {
+  if (label === "critical") {
+    return {
+      box: "border-red-500/40 bg-red-500/10",
+      text: "text-red-100",
+      badge: "bg-red-500/20 text-red-100",
+      title: "text-red-200",
+    };
+  }
+
+  if (label === "high") {
+    return {
+      box: "border-orange-500/40 bg-orange-500/10",
+      text: "text-orange-100",
+      badge: "bg-orange-500/20 text-orange-100",
+      title: "text-orange-200",
+    };
+  }
+
+  if (label === "medium") {
+    return {
+      box: "border-yellow-500/40 bg-yellow-500/10",
+      text: "text-yellow-100",
+      badge: "bg-yellow-500/20 text-yellow-100",
+      title: "text-yellow-200",
+    };
+  }
+
+  return {
+    box: "border-slate-500/30 bg-slate-500/10",
+    text: "text-slate-100",
+    badge: "bg-slate-500/20 text-slate-100",
+    title: "text-slate-200",
+  };
+}
+
+
 return (
   <main className="mx-auto max-w-6xl px-6 py-10">
     <AdminBackButton />
@@ -252,6 +311,28 @@ return (
               Possible contradiction probability: {item.contradictionProbability}%
             </div>
           )}
+          {typeof item.overallRankScore === "number" && (
+    <div className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+    <div className="flex items-center justify-between">
+      <div className="text-sm font-bold text-red-200">
+        Overall AI contradiction score
+      </div>
+
+      <div className="rounded-full bg-red-500/20 px-3 py-1 text-sm font-bold text-red-100">
+        {item.overallRankScore}%
+      </div>
+    </div>
+
+    <div className="mt-2 text-xs uppercase tracking-wide text-red-300">
+      {item.rankLabel}
+    </div>
+
+    <div className="mt-2 text-sm text-red-100">
+      {item.rankReason}
+    </div>
+  </div>
+)}
+
           {item.contradictionCandidate && (
   <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3">
     <div className="text-xs font-bold text-orange-200">
@@ -289,6 +370,26 @@ return (
 {item.opposeMatches && item.opposeMatches.length > 0 && (
   <div className="mt-2 text-xs text-red-200">
     Oppose signals: {item.opposeMatches.join(", ")}
+  </div>
+)}
+{item.dateSignals && (
+  <div className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3">
+    <div className="text-xs font-bold text-sky-200">
+      Date detection
+    </div>
+
+    <div className="mt-1 text-xs text-sky-100">
+      Detected year:{" "}
+      {item.dateSignals.detectedYear ?? "unknown"}
+    </div>
+
+    <div className="mt-1 text-xs text-sky-100">
+      Confidence: {item.dateSignals.dateConfidence}%
+    </div>
+
+    <div className="mt-2 text-xs text-sky-200/80">
+      {item.dateSignals.dateReason}
+    </div>
   </div>
 )}
 {item.timelineResult && (
