@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
-import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
+import { t, type Lang } from "@/lib/i18n";
 import PublicPageShell from "@/components/public/PublicPageShell";
 import { publicStyles } from "@/lib/publicStyles";
 import PoliticianMiniCard from "../../components/public/cards/PoliticianMiniCard";
@@ -179,10 +179,7 @@ export default function PublicContradictionsPage() {
   const [activeCountry, setActiveCountry] = useState("all");
   const [darkMode, setDarkMode] = useState(false);
 
-  useEffect(() => {
-    setLang(detectBrowserLang());
-    load();
-  }, []);
+  
 
   async function load() {
     const { data } = await supabase
@@ -330,34 +327,9 @@ const mostVotedItems = [...items]
   return (
     
   <PublicPageShell>
-      <div style={topBarStyle}>
-        <div style={brandStyle}>Political App</div>
-        <div style={navStyle}>
-  <a href="/contradictions" style={navLinkStyle}>
-    Contradictions
-  </a>
+      
 
-  <a href="/topics" style={navLinkStyle}>
-    Topics
-  </a>
-  <a href="/politicians" style={navLinkStyle}>
-  Politicians
-</a>
-<a href="/login" style={navLinkStyle}>
-  Login / Register
-</a>
-</div>
-
-  
-</div>
-
-        <PublicLanguageSwitcher
-  lang={lang}
-  onChange={(nextLang) => {
-    setLang(nextLang);
-    saveLang(nextLang);
-  }}
-/>
+        
               
 
       <section style={heroStyle}>

@@ -166,7 +166,7 @@ export default function ContradictionDetailPage() {
   const [lang, setLang] = useState<Lang>("hu");
 
   useEffect(() => {
-    setLang(detectBrowserLang());
+    
     load();
   }, [slug]);
 

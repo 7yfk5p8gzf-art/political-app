@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { detectBrowserLang, saveLang, type Lang } from "@/lib/i18n";
+
 import PublicPageShell from "@/components/public/PublicPageShell";
 import PublicCard from "../../components/public/ui/PublicCard";
 import PublicButton from "../../components/public/ui/PublicButton";
@@ -11,6 +11,8 @@ import PublicInput from "@/components/public/ui/PublicInput";
 import PublicGrid from "@/components/public/ui/PublicGrid";
 import PublicSection from "@/components/public/ui/PublicSection";
 import PublicStatCard from "@/components/public/ui/PublicStatCard";
+export default function PoliticiansPage() {
+  const lang = "hu";
 
 type Item = {
   id: string;
@@ -97,7 +99,7 @@ function slugify(text: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function getTopic(item: Item, lang: Lang) {
+function getTopic(item: Item, lang: string) {
   if (lang === "de") return item.topic_de || item.topic;
   if (lang === "en") return item.topic_en || item.topic;
   if (lang === "fr") return item.topic_fr || item.topic;
@@ -117,10 +119,10 @@ export default function PoliticiansPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
-  const [lang, setLang] = useState<Lang>("hu");
+  
 
   useEffect(() => {
-    setLang(detectBrowserLang());
+    
     load();
   }, []);
 
@@ -197,7 +199,7 @@ export default function PoliticiansPage() {
 
   return (
     
-      
+   <PublicPageShell>   
   <div className="mx-auto max-w-7xl">
         <PublicCard className="mb-8 p-8 md:p-10">
           <div className="flex flex-wrap items-start justify-between gap-6">
@@ -218,8 +220,7 @@ export default function PoliticiansPage() {
                 <button
                   key={l}
                   onClick={() => {
-                    setLang(l);
-                    saveLang(l);
+                    
                   }}
                   className={`rounded-xl px-4 py-2 text-sm font-black transition-all ${
                     lang === l
@@ -303,6 +304,7 @@ export default function PoliticiansPage() {
         </PublicGrid>
       </div>
       
-    
+   </PublicPageShell> 
   );
+  
 }
