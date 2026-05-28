@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminBackButton from "@/components/admin/AdminBackButton";
 import SourcePreviewCard from "@/components/public/SourcePreviewCard";
@@ -34,6 +34,9 @@ semanticIntent?: string;
 overallRankScore?: number;
 rankLabel?: string;
 rankReason?: string;
+sourcePerspective?: "opposition" | "conservative" | "pro-government" | "neutral" | "international" | "unknown";
+sourceDomain?: string;
+sourceLanguage?: string;
 contradictionCandidate?: {
   isCandidate: boolean;
   candidateStrength: number;
@@ -43,6 +46,7 @@ contradictionCandidate?: {
   summary?: string | null;
   url?: string | null;
   politician?: string | null;
+ 
   
 } | null;
 oldStatementScore?: number;
@@ -79,6 +83,37 @@ export default function AiSearchPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const diversityStats = useMemo(() => {
+  return {
+    opposition: results.filter(
+      (x) => x.sourcePerspective === "opposition"
+    ).length,
+
+    proGovernment: results.filter(
+      (x) => x.sourcePerspective === "pro-government"
+    ).length,
+
+    international: results.filter(
+      (x) => x.sourcePerspective === "international"
+    ).length,
+
+    neutral: results.filter(
+      (x) => x.sourcePerspective === "neutral"
+    ).length,
+
+    languages: [
+      ...new Set(
+        results.map((x) => x.sourceLanguage).filter(Boolean)
+      ),
+    ],
+
+    domains: [
+      ...new Set(
+        results.map((x) => x.sourceDomain).filter(Boolean)
+      ),
+    ],
+  };
+}, [results]);
 
   async function search(searchQuery = query) {
   if (!searchQuery) return;
@@ -96,10 +131,14 @@ export default function AiSearchPage() {
   const data = await response.json();
 
   const sortedResults = [...(data.results || [])].sort(
-  (a, b) => (b.overallRankScore || 0) - (a.overallRankScore || 0)
+  (a: SearchResult, b: SearchResult) =>
+    (b.overallRankScore || 0) - (a.overallRankScore || 0)
 );
+    
+  
 
 setResults(sortedResults);
+console.log("AI diversity check:", sortedResults);
   setLoading(false);
 }
 async function saveSource(item: SearchResult) {
@@ -290,6 +329,55 @@ return (
         {loading ? "Searching..." : "Search"}
       </button>
     </div>
+    {results.length > 0 && (
+  <div className="mb-8 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
+    <div className="text-sm uppercase tracking-[0.3em] text-cyan-300">
+      Research diversity
+    </div>
+
+    <div className="mt-3 text-2xl font-bold text-white">
+      {diversityStats.domains.length} unique domains
+    </div>
+
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl bg-black/20 p-3">
+        <div className="text-xs text-cyan-200">Opposition</div>
+        <div className="text-xl font-bold">
+          {diversityStats.opposition}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-black/20 p-3">
+        <div className="text-xs text-cyan-200">
+          Pro-government
+        </div>
+        <div className="text-xl font-bold">
+          {diversityStats.proGovernment}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-black/20 p-3">
+        <div className="text-xs text-cyan-200">
+          International
+        </div>
+        <div className="text-xl font-bold">
+          {diversityStats.international}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-black/20 p-3">
+        <div className="text-xs text-cyan-200">Neutral</div>
+        <div className="text-xl font-bold">
+          {diversityStats.neutral}
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-4 text-sm text-cyan-100">
+      Languages: {diversityStats.languages.join(", ")}
+    </div>
+  </div>
+)}
 
     <div className="mt-10 space-y-6">
   {results.map((item, index) => (

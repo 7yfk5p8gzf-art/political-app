@@ -572,6 +572,37 @@ dateSignals,
 overallRankScore: ranking.overallRankScore,
 rankLabel: ranking.rankLabel,
 rankReason: ranking.rankReason,
+sourceDomain: (() => {
+  try {
+    return new URL(item.url || "").hostname.replace("www.", "");
+  } catch {
+    return "unknown";
+  }
+})(),
+
+sourceLanguage: q.includes("orbán") ||
+q.includes("gyurcsány") ||
+q.includes("magyar")
+  ? "hu"
+  : q.includes("merz") ||
+    q.includes("scholz") ||
+    q.includes("afd")
+  ? "de"
+  : "en",
+
+sourcePerspective:
+  item.url?.includes("telex") ||
+  item.url?.includes("444") ||
+  item.url?.includes("hvg")
+    ? "opposition"
+    : item.url?.includes("mandiner") ||
+      item.url?.includes("magyarnemzet") ||
+      item.url?.includes("origo")
+    ? "pro-government"
+    : item.url?.includes("reuters") ||
+      item.url?.includes("apnews")
+    ? "international"
+    : "neutral",
 timelineResult: dateSignals.detectedDate
   ? {
       yearsBetween: null,
