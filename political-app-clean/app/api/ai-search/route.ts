@@ -11,6 +11,7 @@ import { buildContradictionCandidate } from "@/lib/ai/contradictionCandidate";
 import { supabase } from "@/lib/supabase";
 import { detectPoliticalEvolution } from "@/lib/ai/politicalEvolution";
 import { extractDateSignals } from "@/lib/ai/dateExtraction";
+import { parsePoliticalQuery } from "@/lib/ai/queryParser";
 import {
   rankContradiction,
   type ContradictionRankingResult,
@@ -297,6 +298,8 @@ async function buildResult({
 export async function POST(req: Request) {
   try {
     const { query } = await req.json();
+    const parsedQuery = parsePoliticalQuery(query);
+const effectiveQuery = `${parsedQuery.politician || ""} ${parsedQuery.topic}`.trim();
 
     if (!query) {
       return NextResponse.json({ results: [] });
@@ -327,6 +330,16 @@ ${query}
 let localBias = "";
 
 const q = query.toLowerCase();
+let topicTerms = "";
+
+if (
+  q.includes("migráció") ||
+  q.includes("bevándorlás") ||
+  q.includes("migration")
+) {
+  topicTerms =
+    " migráció OR bevándorlás OR migration OR menekült OR menekültek OR határ OR határvédelem OR schengen";
+}
 
 if (
   q.includes("orbán") ||
@@ -386,12 +399,19 @@ if (
 ) {
   localTerms = "immigration american politics";
 }
+console.log("AI search parsed query:", {
+  query,
+  parsedQuery,
+  effectiveQuery,
+  topicTerms,
+  localTerms,
+});
 const sourceQueries = [
-  `${query} ${localTerms} site:telex.hu`,
-  `${query} ${localTerms} site:444.hu`,
-  `${query} ${localTerms} site:index.hu`,
-  `${query} ${localTerms} site:hvg.hu`,
-  `${query} ${localTerms} site:mandiner.hu`,
+  `${effectiveQuery} ${topicTerms} ${localTerms} site:telex.hu OR site:444.hu OR site:hvg.hu`,
+  `${effectiveQuery} ${topicTerms} ${localTerms} site:mandiner.hu OR site:magyarnemzet.hu OR site:origo.hu`,
+  `${effectiveQuery} ${topicTerms} ${localTerms} site:portfolio.hu OR site:24.hu`,
+  `${effectiveQuery} ${topicTerms} Hungary politics migration Reuters OR BBC OR AP OR Euronews`,
+  `${effectiveQuery} ${topicTerms} fact check analysis political context`,
 ];
 
 const searchResponses = await Promise.all(
@@ -417,9 +437,24 @@ const searchJsons = await Promise.all(
 const rawResults: BraveResult[] = searchJsons.flatMap(
   (json) => json.web?.results || []
 );
-const seenDomains = new Set<string>();
+const topicKeywords =
+  query.toLowerCase().includes("migráció") ||
+  query.toLowerCase().includes("migration") ||
+  query.toLowerCase().includes("bevándorlás")
+    ? ["migráció", "migration", "bevándorlás", "menekült", "határ", "migrant"]
+    : [];
 
-const diversifiedResults = rawResults.filter((item) => {
+const topicFilteredResults =
+  topicKeywords.length > 0
+    ? rawResults.filter((item) => {
+        const text = `${item.title || ""} ${item.description || ""}`.toLowerCase();
+
+        return topicKeywords.some((word) => text.includes(word));
+      })
+    : rawResults
+    const seenDomains = new Set<string>();
+
+const diversifiedResults = topicFilteredResults.filter((item) => {
   try {
     const domain = new URL(item.url || "").hostname.replace("www.", "");
 

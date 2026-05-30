@@ -83,6 +83,27 @@ export default function AiSearchPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  function getPerspectiveFromUrl(url?: string) {
+  const u = url || "";
+
+  if (u.includes("telex") || u.includes("444") || u.includes("hvg")) {
+    return "opposition";
+  }
+
+  if (
+    u.includes("mandiner") ||
+    u.includes("magyarnemzet") ||
+    u.includes("origo")
+  ) {
+    return "pro-government";
+  }
+
+  if (u.includes("reuters") || u.includes("apnews")) {
+    return "international";
+  }
+
+  return "neutral";
+}
   const diversityStats = useMemo(() => {
   return {
     opposition: results.filter(
@@ -389,6 +410,29 @@ return (
         type={item.type === "video" ? "video" : "article"}
         url={item.url}
       />
+      
+
+
+
+{item.sourcePerspective && (
+          <div className="mt-3 flex flex-wrap gap-2">
+    <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-200">
+      {getPerspectiveFromUrl(item.url)}
+    </span>
+
+    {item.sourceDomain && (
+      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">
+        {item.sourceDomain}
+      </span>
+    )}
+
+    {item.sourceLanguage && (
+      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">
+        {item.sourceLanguage}
+      </span>
+    )}
+  </div>
+)}
 
       {item.possibleContradictionHint && (
         <div className="mt-3 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
