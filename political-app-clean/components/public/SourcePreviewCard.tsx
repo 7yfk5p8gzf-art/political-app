@@ -23,7 +23,7 @@ export default function SourcePreviewCard({
     <div className={publicStyles.card}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <span className={publicStyles.badge}>
-          {type === "video" ? "VIDEO" : "ARTICLE"}
+          {type === "video" ? "🎥 VIDEO" : "📰 ARTICLE"}
         </span>
 
         {date && (

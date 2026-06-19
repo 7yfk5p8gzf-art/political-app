@@ -23,22 +23,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+  let mounted = true;
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
+  async function loadUser() {
+    try {
+      const { data } = await supabase.auth.getUser();
+
+      if (!mounted) return;
+
+      setUser(data.user);
+    } catch (error) {
+      console.error("Auth getUser failed:", error);
+
+      if (!mounted) return;
+
+      setUser(null);
+    } finally {
+      if (mounted) {
         setLoading(false);
       }
-    );
+    }
+  }
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+  // loadUser();
+
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    }
+  );
+
+  return () => {
+    mounted = false;
+    listener.subscription.unsubscribe();
+  };
+}, []);
 
   async function logout() {
     await supabase.auth.signOut();

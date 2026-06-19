@@ -11,7 +11,13 @@ import { buildContradictionCandidate } from "@/lib/ai/contradictionCandidate";
 import { supabase } from "@/lib/supabase";
 import { detectPoliticalEvolution } from "@/lib/ai/politicalEvolution";
 import { extractDateSignals } from "@/lib/ai/dateExtraction";
-import { parsePoliticalQuery } from "@/lib/ai/queryParser";
+import {
+  buildTopicExpansionQueries,
+  scoreSearchResultV2,
+} from "@/lib/ai/topicExpansionEngine";
+import { loadPoliticians } from "@/lib/ai/loadPoliticians";
+import { parsePoliticalQueryFromRegistry } from "@/lib/ai/queryParser";
+
 import {
   rankContradiction,
   type ContradictionRankingResult,
@@ -298,7 +304,27 @@ async function buildResult({
 export async function POST(req: Request) {
   try {
     const { query } = await req.json();
-    const parsedQuery = parsePoliticalQuery(query);
+    
+    const politicians = await loadPoliticians();
+const parsedQuery = parsePoliticalQueryFromRegistry(query, politicians);
+const expandedQueries = buildTopicExpansionQueries({
+  topic: parsedQuery.topic || query,
+  politician: null,
+});
+
+console.log("Expanded queries:", expandedQueries);
+const normalizedQuery = query.trim().toLowerCase();
+const { data: cachedSearch } = await supabase
+  .from("ai_search_cache")
+  .select("response")
+  .eq("normalized_query", normalizedQuery)
+  .maybeSingle();
+
+// if (cachedSearch?.response) {
+//   console.log("AI search cache hit:", normalizedQuery);
+//
+//   return NextResponse.json(cachedSearch.response);
+// }
 const effectiveQuery = `${parsedQuery.politician || ""} ${parsedQuery.topic}`.trim();
 
     if (!query) {
@@ -344,10 +370,10 @@ if (
 if (
   q.includes("orbán") ||
   q.includes("gyurcsány") ||
-  q.includes("magyar")
+  parsedQuery.country === "HU"
 ) {
   localBias =
-  "site:telex.hu OR site:444.hu OR site:index.hu OR site:mandiner.hu OR site:hvg.hu";
+  "site:telex.hu OR site:444.hu OR site:hvg.hu OR site:mandiner.hu OR site:magyarnemzet.hu OR site:vadhajtasok.hu";
 }
 
 if (
@@ -379,10 +405,11 @@ let localTerms = "";
 if (
   q.includes("orbán") ||
   q.includes("gyurcsány") ||
-  q.includes("magyar")
-) {
+  parsedQuery.country === "HU"
+)
+{
   localTerms =
-  "migráció bevándorlás magyar politika orbán viktor fidesz";
+    "magyar politika közélet választás parlament";
 }
 
 if (
@@ -406,12 +433,50 @@ console.log("AI search parsed query:", {
   topicTerms,
   localTerms,
 });
+const videoQueries = [
+  `${effectiveQuery} ${topicTerms} site:youtube.com interview`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com interjú`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com speech`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com beszéd`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com debate`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com vita`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com parlament`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com Hír TV`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com ATV`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com Partizán`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com teljes interjú`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com Orbán Viktor migráció`,
+];
+
+const localQueries =
+  parsedQuery.country === "HU"
+    ? [
+        `${effectiveQuery} ${topicTerms} site:telex.hu`,
+        `${effectiveQuery} ${topicTerms} site:hvg.hu`,
+        `${effectiveQuery} ${topicTerms} site:444.hu`,
+        `${effectiveQuery} ${topicTerms} site:vadhajtasok.hu`,
+        `${effectiveQuery} ${topicTerms} site:mandiner.hu`,
+        `${effectiveQuery} ${topicTerms} site:magyarnemzet.hu`,
+        `${effectiveQuery} ${topicTerms} site:24.hu`,
+        `${effectiveQuery} ${topicTerms} site:portfolio.hu`,
+      ]
+    : [`${effectiveQuery} ${topicTerms}`];
+
+const internationalQueries = [
+  `${effectiveQuery} ${topicTerms} site:reuters.com`,
+  `${effectiveQuery} ${topicTerms} site:bbc.com`,
+  `${effectiveQuery} ${topicTerms} site:apnews.com`,
+  `${effectiveQuery} ${topicTerms} site:euronews.com`,
+  `${effectiveQuery} ${topicTerms} site:dw.com`,
+  `${effectiveQuery} ${topicTerms} site:france24.com`,
+  `${effectiveQuery} ${topicTerms} site:politico.com`,
+  `${effectiveQuery} ${topicTerms} site:theguardian.com`,
+];
+
 const sourceQueries = [
-  `${effectiveQuery} ${topicTerms} ${localTerms} site:telex.hu OR site:444.hu OR site:hvg.hu`,
-  `${effectiveQuery} ${topicTerms} ${localTerms} site:mandiner.hu OR site:magyarnemzet.hu OR site:origo.hu`,
-  `${effectiveQuery} ${topicTerms} ${localTerms} site:portfolio.hu OR site:24.hu`,
-  `${effectiveQuery} ${topicTerms} Hungary politics migration Reuters OR BBC OR AP OR Euronews`,
-  `${effectiveQuery} ${topicTerms} fact check analysis political context`,
+  ...videoQueries,
+  ...localQueries,
+  ...internationalQueries,
 ];
 
 const searchResponses = await Promise.all(
@@ -433,9 +498,66 @@ const searchResponses = await Promise.all(
 const searchJsons = await Promise.all(
   searchResponses.map((response) => response.json())
 );
+console.log("AI Brave raw JSON:", JSON.stringify(searchJsons, null, 2));
+const braveErrors = searchJsons.filter(
+  (json) => json.error || json.errors || json.type
+);
 
-const rawResults: BraveResult[] = searchJsons.flatMap(
-  (json) => json.web?.results || []
+if (braveErrors.length > 0) {
+  console.log(
+    "AI Brave errors:",
+    JSON.stringify(braveErrors, null, 2)
+  );
+}
+
+const rawResults: BraveResult[] = searchJsons.flatMap((json) => {
+  return (
+    json.web?.results ||
+    json.news?.results ||
+    json.videos?.results ||
+    []
+  );
+});
+console.log("AI raw results count:", rawResults.length);
+console.log(
+  "AI raw result titles:",
+  rawResults.map((x) => ({
+    title: x.title,
+    url: x.url,
+    description: x.description,
+  }))
+);
+const allowedDomains = [
+  "telex.hu",
+  "hvg.hu",
+  "444.hu",
+  "vadhajtasok.hu",
+  "mandiner.hu",
+  "magyarnemzet.hu",
+  "24.hu",
+  "portfolio.hu",
+  "reuters.com",
+  "bbc.com",
+  "apnews.com",
+  "euronews.com",
+  "youtube.com",
+  "youtu.be",
+];
+
+const allowedRawResults = rawResults.filter((item) => {
+  try {
+    const domain = new URL(item.url || "").hostname.replace("www.", "");
+
+    return allowedDomains.some(
+      (allowed) => domain === allowed || domain.endsWith("." + allowed)
+    );
+  } catch {
+    return false;
+  }
+});
+console.log(
+  "ALLOWED RESULTS:",
+  allowedRawResults.map((x) => x.url)
 );
 const topicKeywords =
   query.toLowerCase().includes("migráció") ||
@@ -446,12 +568,12 @@ const topicKeywords =
 
 const topicFilteredResults =
   topicKeywords.length > 0
-    ? rawResults.filter((item) => {
+    ? allowedRawResults.filter((item) => {
         const text = `${item.title || ""} ${item.description || ""}`.toLowerCase();
 
         return topicKeywords.some((word) => text.includes(word));
       })
-    : rawResults
+    : allowedRawResults
     const seenDomains = new Set<string>();
 
 const diversifiedResults = topicFilteredResults.filter((item) => {
@@ -469,15 +591,32 @@ const diversifiedResults = topicFilteredResults.filter((item) => {
     return false;
   }
 });
+console.log("AI diversified results count:", diversifiedResults.length);
     const { data: existingSources } = await supabase
   .from("sources")
   .select("title, summary, url, politician, topic")
   .limit(50);
 
-    const videoResults = diversifiedResults.filter(
-           (item) =>
-        item.url?.includes("youtube.com") || item.url?.includes("youtu.be")
-    );
+    const videoResults = Array.from(
+  new Map(
+    rawResults
+      .filter(
+        (item) =>
+          item.url?.includes("youtube.com") ||
+          item.url?.includes("youtu.be")
+      )
+      .map((item) => [item.url, item])
+  ).values()
+);
+
+    console.log("AI videoResults count:", videoResults.length);
+console.log(
+  "AI videoResults:",
+  videoResults.map((x) => ({
+    title: x.title,
+    url: x.url,
+  }))
+);
 
     const articleResults = diversifiedResults.filter(
       (item) =>
@@ -503,12 +642,25 @@ const diversifiedResults = topicFilteredResults.filter((item) => {
         })
       )
     );
-    const combinedResults = [...videos, ...articles].map((item) => {
-  const { contradictionProbability, contradictionReasons } = scoreContradiction({
+    const combinedResults = [...videos, ...articles]
+  .map((item) => {
+  const { contradictionProbability, contradictionReasons } =
+  scoreContradiction({
+  
   politician: item.politician,
   topic: item.topic,
   title: item.title,
   summary: item.summary,
+});
+const relevanceScore = scoreSearchResultV2({
+  result: {
+    title: item.title,
+    description: item.summary,
+    url: item.url,
+    source: item.url,
+  },
+  politicianName: item.politician,
+  topic: item.topic,
 });
 
   const {
@@ -586,6 +738,7 @@ const contradictionCandidate = buildContradictionCandidate({
 return {
   ...item,
     ...item,
+    relevanceScore,
     contradictionProbability,
     contradictionReasons,
     stanceDirection,
@@ -664,10 +817,163 @@ politicalEvolution: detectPoliticalEvolution({
       `Search older statements about ${item.topic || "this topic"}`,
   };
 }); 
-    
+if (combinedResults.length > 0) {
+  await supabase.from("ai_search_cache").upsert({
+    normalized_query: normalizedQuery,
+    response: { results: combinedResults },
+  });
+}
+const sortedResults = combinedResults.sort(
+  (a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0)
+);
 
-    return NextResponse.json({
-  results: combinedResults,
+const videoFinalResults = sortedResults
+  .filter((x) => x.type === "video")
+  .slice(0, 4);
+
+const localFinalResults = sortedResults
+  .filter(
+    (x) =>
+      x.type !== "video" &&
+      (
+        x.url.includes("telex.hu") ||
+        x.url.includes("hvg.hu") ||
+        x.url.includes("444.hu") ||
+        x.url.includes("portfolio.hu") ||
+        x.url.includes("24.hu") ||
+        x.url.includes("mandiner.hu") ||
+        x.url.includes("magyarnemzet.hu") ||
+        x.url.includes("vadhajtasok.hu")
+      )
+  )
+  .slice(0, 3);
+
+const internationalFinalResults = sortedResults
+  .filter(
+    (x) =>
+      x.type !== "video" &&
+      (
+        x.url.includes("reuters.com") ||
+        x.url.includes("bbc.") ||
+        x.url.includes("apnews.com") ||
+        x.url.includes("euronews.com") ||
+        x.url.includes("dw.com") ||
+        x.url.includes("france24.com") ||
+        x.url.includes("politico.com") ||
+        x.url.includes("theguardian.com") ||
+        x.url.includes("cnn.com") ||
+        x.url.includes("foxnews.com")
+      )
+  )
+  .slice(0, 3);
+
+
+  
+const allowedSortedResults = sortedResults.filter((item) => {
+  try {
+    const domain = new URL(item.url || "").hostname.replace("www.", "");
+
+    return allowedDomains.some(
+      (allowed) => domain === allowed || domain.endsWith("." + allowed)
+    );
+  } catch {
+    return false;
+  }
+});
+
+const oppositionArticles = allowedSortedResults
+  .filter(
+    (x) =>
+      x.type === "article" &&
+      (
+        x.url.includes("telex.hu") ||
+        x.url.includes("hvg.hu") ||
+        x.url.includes("444.hu")
+      )
+  )
+  .slice(0, 2);
+
+const proGovernmentArticles = allowedSortedResults
+  .filter(
+    (x) =>
+      x.type === "article" &&
+      (
+        x.url.includes("vadhajtasok.hu") ||
+        x.url.includes("mandiner.hu") ||
+        x.url.includes("magyarnemzet.hu")
+      )
+  )
+  .slice(0, 2);
+
+const neutralArticles = allowedSortedResults
+  .filter(
+    (x) =>
+      x.type === "article" &&
+      (
+        x.url.includes("24.hu") ||
+        x.url.includes("portfolio.hu")
+      )
+  )
+  .slice(0, 1);
+
+const finalArticles = [
+  ...oppositionArticles,
+  ...proGovernmentArticles,
+  ...neutralArticles,
+].slice(0, 5);
+
+const finalVideos = allowedSortedResults
+  .filter((x) => x.type === "video")
+  .sort((a, b) => {
+    const aText =
+      `${a.title || ""} ${a.summary || ""}`.toLowerCase();
+
+    const bText =
+      `${b.title || ""} ${b.summary || ""}`.toLowerCase();
+
+    function scoreVideo(text: string) {
+      let score = 0;
+
+      if (text.includes("orbán")) score += 30;
+      if (text.includes("viktor")) score += 20;
+      if (text.includes("migráció")) score += 25;
+      if (text.includes("migration")) score += 25;
+      if (text.includes("bevándorlás")) score += 25;
+
+      if (text.includes("interjú")) score += 15;
+      if (text.includes("interview")) score += 15;
+
+      if (text.includes("beszéd")) score += 10;
+      if (text.includes("speech")) score += 10;
+
+      if (text.includes("parlament")) score += 10;
+
+      if (text.includes("magyar péter")) score -= 80;
+if (text.includes("orbán balázs")) score -= 60;
+if (text.includes("shorts")) score -= 40;
+if (text.includes("friss hír")) score -= 25;
+if (text.includes("letartóztatni")) score -= 25;
+if (text.includes("orbán viktor")) score += 60;
+if (text.includes("hír tv")) score += 20;
+if (text.includes("atv")) score += 20;
+if (text.includes("partizán")) score += 20;
+if (text.includes("teljes")) score += 15;
+
+      return score;
+    }
+
+    return scoreVideo(bText) - scoreVideo(aText);
+  })
+  .slice(0, 10);
+
+const results = [...finalArticles, ...finalVideos];
+
+return NextResponse.json({
+  articleQueries: [...localQueries, ...internationalQueries],
+  videoQueries,
+  articles: finalArticles,
+  videos: finalVideos,
+  results,
 });
   } catch (error) {
     console.error("AI search failed:", error);

@@ -149,12 +149,19 @@ export default function AiSearchPage() {
   body: JSON.stringify({ query: searchQuery }),
 });
 
-  const data = await response.json();
+  if (!response.ok) {
+  const errorText = await response.text();
+  console.error("AI SEARCH API ERROR:", response.status, errorText);
+  throw new Error(errorText);
+}
+
+const data = await response.json();
 
   const sortedResults = [...(data.results || [])].sort(
   (a: SearchResult, b: SearchResult) =>
     (b.overallRankScore || 0) - (a.overallRankScore || 0)
 );
+console.log("FRONTEND RESULTS:", sortedResults);
     
   
 
