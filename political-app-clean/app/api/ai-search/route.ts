@@ -957,6 +957,24 @@ const neutralArticles = allowedSortedResults
       )
   )
   .slice(0, 1);
+  const germanArticles = allowedSortedResults
+  .filter(
+    (x) =>
+      x.type === "article" &&
+      (
+        x.url.includes("tagesschau.de") ||
+        x.url.includes("zdf.de") ||
+        x.url.includes("ard.de") ||
+        x.url.includes("faz.net") ||
+        x.url.includes("sueddeutsche.de") ||
+        x.url.includes("welt.de") ||
+        x.url.includes("spiegel.de") ||
+        x.url.includes("zeit.de") ||
+        x.url.includes("focus.de") ||
+        x.url.includes("n-tv.de")
+      )
+  )
+  .slice(0, 5);
 
 const finalArticles =
   parsedQuery.country === "HU"
@@ -965,6 +983,8 @@ const finalArticles =
         ...proGovernmentArticles,
         ...neutralArticles,
       ].slice(0, 5)
+    : parsedQuery.country === "DE"
+    ? germanArticles
     : allowedSortedResults
         .filter((x) => x.type === "article")
         .slice(0, 5);
