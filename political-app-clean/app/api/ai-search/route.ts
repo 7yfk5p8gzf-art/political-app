@@ -958,14 +958,31 @@ const neutralArticles = allowedSortedResults
   )
   .slice(0, 1);
 
-const finalArticles = [
-  ...oppositionArticles,
-  ...proGovernmentArticles,
-  ...neutralArticles,
-].slice(0, 5);
+const finalArticles =
+  parsedQuery.country === "HU"
+    ? [
+        ...oppositionArticles,
+        ...proGovernmentArticles,
+        ...neutralArticles,
+      ].slice(0, 5)
+    : allowedSortedResults
+        .filter((x) => x.type === "article")
+        .slice(0, 5);
 
 const finalVideos = allowedSortedResults
-  .filter((x) => x.type === "video")
+  .filter((x) => {
+    if (x.type !== "video") return false;
+
+    const politicianName =
+      (parsedQuery.politician || "").toLowerCase();
+
+    const text =
+      `${x.title || ""} ${x.summary || ""}`.toLowerCase();
+
+    if (!politicianName) return true;
+
+    return text.includes(politicianName);
+  })
   .sort((a, b) => {
 
     const politicianName =
