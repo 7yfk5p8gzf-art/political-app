@@ -33,6 +33,7 @@ import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 import { getTopicKeywords } from "@/lib/ai-search/topicKeywords";
 import { diversifyResults } from "@/lib/ai-search/resultFilter";
 
+import { extractVideoResults } from "@/lib/ai-search/videoExtractor";
 
 
 
@@ -576,17 +577,8 @@ console.log("AI diversified results count:", diversifiedResults.length);
   .select("title, summary, url, politician, topic")
   .limit(50);
 
-    const videoResults = Array.from(
-  new Map(
-    rawResults
-      .filter(
-        (item) =>
-          item.url?.includes("youtube.com") ||
-          item.url?.includes("youtu.be")
-      )
-      .map((item) => [item.url, item])
-  ).values()
-);
+    const videoResults =
+  extractVideoResults(rawResults);
 
     console.log("AI videoResults count:", videoResults.length);
 console.log(
