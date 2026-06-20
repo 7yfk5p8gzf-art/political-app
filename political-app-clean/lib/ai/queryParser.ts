@@ -24,6 +24,19 @@ function languageFromCountry(country: string): "hu" | "de" | "en" {
   if (country === "DE") return "de";
   return "en";
 }
+function normalizePoliticianName(name: string | null) {
+  if (!name) return null;
+
+  const normalized = normalizeText(name);
+
+  if (normalized === "orban") return "Orbán Viktor";
+  if (normalized === "olaf") return "Olaf Scholz";
+  if (normalized === "meloni") return "Giorgia Meloni";
+  if (normalized === "trump") return "Donald Trump";
+  if (normalized === "merz") return "Friedrich Merz";
+
+  return name;
+}
 
 export function parsePoliticalQueryFromRegistry(
   query: string,
@@ -65,7 +78,7 @@ topic = topic.trim();
 
     return {
       rawQuery: query,
-      politician: matchedPolitician.full_name,
+      politician: normalizePoliticianName(matchedPolitician.full_name),
       topic: topic || query,
       country: matchedPolitician.country,
       language: languageFromCountry(matchedPolitician.country),

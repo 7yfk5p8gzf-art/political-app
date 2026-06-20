@@ -99,7 +99,14 @@ async function rejectItem(id: string) {
                   {item.status}
                 </td>
                 <td className="p-3">
-  <div className="flex gap-2">
+  <div className="flex gap-2 flex-wrap">
+    <a
+  href={`/contradictions/${item.slug}`}
+  target="_blank"
+  className="rounded-lg bg-blue-600 px-3 py-1 text-sm font-bold text-white"
+>
+  View
+</a>
   <button
     onClick={() => approveItem(item.id)}
     className="rounded-lg bg-green-600 px-3 py-1 text-sm font-bold text-white"

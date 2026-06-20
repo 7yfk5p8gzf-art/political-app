@@ -736,6 +736,7 @@ const contradictionCandidate = buildContradictionCandidate({
 
 return {
   ...item,
+  
     ...item,
     relevanceScore,
     contradictionProbability,
@@ -766,6 +767,10 @@ sourceDomain: (() => {
     return "unknown";
   }
 })(),
+politician:
+  parsedQuery.politician ||
+  item.politician ||
+  null,
 
 sourceLanguage: q.includes("orbán") ||
 q.includes("gyurcsány") ||
