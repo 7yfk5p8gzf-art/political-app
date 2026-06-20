@@ -378,11 +378,12 @@ if (
 if (
   q.includes("merz") ||
   q.includes("scholz") ||
+  q.includes("olaf") ||
   q.includes("afd") ||
   q.includes("deutschland")
 ) {
   localBias =
-  "site:welt.de OR site:spiegel.de OR site:focus.de OR site:zeit.de";
+    "site:tagesschau.de OR site:zdf.de OR site:ard.de OR site:faz.net OR site:sueddeutsche.de OR site:n-tv.de OR site:handelsblatt.com OR site:welt.de OR site:spiegel.de OR site:zeit.de OR site:focus.de";
 }
 
 if (
@@ -432,8 +433,12 @@ console.log("AI search parsed query:", {
   topicTerms,
   localTerms,
 });
+const strictQuery =
+  parsedQuery.politician
+    ? `"${parsedQuery.politician}" ${parsedQuery.topic || ""}`
+    : effectiveQuery;
 const videoQueries = [
-  `${effectiveQuery} ${topicTerms} site:youtube.com interview`,
+  `${strictQuery} ${topicTerms} site:youtube.com interview`,
   `${effectiveQuery} ${topicTerms} site:youtube.com interjú`,
   `${effectiveQuery} ${topicTerms} site:youtube.com speech`,
   `${effectiveQuery} ${topicTerms} site:youtube.com beszéd`,
@@ -458,6 +463,17 @@ const localQueries =
         `${effectiveQuery} ${topicTerms} site:magyarnemzet.hu`,
         `${effectiveQuery} ${topicTerms} site:24.hu`,
         `${effectiveQuery} ${topicTerms} site:portfolio.hu`,
+      ]
+    : parsedQuery.country === "DE"
+    ? [
+        `${effectiveQuery} ${topicTerms} site:tagesschau.de`,
+        `${effectiveQuery} ${topicTerms} site:zdf.de`,
+        `${effectiveQuery} ${topicTerms} site:ard.de`,
+        `${effectiveQuery} ${topicTerms} site:faz.net`,
+        `${effectiveQuery} ${topicTerms} site:sueddeutsche.de`,
+        `${effectiveQuery} ${topicTerms} site:welt.de`,
+        `${effectiveQuery} ${topicTerms} site:spiegel.de`,
+        `${effectiveQuery} ${topicTerms} site:zeit.de`,
       ]
     : [`${effectiveQuery} ${topicTerms}`];
 
@@ -519,6 +535,16 @@ const rawResults: BraveResult[] = searchJsons.flatMap((json) => {
 });
 console.log("AI raw results count:", rawResults.length);
 console.log(
+  "RAW DOMAINS:",
+  rawResults.map((x) => {
+    try {
+      return new URL(x.url || "").hostname;
+    } catch {
+      return "invalid";
+    }
+  })
+);
+console.log(
   "AI raw result titles:",
   rawResults.map((x) => ({
     title: x.title,
@@ -539,6 +565,16 @@ const allowedDomains = [
   "bbc.com",
   "apnews.com",
   "euronews.com",
+  "tagesschau.de",
+"zdf.de",
+"ard.de",
+"faz.net",
+"sueddeutsche.de",
+"welt.de",
+"spiegel.de",
+"zeit.de",
+"focus.de",
+"n-tv.de",
   "youtube.com",
   "youtu.be",
 ];
@@ -557,6 +593,10 @@ const allowedRawResults = rawResults.filter((item) => {
 console.log(
   "ALLOWED RESULTS:",
   allowedRawResults.map((x) => x.url)
+);
+console.log(
+  "ALLOWED RESULTS COUNT:",
+  allowedRawResults.length
 );
 const topicKeywords =
   query.toLowerCase().includes("migráció") ||
@@ -617,10 +657,11 @@ console.log(
   }))
 );
 
-    const articleResults = diversifiedResults.filter(
-      (item) =>
-        !item.url?.includes("youtube.com") && !item.url?.includes("youtu.be")
-    );
+    const articleResults = allowedRawResults.filter(
+  (item) =>
+    !item.url?.includes("youtube.com") &&
+    !item.url?.includes("youtu.be")
+);
 
     const articles = await Promise.all(
       articleResults.map((item) =>
@@ -641,7 +682,7 @@ console.log(
         })
       )
     );
-    const combinedResults = [...videos, ...articles]
+    const combinedResults = [...articles, ...videos]
   .map((item) => {
   const { contradictionProbability, contradictionReasons } =
   scoreContradiction({
@@ -658,7 +699,9 @@ const relevanceScore = scoreSearchResultV2({
     url: item.url,
     source: item.url,
   },
-  politicianName: item.politician,
+  politicianName:
+  parsedQuery.politician ||
+  item.politician,
   topic: item.topic,
 });
 
@@ -974,6 +1017,15 @@ if (text.includes("teljes")) score += 15;
   })
   .slice(0, 10);
 
+  console.log("AI articleResults count:", finalArticles.length);
+
+console.log(
+  "AI articleResults:",
+  finalArticles.map((item) => ({
+    title: item.title,
+    url: item.url,
+  }))
+);
 const results = [...finalArticles, ...finalVideos];
 if (results.length > 0) {
   await supabase.from("ai_search_cache").upsert({
