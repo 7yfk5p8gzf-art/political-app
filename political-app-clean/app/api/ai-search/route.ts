@@ -30,6 +30,7 @@ import {
 } from "@/lib/ai-search/sourceConfig";
 import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 
+import { getTopicKeywords } from "@/lib/ai-search/topicKeywords";
 
 
 
@@ -556,33 +557,7 @@ console.log(
 );
 const lowerQuery = query.toLowerCase();
 
-const topicKeywords =
-  lowerQuery.includes("migráció") ||
-  lowerQuery.includes("migration") ||
-  lowerQuery.includes("bevándorlás") ||
-  lowerQuery.includes("asyl") ||
-  lowerQuery.includes("flücht") ||
-  lowerQuery.includes("fluecht") ||
-  lowerQuery.includes("einwanderung")
-    ? [
-        "migráció",
-        "migration",
-        "bevándorlás",
-        "menekült",
-        "menekültek",
-        "határ",
-        "migrant",
-        "migranten",
-        "asyl",
-        "flüchtling",
-        "flüchtlinge",
-        "fluechtling",
-        "fluechtlinge",
-        "einwanderung",
-        "grenze",
-        "grenzschutz",
-      ]
-    : [];
+const topicKeywords = getTopicKeywords(query);
 
 const topicFilteredResults =
   topicKeywords.length > 0
