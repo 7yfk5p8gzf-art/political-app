@@ -31,6 +31,7 @@ import {
 import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 
 import { getTopicKeywords } from "@/lib/ai-search/topicKeywords";
+import { diversifyResults } from "@/lib/ai-search/resultFilter";
 
 
 
@@ -567,23 +568,8 @@ const topicFilteredResults =
         return topicKeywords.some((word) => text.includes(word));
       })
     : allowedRawResults
-    const seenDomains = new Set<string>();
-
-const diversifiedResults = topicFilteredResults.filter((item) => {
-  try {
-    const domain = new URL(item.url || "").hostname.replace("www.", "");
-
-    if (seenDomains.has(domain)) {
-      return false;
-    }
-
-    seenDomains.add(domain);
-
-    return true;
-  } catch {
-    return false;
-  }
-});
+    const diversifiedResults =
+  diversifyResults(topicFilteredResults);
 console.log("AI diversified results count:", diversifiedResults.length);
     const { data: existingSources } = await supabase
   .from("sources")
