@@ -32,4 +32,14 @@ export const COUNTRY_SOURCES = {
   IT: {
     articles: [],
   },
-};
+  };
+  export const INTERNATIONAL_SOURCES = [
+  "reuters.com",
+  "bbc.com",
+  "apnews.com",
+  "euronews.com",
+  "dw.com",
+  "france24.com",
+  "politico.com",
+  "theguardian.com",
+];

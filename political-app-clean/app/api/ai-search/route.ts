@@ -24,7 +24,10 @@ import {
 } from "@/lib/ai/contradictionRanking";
 import { isVideoResult } from "@/lib/ai-search/videoDetector";
 import { buildVideoQueries } from "@/lib/ai-search/queryBuilder";
-import { COUNTRY_SOURCES } from "@/lib/ai-search/sourceConfig";
+import {
+  COUNTRY_SOURCES,
+  INTERNATIONAL_SOURCES,
+} from "@/lib/ai-search/sourceConfig";
 
 
 
@@ -460,16 +463,9 @@ const localQueries =
       )
     : [`${effectiveQuery} ${topicTerms}`];
 
-const internationalQueries = [
-  `${effectiveQuery} ${topicTerms} site:reuters.com`,
-  `${effectiveQuery} ${topicTerms} site:bbc.com`,
-  `${effectiveQuery} ${topicTerms} site:apnews.com`,
-  `${effectiveQuery} ${topicTerms} site:euronews.com`,
-  `${effectiveQuery} ${topicTerms} site:dw.com`,
-  `${effectiveQuery} ${topicTerms} site:france24.com`,
-  `${effectiveQuery} ${topicTerms} site:politico.com`,
-  `${effectiveQuery} ${topicTerms} site:theguardian.com`,
-];
+const internationalQueries = INTERNATIONAL_SOURCES.map(
+  (domain) => `${effectiveQuery} ${topicTerms} site:${domain}`
+);
 
 const sourceQueries = [
   ...videoQueries,
