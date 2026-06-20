@@ -28,6 +28,7 @@ import {
   COUNTRY_SOURCES,
   INTERNATIONAL_SOURCES,
 } from "@/lib/ai-search/sourceConfig";
+import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 
 
 
@@ -532,38 +533,13 @@ console.log(
     description: x.description,
   }))
 );
-const allowedDomains = [
-  "telex.hu",
-  "hvg.hu",
-  "444.hu",
-  "vadhajtasok.hu",
-  "mandiner.hu",
-  "magyarnemzet.hu",
-  "24.hu",
-  "portfolio.hu",
-  "reuters.com",
-  "bbc.com",
-  "apnews.com",
-  "euronews.com",
-  "tagesschau.de",
-"zdf.de",
-"ard.de",
-"faz.net",
-"sueddeutsche.de",
-"welt.de",
-"spiegel.de",
-"zeit.de",
-"focus.de",
-"n-tv.de",
-  "youtube.com",
-  "youtu.be",
-];
+
 
 const allowedRawResults = rawResults.filter((item) => {
   try {
     const domain = new URL(item.url || "").hostname.replace("www.", "");
 
-    return allowedDomains.some(
+    return ALLOWED_DOMAINS.some(
       (allowed) => domain === allowed || domain.endsWith("." + allowed)
     );
   } catch {
@@ -918,7 +894,7 @@ const allowedSortedResults = sortedResults.filter((item) => {
   try {
     const domain = new URL(item.url || "").hostname.replace("www.", "");
 
-    return allowedDomains.some(
+    return ALLOWED_DOMAINS.some(
       (allowed) => domain === allowed || domain.endsWith("." + allowed)
     );
   } catch {
