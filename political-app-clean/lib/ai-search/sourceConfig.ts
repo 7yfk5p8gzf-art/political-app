@@ -26,8 +26,15 @@ export const COUNTRY_SOURCES = {
   },
 
   FR: {
-    articles: [],
-  },
+  articles: [
+    "lemonde.fr",
+    "lefigaro.fr",
+    "france24.com",
+    "liberation.fr",
+    "bfmtv.com",
+    "francetvinfo.fr",
+  ],
+},
 
   IT: {
     articles: [],

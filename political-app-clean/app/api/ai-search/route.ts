@@ -270,6 +270,7 @@ export async function POST(req: Request) {
     
     const politicians = await loadPoliticians();
 const parsedQuery = parsePoliticalQueryFromRegistry(query, politicians);
+console.log("PARSED QUERY:", parsedQuery);
 const expandedQueries = buildTopicExpansionQueries({
   topic: parsedQuery.topic || query,
   politician: null,
@@ -529,7 +530,7 @@ console.log("AI diversified results count:", diversifiedResults.length);
   .limit(50);
 
     const videoResults =
-  extractVideoResults(rawResults);
+  extractVideoResults(diversifiedResults);
 
     console.log("AI videoResults count:", videoResults.length);
 console.log(

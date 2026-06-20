@@ -23,4 +23,9 @@ export const ALLOWED_DOMAINS = [
   "n-tv.de",
   "youtube.com",
   "youtu.be",
+  "lemonde.fr",
+"lefigaro.fr",
+"liberation.fr",
+"bfmtv.com",
+"francetvinfo.fr",
 ];

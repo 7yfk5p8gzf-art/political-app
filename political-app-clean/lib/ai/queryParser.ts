@@ -46,12 +46,13 @@ export function parsePoliticalQueryFromRegistry(
 
   const matchedPolitician = politicians.find((politician) => {
     const fullName = normalizeText(politician.full_name);
-    const surname = fullName.split(" ")[0];
+const nameParts = fullName.split(" ").filter(Boolean);
+const lastName = nameParts[nameParts.length - 1];
 
-    return (
-      normalizedQuery.includes(fullName) ||
-      normalizedQuery.includes(surname)
-    );
+return (
+  normalizedQuery.includes(fullName) ||
+  normalizedQuery.includes(lastName)
+);
   });
 
   if (matchedPolitician) {
