@@ -454,28 +454,10 @@ const countrySources =
   ];
 
 const localQueries =
-  parsedQuery.country === "HU"
-    ? [
-        `${effectiveQuery} ${topicTerms} site:telex.hu`,
-        `${effectiveQuery} ${topicTerms} site:hvg.hu`,
-        `${effectiveQuery} ${topicTerms} site:444.hu`,
-        `${effectiveQuery} ${topicTerms} site:vadhajtasok.hu`,
-        `${effectiveQuery} ${topicTerms} site:mandiner.hu`,
-        `${effectiveQuery} ${topicTerms} site:magyarnemzet.hu`,
-        `${effectiveQuery} ${topicTerms} site:24.hu`,
-        `${effectiveQuery} ${topicTerms} site:portfolio.hu`,
-      ]
-    : parsedQuery.country === "DE"
-    ? [
-        `${effectiveQuery} ${topicTerms} site:tagesschau.de`,
-        `${effectiveQuery} ${topicTerms} site:zdf.de`,
-        `${effectiveQuery} ${topicTerms} site:ard.de`,
-        `${effectiveQuery} ${topicTerms} site:faz.net`,
-        `${effectiveQuery} ${topicTerms} site:sueddeutsche.de`,
-        `${effectiveQuery} ${topicTerms} site:welt.de`,
-        `${effectiveQuery} ${topicTerms} site:spiegel.de`,
-        `${effectiveQuery} ${topicTerms} site:zeit.de`,
-      ]
+  countrySources?.articles?.length
+    ? countrySources.articles.map(
+        (domain) => `${effectiveQuery} ${topicTerms} site:${domain}`
+      )
     : [`${effectiveQuery} ${topicTerms}`];
 
 const internationalQueries = [
