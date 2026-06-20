@@ -23,6 +23,8 @@ import {
   type ContradictionRankingResult,
 } from "@/lib/ai/contradictionRanking";
 import { isVideoResult } from "@/lib/ai-search/videoDetector";
+import { buildVideoQueries } from "@/lib/ai-search/queryBuilder";
+import { COUNTRY_SOURCES } from "@/lib/ai-search/sourceConfig";
 
 
 
@@ -441,36 +443,15 @@ const strictQuery =
   parsedQuery.politician
     ? `"${parsedQuery.politician}" ${parsedQuery.topic || ""}`
     : effectiveQuery;
-const videoQueries =
-  parsedQuery.country === "DE"
-    ? [
-        `${effectiveQuery} ${topicTerms} interview`,
-        `${effectiveQuery} ${topicTerms} rede`,
-        `${effectiveQuery} ${topicTerms} pressekonferenz`,
-        `${effectiveQuery} ${topicTerms} debatte`,
-        `${effectiveQuery} ${topicTerms} migration video`,
-        `${effectiveQuery} ${topicTerms} asyl video`,
-        `${effectiveQuery} ${topicTerms} flüchtlinge video`,
-        `${effectiveQuery} ${topicTerms} youtube`,
-        `${effectiveQuery} ${topicTerms} site:youtube.com`,
-        `${effectiveQuery} ${topicTerms} site:zdf.de video`,
-        `${effectiveQuery} ${topicTerms} site:phoenix.de`,
-        `${effectiveQuery} ${topicTerms} site:tagesschau.de video`,
-      ]
-    : [
-        `${effectiveQuery} ${topicTerms} interview`,
-        `${effectiveQuery} ${topicTerms} interjú`,
-        `${effectiveQuery} ${topicTerms} speech`,
-        `${effectiveQuery} ${topicTerms} beszéd`,
-        `${effectiveQuery} ${topicTerms} debate`,
-        `${effectiveQuery} ${topicTerms} vita`,
-        `${effectiveQuery} ${topicTerms} video`,
-        `${effectiveQuery} ${topicTerms} youtube`,
-        `${effectiveQuery} ${topicTerms} site:youtube.com`,
-        `${effectiveQuery} ${topicTerms} ATV`,
-        `${effectiveQuery} ${topicTerms} Partizán`,
-        `${effectiveQuery} ${topicTerms} Hír TV`,
-      ];
+const videoQueries = buildVideoQueries({
+  effectiveQuery,
+  topicTerms,
+  country: parsedQuery.country,
+});
+const countrySources =
+  COUNTRY_SOURCES[
+    (parsedQuery.country as keyof typeof COUNTRY_SOURCES) || "HU"
+  ];
 
 const localQueries =
   parsedQuery.country === "HU"
