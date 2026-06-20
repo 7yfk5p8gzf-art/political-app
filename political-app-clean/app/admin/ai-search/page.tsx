@@ -173,16 +173,40 @@ async function saveSource(item: SearchResult) {
   const { data, error } = await supabase
     .from("sources")
     .insert({
-      title: item.title,
-      url: item.url,
-      article_url: item.url,
-      summary: item.summary,
-      ai_summary: item.summary,
-      politician: item.politician || null,
-      topic: item.topic || null,
-      status: "draft",
-      source_type: "article",
-    })
+  title: item.title,
+
+  url: item.url,
+
+  article_url:
+    item.type === "article"
+      ? item.url
+      : null,
+
+  video_url:
+    item.type === "video"
+      ? item.url
+      : null,
+
+  summary: item.summary,
+  ai_summary: item.summary,
+
+  politician: item.politician || null,
+  topic: item.topic || null,
+
+  status: "draft",
+
+  source_type:
+    item.type === "video"
+      ? "video"
+      : "article",
+
+  video_id: item.videoId || null,
+
+  timestamp: item.timestamp || null,
+
+  language:
+    item.sourceLanguage || "unknown",
+})
     .select()
     .single();
 
@@ -204,6 +228,7 @@ async function saveSource(item: SearchResult) {
   } catch (err) {
     console.error("Source translation failed", err);
   }
+  
 
   alert("Source saved.");
 }

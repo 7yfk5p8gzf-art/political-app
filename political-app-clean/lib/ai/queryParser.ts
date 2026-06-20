@@ -43,12 +43,25 @@ export function parsePoliticalQueryFromRegistry(
 
   if (matchedPolitician) {
     const normalizedName = normalizeText(matchedPolitician.full_name);
-    const surname = normalizedName.split(" ")[0];
+    const nameParts = matchedPolitician.full_name
+  .split(" ")
+  .filter(Boolean);
 
-    let topic = query
-      .replace(new RegExp(matchedPolitician.full_name, "gi"), "")
-      .replace(new RegExp(surname, "gi"), "")
-      .trim();
+let topic = query;
+
+topic = topic.replace(
+  new RegExp(matchedPolitician.full_name, "gi"),
+  ""
+);
+
+for (const part of nameParts) {
+  topic = topic.replace(
+    new RegExp(part, "gi"),
+    ""
+  );
+}
+
+topic = topic.trim();
 
     return {
       rawQuery: query,

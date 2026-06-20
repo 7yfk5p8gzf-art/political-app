@@ -41,15 +41,21 @@ export function findBestOldStatement(
   topic?: string | null,
   politician?: string | null
 ) {
-  if (!topic) return null;
+  if (!topic || !politician) return null;
 
   const lowerTopic = topic.toLowerCase();
-  const lowerPolitician = (politician || "").toLowerCase();
+  const lowerPolitician = politician.toLowerCase();
 
   let bestMatch: ExistingStatementMatch | null = null;
   let bestScore = 0;
 
   for (const item of statements) {
+    const itemPolitician = (item.politician || "").toLowerCase();
+
+    if (itemPolitician !== lowerPolitician) {
+      continue;
+    }
+
     const text = `
 ${item.title || ""}
 ${item.summary || ""}
@@ -59,18 +65,15 @@ ${item.topic || ""}
     let score = 0;
 
     if (text.includes(lowerTopic)) {
-      score += 50;
-    }
-
-    if (
-      item.politician &&
-      item.politician.toLowerCase() === lowerPolitician
-    ) {
-      score += 30;
+      score += 60;
     }
 
     if (item.topic && item.topic.toLowerCase().includes(lowerTopic)) {
-      score += 20;
+      score += 30;
+    }
+
+    if (item.url) {
+      score += 10;
     }
 
     if (score > bestScore) {
@@ -79,10 +82,10 @@ ${item.topic || ""}
     }
   }
 
-  return bestMatch
-  ? {
-      match: bestMatch,
-      score: bestScore,
-    }
-  : null;
+  return bestMatch && bestScore >= 40
+    ? {
+        match: bestMatch,
+        score: bestScore,
+      }
+    : null;
 }
