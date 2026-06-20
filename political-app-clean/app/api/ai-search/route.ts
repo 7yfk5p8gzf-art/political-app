@@ -268,19 +268,18 @@ async function buildResult({
     snippet,
   });
 
-  const [summary_hu, summary_de, summary_en, summary_fr, timestamp] =
-    await Promise.all([
-      translateSummary(baseSummary, "hu"),
-      translateSummary(baseSummary, "de"),
-      translateSummary(baseSummary, "en"),
-      translateSummary(baseSummary, "fr"),
-      type === "video"
-        ? generateVideoTimestamp({
-            title,
-            snippet,
-          })
-        : Promise.resolve(null),
-    ]);
+  const timestamp =
+  type === "video"
+    ? await generateVideoTimestamp({
+        title,
+        snippet,
+      })
+    : null;
+
+const summary_hu = baseSummary;
+const summary_de = "";
+const summary_en = "";
+const summary_fr = "";
 
   return {
     type,
@@ -320,11 +319,11 @@ const { data: cachedSearch } = await supabase
   .eq("normalized_query", normalizedQuery)
   .maybeSingle();
 
-// if (cachedSearch?.response) {
-//   console.log("AI search cache hit:", normalizedQuery);
-//
-//   return NextResponse.json(cachedSearch.response);
-// }
+ if (cachedSearch?.response) {
+   console.log("AI search cache hit:", normalizedQuery);
+
+  return NextResponse.json(cachedSearch.response);
+ }
 const effectiveQuery = `${parsedQuery.politician || ""} ${parsedQuery.topic}`.trim();
 
     if (!query) {
@@ -817,12 +816,7 @@ politicalEvolution: detectPoliticalEvolution({
       `Search older statements about ${item.topic || "this topic"}`,
   };
 }); 
-if (combinedResults.length > 0) {
-  await supabase.from("ai_search_cache").upsert({
-    normalized_query: normalizedQuery,
-    response: { results: combinedResults },
-  });
-}
+
 const sortedResults = combinedResults.sort(
   (a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0)
 );
@@ -925,6 +919,9 @@ const finalArticles = [
 const finalVideos = allowedSortedResults
   .filter((x) => x.type === "video")
   .sort((a, b) => {
+
+    const politicianName =
+  (parsedQuery.politician || "").toLowerCase();
     const aText =
       `${a.title || ""} ${a.summary || ""}`.toLowerCase();
 
@@ -933,9 +930,15 @@ const finalVideos = allowedSortedResults
 
     function scoreVideo(text: string) {
       let score = 0;
+      if (
+  politicianName &&
+  text.includes(politicianName)
+) {
+  score += 80;
+}
 
-      if (text.includes("orbán")) score += 30;
-      if (text.includes("viktor")) score += 20;
+      
+      
       if (text.includes("migráció")) score += 25;
       if (text.includes("migration")) score += 25;
       if (text.includes("bevándorlás")) score += 25;
@@ -953,7 +956,7 @@ if (text.includes("orbán balázs")) score -= 60;
 if (text.includes("shorts")) score -= 40;
 if (text.includes("friss hír")) score -= 25;
 if (text.includes("letartóztatni")) score -= 25;
-if (text.includes("orbán viktor")) score += 60;
+
 if (text.includes("hír tv")) score += 20;
 if (text.includes("atv")) score += 20;
 if (text.includes("partizán")) score += 20;
@@ -967,6 +970,18 @@ if (text.includes("teljes")) score += 15;
   .slice(0, 10);
 
 const results = [...finalArticles, ...finalVideos];
+if (results.length > 0) {
+  await supabase.from("ai_search_cache").upsert({
+    normalized_query: normalizedQuery,
+    response: {
+      articleQueries: [...localQueries, ...internationalQueries],
+      videoQueries,
+      articles: finalArticles,
+      videos: finalVideos,
+      results,
+    },
+  });
+}
 
 return NextResponse.json({
   articleQueries: [...localQueries, ...internationalQueries],
