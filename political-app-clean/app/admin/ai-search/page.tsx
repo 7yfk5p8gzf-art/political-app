@@ -156,6 +156,9 @@ export default function AiSearchPage() {
 }
 
 const data = await response.json();
+console.log("FRONTEND DATA:", data);
+console.log("FRONTEND VIDEOS:", data.videos);
+console.log("FRONTEND RESULTS:", data.results);
 
   const sortedResults = [...(data.results || [])].sort(
   (a: SearchResult, b: SearchResult) =>

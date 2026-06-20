@@ -22,6 +22,10 @@ import {
   rankContradiction,
   type ContradictionRankingResult,
 } from "@/lib/ai/contradictionRanking";
+import { isVideoResult } from "@/lib/ai-search/videoDetector";
+
+
+
 
 
 
@@ -437,20 +441,36 @@ const strictQuery =
   parsedQuery.politician
     ? `"${parsedQuery.politician}" ${parsedQuery.topic || ""}`
     : effectiveQuery;
-const videoQueries = [
-  `${strictQuery} ${topicTerms} site:youtube.com interview`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com interjú`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com speech`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com beszéd`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com debate`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com vita`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com parlament`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com Hír TV`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com ATV`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com Partizán`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com teljes interjú`,
-  `${effectiveQuery} ${topicTerms} site:youtube.com Orbán Viktor migráció`,
-];
+const videoQueries =
+  parsedQuery.country === "DE"
+    ? [
+        `${effectiveQuery} ${topicTerms} interview`,
+        `${effectiveQuery} ${topicTerms} rede`,
+        `${effectiveQuery} ${topicTerms} pressekonferenz`,
+        `${effectiveQuery} ${topicTerms} debatte`,
+        `${effectiveQuery} ${topicTerms} migration video`,
+        `${effectiveQuery} ${topicTerms} asyl video`,
+        `${effectiveQuery} ${topicTerms} flüchtlinge video`,
+        `${effectiveQuery} ${topicTerms} youtube`,
+        `${effectiveQuery} ${topicTerms} site:youtube.com`,
+        `${effectiveQuery} ${topicTerms} site:zdf.de video`,
+        `${effectiveQuery} ${topicTerms} site:phoenix.de`,
+        `${effectiveQuery} ${topicTerms} site:tagesschau.de video`,
+      ]
+    : [
+        `${effectiveQuery} ${topicTerms} interview`,
+        `${effectiveQuery} ${topicTerms} interjú`,
+        `${effectiveQuery} ${topicTerms} speech`,
+        `${effectiveQuery} ${topicTerms} beszéd`,
+        `${effectiveQuery} ${topicTerms} debate`,
+        `${effectiveQuery} ${topicTerms} vita`,
+        `${effectiveQuery} ${topicTerms} video`,
+        `${effectiveQuery} ${topicTerms} youtube`,
+        `${effectiveQuery} ${topicTerms} site:youtube.com`,
+        `${effectiveQuery} ${topicTerms} ATV`,
+        `${effectiveQuery} ${topicTerms} Partizán`,
+        `${effectiveQuery} ${topicTerms} Hír TV`,
+      ];
 
 const localQueries =
   parsedQuery.country === "HU"
@@ -525,14 +545,15 @@ if (braveErrors.length > 0) {
   );
 }
 
-const rawResults: BraveResult[] = searchJsons.flatMap((json) => {
-  return (
-    json.web?.results ||
-    json.news?.results ||
-    json.videos?.results ||
-    []
-  );
-});
+const rawResults: BraveResult[] = searchJsons.flatMap((json) => [
+  ...(json.web?.results || []),
+  ...(json.news?.results || []),
+  ...(json.videos?.results || []),
+]);
+console.log(
+  "VIDEO RESULTS:",
+  searchJsons.flatMap((json) => json.videos?.results || []).length
+);
 console.log("AI raw results count:", rawResults.length);
 console.log(
   "RAW DOMAINS:",
@@ -598,11 +619,34 @@ console.log(
   "ALLOWED RESULTS COUNT:",
   allowedRawResults.length
 );
+const lowerQuery = query.toLowerCase();
+
 const topicKeywords =
-  query.toLowerCase().includes("migráció") ||
-  query.toLowerCase().includes("migration") ||
-  query.toLowerCase().includes("bevándorlás")
-    ? ["migráció", "migration", "bevándorlás", "menekült", "határ", "migrant"]
+  lowerQuery.includes("migráció") ||
+  lowerQuery.includes("migration") ||
+  lowerQuery.includes("bevándorlás") ||
+  lowerQuery.includes("asyl") ||
+  lowerQuery.includes("flücht") ||
+  lowerQuery.includes("fluecht") ||
+  lowerQuery.includes("einwanderung")
+    ? [
+        "migráció",
+        "migration",
+        "bevándorlás",
+        "menekült",
+        "menekültek",
+        "határ",
+        "migrant",
+        "migranten",
+        "asyl",
+        "flüchtling",
+        "flüchtlinge",
+        "fluechtling",
+        "fluechtlinge",
+        "einwanderung",
+        "grenze",
+        "grenzschutz",
+      ]
     : [];
 
 const topicFilteredResults =
@@ -991,7 +1035,9 @@ const finalArticles =
 
 const finalVideos = allowedSortedResults
   .filter((x) => {
-    if (x.type !== "video") return false;
+  if (!isVideoResult(x)) return false;
+
+  
 
     const politicianName =
       (parsedQuery.politician || "").toLowerCase();
