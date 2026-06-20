@@ -287,10 +287,16 @@ Date detection:
 - Date confidence: ${item.dateSignals?.dateConfidence ?? 0}%
 - Date reason: ${item.dateSignals?.dateReason || "No date reason"}`,
 review_status: "draft",
-confidence_score: item.contradictionCandidate?.candidateStrength ?? 0,
+confidence_score:
+  item.overallRankScore ??
+  item.contradictionCandidate?.candidateStrength ??
+  item.contradictionProbability ??
+  0,
 severity_score:
+  item.contradictionProbability ??
+  item.overallRankScore ??
   semanticResult.similarityScore +
-  timelineResult.timelineStrength,
+    timelineResult.timelineStrength,
 status: "draft",
     })
     .select()
