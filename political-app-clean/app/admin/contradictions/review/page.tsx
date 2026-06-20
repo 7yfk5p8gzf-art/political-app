@@ -12,6 +12,7 @@ export default function ReviewQueuePage() {
   .select("*")
   .eq("review_status", "draft")
   .eq("status", "draft")
+  .gte("confidence_score", 50)
   .order("confidence_score", { ascending: false })
   .order("created_at", { ascending: false });
 
@@ -22,6 +23,17 @@ export default function ReviewQueuePage() {
     .from("contradictions")
     .update({
       review_status: "approved",
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  loadItems();
+}
+async function rejectItem(id: string) {
+  await supabase
+    .from("contradictions")
+    .update({
+      review_status: "rejected",
       reviewed_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -87,12 +99,21 @@ export default function ReviewQueuePage() {
                   {item.status}
                 </td>
                 <td className="p-3">
+  <div className="flex gap-2">
   <button
-  onClick={() => approveItem(item.id)}
-  className="rounded-lg bg-green-600 px-3 py-1 text-sm font-bold text-white"
->
-  Approve
-</button>
+    onClick={() => approveItem(item.id)}
+    className="rounded-lg bg-green-600 px-3 py-1 text-sm font-bold text-white"
+  >
+    Approve
+  </button>
+
+  <button
+    onClick={() => rejectItem(item.id)}
+    className="rounded-lg bg-red-600 px-3 py-1 text-sm font-bold text-white"
+  >
+    Reject
+  </button>
+</div>
 </td>
               </tr>
             ))}
