@@ -44,16 +44,21 @@ export function parsePoliticalQueryFromRegistry(
 ): ParsedPoliticalQuery {
   const normalizedQuery = normalizeText(query);
 
-  const matchedPolitician = politicians.find((politician) => {
-    const fullName = normalizeText(politician.full_name);
-const nameParts = fullName.split(" ").filter(Boolean);
-const lastName = nameParts[nameParts.length - 1];
+  const queryWords = normalizedQuery.split(" ").filter(Boolean);
 
-return (
-  normalizedQuery.includes(fullName) ||
-  normalizedQuery.includes(lastName)
-);
-  });
+const matchedPolitician = politicians.find((politician) => {
+  const fullName = normalizeText(politician.full_name);
+  const nameParts = fullName.split(" ").filter(Boolean);
+  const lastName = nameParts[nameParts.length - 1];
+
+  const aliases: string[] = [];
+
+  return (
+    normalizedQuery.includes(fullName) ||
+    queryWords.includes(lastName) ||
+    aliases.some((alias) => normalizedQuery.includes(alias))
+  );
+});
 
   if (matchedPolitician) {
     const normalizedName = normalizeText(matchedPolitician.full_name);
