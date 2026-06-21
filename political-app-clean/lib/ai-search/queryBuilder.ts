@@ -23,7 +23,20 @@ export function buildVideoQueries({
       `${effectiveQuery} ${topicTerms} site:tagesschau.de video`,
     ];
   }
-
+if (country === "FR") {
+  return [
+    `${effectiveQuery} ${topicTerms} interview`,
+    `${effectiveQuery} ${topicTerms} discours`,
+    `${effectiveQuery} ${topicTerms} débat`,
+    `${effectiveQuery} ${topicTerms} conférence de presse`,
+    `${effectiveQuery} ${topicTerms} vidéo`,
+    `${effectiveQuery} ${topicTerms} youtube`,
+    `${effectiveQuery} ${topicTerms} site:youtube.com`,
+    `${effectiveQuery} ${topicTerms} site:france24.com video`,
+    `${effectiveQuery} ${topicTerms} site:bfmtv.com video`,
+    `${effectiveQuery} ${topicTerms} site:francetvinfo.fr video`,
+  ];
+}
   return [
     `${effectiveQuery} ${topicTerms} interview`,
     `${effectiveQuery} ${topicTerms} interjú`,

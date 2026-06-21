@@ -1,65 +1,13 @@
-export const ALLOWED_DOMAINS = [
-  "telex.hu",
-  "hvg.hu",
-  "444.hu",
-  "vadhajtasok.hu",
-  "mandiner.hu",
-  "magyarnemzet.hu",
-  "24.hu",
-  "portfolio.hu",
+import {
+  COUNTRY_SOURCES,
+  INTERNATIONAL_SOURCES,
+} from "@/lib/ai-search/sourceConfig";
 
-  "tagesschau.de",
-  "zdf.de",
-  "ard.de",
-  "faz.net",
-  "sueddeutsche.de",
-  "welt.de",
-  "spiegel.de",
-  "zeit.de",
-  "focus.de",
-  "n-tv.de",
-
-  "lemonde.fr",
-  "lefigaro.fr",
-  "liberation.fr",
-  "francetvinfo.fr",
-  "bfmtv.com",
-  "france24.com",
-
-  "corriere.it",
-  "repubblica.it",
-  "lastampa.it",
-  "ilsole24ore.com",
-  "ansa.it",
-
-  "nos.nl",
-  "nrc.nl",
-  "telegraaf.nl",
-  "volkskrant.nl",
-
-  "tvn24.pl",
-  "rp.pl",
-  "wyborcza.pl",
-  "onet.pl",
-
-  "elpais.com",
-  "elmundo.es",
-  "abc.es",
-  "rtve.es",
-
-  "orf.at",
-  "derstandard.at",
-  "diepresse.com",
-  "kurier.at",
-
-  "reuters.com",
-  "bbc.com",
-  "apnews.com",
-  "euronews.com",
-  "dw.com",
-  "politico.com",
-  "theguardian.com",
-
-  "youtube.com",
-  "youtu.be",
-];
+export const ALLOWED_DOMAINS = Array.from(
+  new Set([
+    ...Object.values(COUNTRY_SOURCES).flatMap((country) => country.articles),
+    ...INTERNATIONAL_SOURCES,
+    "youtube.com",
+    "youtu.be",
+  ])
+);

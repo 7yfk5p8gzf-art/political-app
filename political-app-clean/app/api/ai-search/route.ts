@@ -409,7 +409,7 @@ const videoQueries = buildVideoQueries({
 });
 const countrySources =
   COUNTRY_SOURCES[
-    (parsedQuery.country as keyof typeof COUNTRY_SOURCES) || "HU"
+    (parsedQuery.country as keyof typeof COUNTRY_SOURCES)
   ];
 
 const localQueries =
@@ -529,10 +529,72 @@ console.log("AI diversified results count:", diversifiedResults.length);
   .select("title, summary, url, politician, topic")
   .limit(50);
 
-    const videoResults =
-  extractVideoResults(diversifiedResults);
+    
 
-    console.log("AI videoResults count:", videoResults.length);
+    
+    const activeArticleDomains = [
+  ...(countrySources?.articles || []),
+  ...INTERNATIONAL_SOURCES,
+];
+const politicianName =
+  (parsedQuery.politician || "").toLowerCase();
+
+const politicianLastName =
+  politicianName.split(" ").filter(Boolean).at(-1) || "";
+
+function mentionsPolitician(item: any) {
+  if (!politicianLastName) return true;
+
+  const text =
+    `${item.title || ""} ${item.description || ""}`.toLowerCase();
+
+  return (
+    text.includes(politicianName) ||
+    text.includes(politicianLastName)
+  );
+}
+const scopedResults = diversifiedResults.filter((item) => {
+  try {
+    const domain = new URL(item.url || "")
+      .hostname.replace("www.", "");
+
+    const isVideo =
+      domain.includes("youtube.com") ||
+      domain.includes("youtu.be");
+
+    if (isVideo) return mentionsPolitician(item);
+
+    return (
+  mentionsPolitician(item) &&
+  activeArticleDomains.some(
+      (allowed) =>
+        domain === allowed ||
+        domain.endsWith("." + allowed)
+      )
+);
+  } catch {
+    return false;
+  }
+});
+const videoResults = extractVideoResults(scopedResults).filter((item) => {
+  const politicianName =
+    (parsedQuery.politician || "").toLowerCase();
+
+  const politicianLastName =
+    politicianName.split(" ").filter(Boolean).at(-1) || "";
+
+  const title = (item.title || "").toLowerCase();
+
+  if (!politicianLastName) return true;
+
+  return (
+    title.includes(politicianName) ||
+    title.includes(politicianLastName)
+  );
+});
+  console.log("AI videoResults count:", videoResults.length);
+
+console.log("AI videoResults count:", videoResults.length);
 console.log(
   "AI videoResults:",
   videoResults.map((x) => ({
@@ -541,7 +603,7 @@ console.log(
   }))
 );
 
-    const articleResults = allowedRawResults.filter(
+    const articleResults = scopedResults.filter(
   (item) =>
     !item.url?.includes("youtube.com") &&
     !item.url?.includes("youtu.be")
@@ -880,14 +942,19 @@ const finalVideos = allowedSortedResults
   
 
     const politicianName =
-      (parsedQuery.politician || "").toLowerCase();
+  (parsedQuery.politician || "").toLowerCase();
 
-    const text =
-      `${x.title || ""} ${x.summary || ""}`.toLowerCase();
+const politicianLastName =
+  politicianName.split(" ").filter(Boolean).at(-1) || "";
 
-    if (!politicianName) return true;
+const text = (x.title || "").toLowerCase();
 
-    return text.includes(politicianName);
+if (!politicianName) return true;
+
+return (
+  text.includes(politicianName) ||
+  text.includes(politicianLastName)
+);
   })
   .sort((a, b) => {
 
