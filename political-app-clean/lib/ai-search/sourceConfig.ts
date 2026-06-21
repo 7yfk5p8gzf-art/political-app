@@ -55,6 +55,8 @@ export const COUNTRY_SOURCES = {
     "ilmessaggero.it",
     "ilgiornale.it",
     "fanpage.it",
+    "la7.it",
+"mediaset.it",
   ],
 },
 

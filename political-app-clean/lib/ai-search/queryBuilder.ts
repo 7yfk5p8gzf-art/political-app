@@ -63,17 +63,39 @@ export function buildVideoQueries({
   }
 
   if (country === "IT") {
-    return [
-      `${effectiveQuery} ${topicTerms} intervista`,
-      `${effectiveQuery} ${topicTerms} discorso`,
-      `${effectiveQuery} ${topicTerms} dibattito`,
-      `${effectiveQuery} ${topicTerms} conferenza stampa`,
-      `${effectiveQuery} ${topicTerms} video`,
-      `${effectiveQuery} ${topicTerms} rai`,
-      `${effectiveQuery} ${topicTerms} la7`,
-      `${effectiveQuery} ${topicTerms} site:youtube.com`,
-    ];
-  }
+  return [
+    `${effectiveQuery} ${topicTerms} intervista`,
+    `${effectiveQuery} ${topicTerms} discorso`,
+    `${effectiveQuery} ${topicTerms} dibattito`,
+    `${effectiveQuery} ${topicTerms} conferenza stampa`,
+    `${effectiveQuery} ${topicTerms} video`,
+    `${effectiveQuery} ${topicTerms} migranti video`,
+    `${effectiveQuery} ${topicTerms} immigrazione video`,
+    `${effectiveQuery} ${topicTerms} rai`,
+    `${effectiveQuery} ${topicTerms} rainews`,
+    `${effectiveQuery} ${topicTerms} mediaset`,
+    `${effectiveQuery} ${topicTerms} tgcom24`,
+    `${effectiveQuery} ${topicTerms} la7`,
+    `${effectiveQuery} ${topicTerms} il giornale video`,
+    `${effectiveQuery} ${topicTerms} site:youtube.com`,
+    `${effectiveQuery} ${topicTerms} site:rainews.it video`,
+    `${effectiveQuery} ${topicTerms} site:tgcom24.mediaset.it video`,
+    `${effectiveQuery} ${topicTerms} site:ilgiornale.it video`,
+    `${effectiveQuery} ${topicTerms} site:la7.it video`,
+    `${effectiveQuery} ${topicTerms} intervista`,
+`${effectiveQuery} ${topicTerms} video`,
+`${effectiveQuery} ${topicTerms} youtube`,
+`${effectiveQuery} ${topicTerms} tgcom24 video`,
+`${effectiveQuery} ${topicTerms} rainews video`,
+`${effectiveQuery} ${topicTerms} la7 video`,
+`${effectiveQuery} ${topicTerms} mediaset video`,
+`${effectiveQuery} ${topicTerms} conferenza stampa`,
+`${effectiveQuery} ${topicTerms} dibattito`,
+`${effectiveQuery} ${topicTerms} discorso`,
+`${effectiveQuery} ${topicTerms} intervista tv`,
+`${effectiveQuery} ${topicTerms} site:youtube.com`,
+  ];
+}
 
   if (country === "UK") {
     return [

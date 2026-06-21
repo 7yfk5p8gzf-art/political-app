@@ -27,5 +27,18 @@ if (isBadRootUrl) return false;
     title.includes("debatte") ||
     description.includes("video") ||
     description.includes("youtube")
+        ||
+    url.includes("rainews.it/video") ||
+    url.includes("rai.it") ||
+    url.includes("la7.it") ||
+    url.includes("tgcom24.mediaset.it") ||
+    url.includes("mediaset.it/video") ||
+    url.includes("ilgiornale.it/video") ||
+    url.includes("bfmtv.com") && url.includes("video") ||
+    url.includes("france24.com") && url.includes("video") ||
+    url.includes("franceinfo.fr") && url.includes("video") ||
+    url.includes("zdf.de") && url.includes("video") ||
+    url.includes("ardmediathek.de") ||
+    url.includes("phoenix.de") && url.includes("video")
   );
 }
