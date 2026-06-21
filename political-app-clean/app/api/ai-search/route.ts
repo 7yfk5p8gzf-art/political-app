@@ -30,7 +30,10 @@ import {
 } from "@/lib/ai-search/sourceConfig";
 import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 
-import { getTopicKeywords } from "@/lib/ai-search/topicKeywords";
+import {
+  getTopicKeywords,
+  getLocalizedTopicTerms,
+} from "@/lib/ai-search/topicKeywords";
 import { diversifyResults } from "@/lib/ai-search/resultFilter";
 
 import { extractVideoResults } from "@/lib/ai-search/videoExtractor";
@@ -320,16 +323,10 @@ ${query}
 let localBias = "";
 
 const q = query.toLowerCase();
-let topicTerms = "";
-
-if (
-  q.includes("migráció") ||
-  q.includes("bevándorlás") ||
-  q.includes("migration")
-) {
-  topicTerms =
-    " migráció OR bevándorlás OR migration OR menekült OR menekültek OR határ OR határvédelem OR schengen";
-}
+const topicTerms = getLocalizedTopicTerms(
+  parsedQuery.topic || query,
+  parsedQuery.country
+);
 
 if (
   q.includes("orbán") ||
@@ -424,9 +421,9 @@ const internationalQueries = INTERNATIONAL_SOURCES.map(
 );
 
 const sourceQueries = [
-  ...videoQueries,
   ...localQueries,
-  ...internationalQueries,
+  ...videoQueries,
+  ...internationalQueries.slice(0, 2),
 ];
 console.log("SOURCE QUERIES COUNT:", sourceQueries.length);
 console.log("VIDEO QUERIES:", videoQueries);
@@ -439,7 +436,7 @@ const searchResponses = await Promise.all(
     fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
         searchQuery
-      )}&count=3`,
+      )}&count=5`,
       {
         headers: {
           Accept: "application/json",
@@ -516,7 +513,10 @@ console.log(
 );
 const lowerQuery = query.toLowerCase();
 
-const topicKeywords = getTopicKeywords(query);
+const topicKeywords = getTopicKeywords(
+  parsedQuery.topic || query,
+  parsedQuery.country
+);
 
 const topicFilteredResults =
   topicKeywords.length > 0
@@ -853,19 +853,12 @@ const localFinalResults = sortedResults
 const internationalFinalResults = sortedResults
   .filter(
     (x) =>
-      x.type !== "video" &&
-      (
-        x.url.includes("reuters.com") ||
-        x.url.includes("bbc.") ||
-        x.url.includes("apnews.com") ||
-        x.url.includes("euronews.com") ||
-        x.url.includes("dw.com") ||
-        x.url.includes("france24.com") ||
-        x.url.includes("politico.com") ||
-        x.url.includes("theguardian.com") ||
-        x.url.includes("cnn.com") ||
-        x.url.includes("foxnews.com")
-      )
+      x.url?.includes("reuters.com") ||
+      x.url?.includes("bbc.com") ||
+      x.url?.includes("politico.eu") ||
+      x.url?.includes("euronews.com") ||
+      x.url?.includes("dw.com") ||
+      x.url?.includes("foxnews.com")
   )
   .slice(0, 3);
 
@@ -882,8 +875,38 @@ const allowedSortedResults = sortedResults.filter((item) => {
     return false;
   }
 });
+const rankingCountrySources =
+  COUNTRY_SOURCES[parsedQuery.country as keyof typeof COUNTRY_SOURCES]?.articles || [];
 
-const oppositionArticles = allowedSortedResults
+function getDomainBonus(item: any) {
+  try {
+    const domain = new URL(item.url || "").hostname.replace("www.", "");
+
+    const isCountrySource = rankingCountrySources.some(
+      (source: string) => domain === source || domain.endsWith("." + source)
+    );
+
+    if (isCountrySource) return 100;
+
+    if (
+      domain.includes("reuters") ||
+      domain.includes("bbc") ||
+      domain.includes("politico")
+    ) {
+      return 20;
+    }
+
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+const countryRankedResults = [...allowedSortedResults].sort(
+  (a, b) => getDomainBonus(b) - getDomainBonus(a)
+);
+
+const oppositionArticles = countryRankedResults
   .filter(
     (x) =>
       x.type === "article" &&
@@ -895,7 +918,7 @@ const oppositionArticles = allowedSortedResults
   )
   .slice(0, 2);
 
-const proGovernmentArticles = allowedSortedResults
+const proGovernmentArticles = countryRankedResults
   .filter(
     (x) =>
       x.type === "article" &&
@@ -907,7 +930,7 @@ const proGovernmentArticles = allowedSortedResults
   )
   .slice(0, 2);
 
-const neutralArticles = allowedSortedResults
+const neutralArticles = countryRankedResults
   .filter(
     (x) =>
       x.type === "article" &&
@@ -935,21 +958,21 @@ const neutralArticles = allowedSortedResults
       )
   )
   .slice(0, 5);
+console.log(
+  "AI countryRanked article candidates:",
+  countryRankedResults
+    .filter((x) => x.type === "article")
+    .slice(0, 10)
+    .map((x) => ({
+      title: x.title,
+      url: x.url,
+    }))
+);
+const finalArticles = countryRankedResults
+  .filter((x) => x.type === "article")
+  .slice(0, 5);
 
-const finalArticles =
-  parsedQuery.country === "HU"
-    ? [
-        ...oppositionArticles,
-        ...proGovernmentArticles,
-        ...neutralArticles,
-      ].slice(0, 5)
-    : parsedQuery.country === "DE"
-    ? germanArticles
-    : allowedSortedResults
-        .filter((x) => x.type === "article")
-        .slice(0, 5);
-
-const finalVideos = allowedSortedResults
+const finalVideos = countryRankedResults
   .filter((x) => {
   if (!isVideoResult(x)) return false;
 
