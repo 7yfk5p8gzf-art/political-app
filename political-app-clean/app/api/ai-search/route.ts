@@ -576,7 +576,18 @@ const scopedResults = diversifiedResults.filter((item) => {
     return false;
   }
 });
-const videoResults = extractVideoResults(scopedResults).filter((item) => {
+const rawVideoResults =
+  extractVideoResults(scopedResults);
+
+console.log(
+  "RAW VIDEO RESULTS:",
+  rawVideoResults.map((x) => ({
+    title: x.title,
+    url: x.url,
+  }))
+);
+const videoResults =
+  rawVideoResults.filter((item) => {
   const politicianName =
     (parsedQuery.politician || "").toLowerCase();
 
@@ -604,9 +615,7 @@ console.log(
 );
 
     const articleResults = scopedResults.filter(
-  (item) =>
-    !item.url?.includes("youtube.com") &&
-    !item.url?.includes("youtu.be")
+  (item) => !isVideoResult(item)
 );
 
     const articles = await Promise.all(
