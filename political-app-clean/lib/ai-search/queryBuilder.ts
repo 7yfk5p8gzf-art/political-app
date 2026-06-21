@@ -7,48 +7,88 @@ export function buildVideoQueries({
   topicTerms: string;
   country?: string | null;
 }) {
+  const common = [
+    `${effectiveQuery} ${topicTerms} interview`,
+    `${effectiveQuery} ${topicTerms} debate`,
+    `${effectiveQuery} ${topicTerms} speech`,
+    `${effectiveQuery} ${topicTerms} press conference`,
+    `${effectiveQuery} ${topicTerms} video`,
+    `${effectiveQuery} ${topicTerms} youtube`,
+    `${effectiveQuery} ${topicTerms} site:youtube.com`,
+  ];
+
   if (country === "DE") {
     return [
       `${effectiveQuery} ${topicTerms} interview`,
       `${effectiveQuery} ${topicTerms} rede`,
       `${effectiveQuery} ${topicTerms} pressekonferenz`,
       `${effectiveQuery} ${topicTerms} debatte`,
-      `${effectiveQuery} ${topicTerms} migration video`,
-      `${effectiveQuery} ${topicTerms} asyl video`,
-      `${effectiveQuery} ${topicTerms} flüchtlinge video`,
-      `${effectiveQuery} ${topicTerms} youtube`,
+      `${effectiveQuery} ${topicTerms} phoenix`,
+      `${effectiveQuery} ${topicTerms} tagesschau video`,
+      `${effectiveQuery} ${topicTerms} zdf video`,
+      `${effectiveQuery} ${topicTerms} n-tv video`,
       `${effectiveQuery} ${topicTerms} site:youtube.com`,
       `${effectiveQuery} ${topicTerms} site:zdf.de video`,
-      `${effectiveQuery} ${topicTerms} site:phoenix.de`,
       `${effectiveQuery} ${topicTerms} site:tagesschau.de video`,
+      `${effectiveQuery} ${topicTerms} site:n-tv.de video`,
     ];
   }
-if (country === "FR") {
-  return [
-    `${effectiveQuery} ${topicTerms} interview`,
-    `${effectiveQuery} ${topicTerms} discours`,
-    `${effectiveQuery} ${topicTerms} débat`,
-    `${effectiveQuery} ${topicTerms} conférence de presse`,
-    `${effectiveQuery} ${topicTerms} vidéo`,
-    `${effectiveQuery} ${topicTerms} youtube`,
-    `${effectiveQuery} ${topicTerms} site:youtube.com`,
-    `${effectiveQuery} ${topicTerms} site:france24.com video`,
-    `${effectiveQuery} ${topicTerms} site:bfmtv.com video`,
-    `${effectiveQuery} ${topicTerms} site:francetvinfo.fr video`,
-  ];
-}
-  return [
-    `${effectiveQuery} ${topicTerms} interview`,
-    `${effectiveQuery} ${topicTerms} interjú`,
-    `${effectiveQuery} ${topicTerms} speech`,
-    `${effectiveQuery} ${topicTerms} beszéd`,
-    `${effectiveQuery} ${topicTerms} debate`,
-    `${effectiveQuery} ${topicTerms} vita`,
-    `${effectiveQuery} ${topicTerms} video`,
-    `${effectiveQuery} ${topicTerms} youtube`,
-    `${effectiveQuery} ${topicTerms} site:youtube.com`,
-    `${effectiveQuery} ${topicTerms} ATV`,
-    `${effectiveQuery} ${topicTerms} Partizán`,
-    `${effectiveQuery} ${topicTerms} Hír TV`,
-  ];
+
+  if (country === "FR") {
+    return [
+      `${effectiveQuery} ${topicTerms} interview`,
+      `${effectiveQuery} ${topicTerms} discours`,
+      `${effectiveQuery} ${topicTerms} débat`,
+      `${effectiveQuery} ${topicTerms} conférence de presse`,
+      `${effectiveQuery} ${topicTerms} vidéo`,
+      `${effectiveQuery} ${topicTerms} bfmtv`,
+      `${effectiveQuery} ${topicTerms} franceinfo`,
+      `${effectiveQuery} ${topicTerms} france24`,
+      `${effectiveQuery} ${topicTerms} site:youtube.com`,
+      `${effectiveQuery} ${topicTerms} site:bfmtv.com video`,
+      `${effectiveQuery} ${topicTerms} site:franceinfo.fr video`,
+      `${effectiveQuery} ${topicTerms} site:france24.com video`,
+    ];
+  }
+
+  if (country === "IT") {
+    return [
+      `${effectiveQuery} ${topicTerms} intervista`,
+      `${effectiveQuery} ${topicTerms} discorso`,
+      `${effectiveQuery} ${topicTerms} dibattito`,
+      `${effectiveQuery} ${topicTerms} conferenza stampa`,
+      `${effectiveQuery} ${topicTerms} video`,
+      `${effectiveQuery} ${topicTerms} rai`,
+      `${effectiveQuery} ${topicTerms} la7`,
+      `${effectiveQuery} ${topicTerms} site:youtube.com`,
+    ];
+  }
+
+  if (country === "UK") {
+    return [
+      `${effectiveQuery} ${topicTerms} interview`,
+      `${effectiveQuery} ${topicTerms} speech`,
+      `${effectiveQuery} ${topicTerms} debate`,
+      `${effectiveQuery} ${topicTerms} press conference`,
+      `${effectiveQuery} ${topicTerms} bbc`,
+      `${effectiveQuery} ${topicTerms} sky news`,
+      `${effectiveQuery} ${topicTerms} site:youtube.com`,
+    ];
+  }
+
+  if (country === "HU") {
+    return [
+      `${effectiveQuery} ${topicTerms} interjú`,
+      `${effectiveQuery} ${topicTerms} beszéd`,
+      `${effectiveQuery} ${topicTerms} vita`,
+      `${effectiveQuery} ${topicTerms} sajtótájékoztató`,
+      `${effectiveQuery} ${topicTerms} videó`,
+      `${effectiveQuery} ${topicTerms} ATV`,
+      `${effectiveQuery} ${topicTerms} Partizán`,
+      `${effectiveQuery} ${topicTerms} Hír TV`,
+      `${effectiveQuery} ${topicTerms} site:youtube.com`,
+    ];
+  }
+
+  return common;
 }

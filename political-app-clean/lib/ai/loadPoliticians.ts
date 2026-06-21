@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 export async function loadPoliticians() {
   const { data, error } = await supabase
     .from("politicians")
-    .select("full_name, slug, country");
+    .select("full_name, slug, country, aliases");
 
   if (error) {
     console.error(error);

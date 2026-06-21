@@ -10,6 +10,7 @@ type PoliticianRecord = {
   full_name: string;
   slug: string;
   country: string;
+  aliases?: string[] | null;
 };
 
 function normalizeText(text: string) {
@@ -51,7 +52,9 @@ const matchedPolitician = politicians.find((politician) => {
   const nameParts = fullName.split(" ").filter(Boolean);
   const lastName = nameParts[nameParts.length - 1];
 
-  const aliases: string[] = [];
+  const aliases = (politician.aliases || []).map((alias) =>
+  normalizeText(alias)
+);
 
   return (
     normalizedQuery.includes(fullName) ||
