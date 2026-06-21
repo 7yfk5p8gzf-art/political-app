@@ -7,6 +7,8 @@ export const ALLOWED_DOMAINS = Array.from(
   new Set([
     ...Object.values(COUNTRY_SOURCES).flatMap((country) => country.articles),
     ...INTERNATIONAL_SOURCES,
+    "phoenix.de",
+"ardmediathek.de",
     "youtube.com",
     "youtu.be",
   ])

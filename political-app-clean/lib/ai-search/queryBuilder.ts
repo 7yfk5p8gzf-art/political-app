@@ -31,6 +31,17 @@ export function buildVideoQueries({
       `${effectiveQuery} ${topicTerms} site:zdf.de video`,
       `${effectiveQuery} ${topicTerms} site:tagesschau.de video`,
       `${effectiveQuery} ${topicTerms} site:n-tv.de video`,
+      `${effectiveQuery} ${topicTerms} bundestag`,
+      `${effectiveQuery} ${topicTerms} zdf video`,
+`${effectiveQuery} ${topicTerms} zdf mediathek`,
+`${effectiveQuery} ${topicTerms} tagesschau video`,
+`${effectiveQuery} ${topicTerms} ard video`,
+`${effectiveQuery} ${topicTerms} ard mediathek`,
+`${effectiveQuery} ${topicTerms} phoenix video`,
+`${effectiveQuery} ${topicTerms} n-tv video`,
+`${effectiveQuery} ${topicTerms} welt video`,
+`${effectiveQuery} ${topicTerms} youtube`,
+
     ];
   }
 
