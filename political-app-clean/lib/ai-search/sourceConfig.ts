@@ -99,6 +99,24 @@ export const COUNTRY_SOURCES = {
       "kurier.at",
     ],
   },
+  US: {
+  language: "en",
+  articles: [
+    "foxnews.com",
+    "cnn.com",
+    "nbcnews.com",
+    "abcnews.go.com",
+    "cbsnews.com",
+    "apnews.com",
+    "nytimes.com",
+    "washingtonpost.com",
+    "wsj.com",
+    "thehill.com",
+    "npr.org",
+    "politico.com",
+    "c-span.org",
+  ],
+},
 
   UK: {
     language: "en",
