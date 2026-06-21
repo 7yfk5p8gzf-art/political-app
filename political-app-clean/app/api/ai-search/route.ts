@@ -428,7 +428,12 @@ const sourceQueries = [
   ...localQueries,
   ...internationalQueries,
 ];
-
+console.log("SOURCE QUERIES COUNT:", sourceQueries.length);
+console.log("VIDEO QUERIES:", videoQueries);
+console.log("SOURCE QUERIES:", sourceQueries);
+console.log("VIDEO QUERIES:", videoQueries);
+console.log("LOCAL QUERIES:", localQueries);
+console.log("INTERNATIONAL QUERIES:", internationalQueries);
 const searchResponses = await Promise.all(
   sourceQueries.map((searchQuery) =>
     fetch(

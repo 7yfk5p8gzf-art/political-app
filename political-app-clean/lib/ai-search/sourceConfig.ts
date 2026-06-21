@@ -43,15 +43,20 @@ export const COUNTRY_SOURCES = {
   },
 
   IT: {
-    language: "it",
-    articles: [
-      "corriere.it",
-      "repubblica.it",
-      "lastampa.it",
-      "ilsole24ore.com",
-      "ansa.it",
-    ],
-  },
+  language: "it",
+  articles: [
+    "ansa.it",
+    "rainews.it",
+    "tgcom24.mediaset.it",
+    "corriere.it",
+    "repubblica.it",
+    "lastampa.it",
+    "ilsole24ore.com",
+    "ilmessaggero.it",
+    "ilgiornale.it",
+    "fanpage.it",
+  ],
+},
 
   NL: {
     language: "nl",
@@ -107,7 +112,7 @@ export const INTERNATIONAL_SOURCES = [
   "reuters.com",
   "bbc.com",
   "apnews.com",
-  "euronews.com",
+  
   "dw.com",
   "france24.com",
   "politico.com",
