@@ -38,6 +38,7 @@ export const COUNTRY_SOURCES = {
       "francetvinfo.fr",
       "bfmtv.com",
       "france24.com",
+      "tf1info.fr",
     ],
   },
 
@@ -91,8 +92,17 @@ export const COUNTRY_SOURCES = {
       "kurier.at",
     ],
   },
-};
 
+  UK: {
+    language: "en",
+    articles: [
+      "bbc.com",
+      "theguardian.com",
+      "telegraph.co.uk",
+      "independent.co.uk",
+    ],
+  },
+};
 export const INTERNATIONAL_SOURCES = [
   "reuters.com",
   "bbc.com",
