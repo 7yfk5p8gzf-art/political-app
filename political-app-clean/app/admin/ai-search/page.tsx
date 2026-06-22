@@ -11,6 +11,8 @@ type SearchResult = {
   title: string;
   url: string;
   summary: string;
+  oldStatement?: string;
+newStatement?: string;
   politician?: string;
   topic?: string;
   type: string;
@@ -213,19 +215,12 @@ function toggleSelectedSource(item: SearchResult) {
 
 async function analyzeSelectedSources() {
   const candidates = selectedSources
-    .filter((x) => x.contradictionCandidate?.isCandidate)
-    .sort(
-      (a, b) =>
-        (b.contradictionCandidate?.candidateStrength || 0) -
-        (a.contradictionCandidate?.candidateStrength || 0)
-    );
-
-  setCandidateResults(candidates);
-
-  if (candidates.length === 0) {
-    alert("No contradiction candidates found.");
-    return;
-  }
+  .filter((x) => x.contradictionCandidate?.isCandidate)
+  .sort(
+    (a, b) =>
+      (b.contradictionCandidate?.candidateStrength || 0) -
+      (a.contradictionCandidate?.candidateStrength || 0)
+  );
 
   setAnalyzingSelected(true);
   const finderResponse = await fetch("/api/admin/ai-contradiction-finder", {
@@ -241,13 +236,19 @@ async function analyzeSelectedSources() {
 });
 
 const finderData = await finderResponse.json();
+console.log("FINDER DATA:", finderData);
 
 if (finderData?.candidates) {
   setCandidateResults(finderData.candidates);
 }
 
-  const analysisEntries = await Promise.all(
-    candidates.map(async (item) => {
+  const candidatesForAnalysis = finderData?.candidates?.length
+  ? finderData.candidates
+  : candidates;
+  console.log("CANDIDATES FOR ANALYSIS:", candidatesForAnalysis);
+
+const analysisEntries = await Promise.all(
+  candidatesForAnalysis.map(async (item: SearchResult) => {
       try {
         const response = await fetch("/api/ai-contradiction-analysis", {
           method: "POST",
@@ -255,15 +256,19 @@ if (finderData?.candidates) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            politician: item.politician,
-            topic: item.topic,
-            old_statement: `${item.bestOldStatement?.title || ""}
+  politician: item.politician,
+  topic: item.topic,
+  old_statement:
+    item.oldStatement ||
+    `${item.bestOldStatement?.title || ""}
 
 ${item.bestOldStatement?.summary || ""}`,
-            new_statement: `${item.title}
+  new_statement:
+    item.newStatement ||
+    `${item.title}
 
 ${item.summary || ""}`,
-          }),
+}),
         });
 
         if (!response.ok) {
