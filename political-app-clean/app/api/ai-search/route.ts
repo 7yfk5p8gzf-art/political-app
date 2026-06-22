@@ -762,6 +762,8 @@ const dateSignals = extractDateSignals({
 const bestOldStatement = oldStatementResult?.match || null;
 
 const oldStatementScore = oldStatementResult?.score || 0;
+const oldStatementTopMatches =
+  oldStatementResult?.topMatches || [];
 
 const { oldStatementQueries, oldStatementHint } =
   buildOldStatementSearch({
@@ -805,6 +807,7 @@ oldStatementQueries,
 oldStatementHint,
 bestOldStatement,
 oldStatementScore,
+oldStatementTopMatches,
 
     semanticIntent,
 contradictionCandidate,

@@ -50,6 +50,18 @@ contradictionCandidate?: {
   
 } | null;
 oldStatementScore?: number;
+oldStatementTopMatches?: {
+  match: {
+    title?: string | null;
+    summary?: string | null;
+    url?: string | null;
+    politician?: string | null;
+    topic?: string | null;
+    source_date?: string | null;
+    created_at?: string | null;
+  };
+  score: number;
+}[];
 timelineResult?: {
   yearsBetween: number | null;
   timelineStrength: number;
@@ -216,6 +228,23 @@ async function analyzeSelectedSources() {
   }
 
   setAnalyzingSelected(true);
+  const finderResponse = await fetch("/api/admin/ai-contradiction-finder", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    selectedSources,
+    politician: selectedSources[0]?.politician || "",
+    topic: selectedSources[0]?.topic || "",
+  }),
+});
+
+const finderData = await finderResponse.json();
+
+if (finderData?.candidates) {
+  setCandidateResults(finderData.candidates);
+}
 
   const analysisEntries = await Promise.all(
     candidates.map(async (item) => {
@@ -854,6 +883,46 @@ return (
                   {item.bestOldStatement.summary}
                 </div>
               )}
+              {item.oldStatementTopMatches &&
+  item.oldStatementTopMatches.length > 0 && (
+    <div className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3">
+      <div className="text-xs font-bold text-sky-200">
+        Top old statement candidates
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {item.oldStatementTopMatches.map((candidate, index) => (
+          <div
+            key={index}
+            className="rounded-lg border border-white/10 bg-black/20 p-3"
+          >
+            <div className="text-xs font-bold text-sky-100">
+              #{index + 1} · Score: {candidate.score}%
+            </div>
+
+            <div className="mt-2 text-sm text-white">
+              {candidate.match.title}
+            </div>
+
+            {candidate.match.summary && (
+              <div className="mt-1 text-xs text-neutral-300">
+                {candidate.match.summary}
+              </div>
+            )}
+
+            {(candidate.match.source_date ||
+              candidate.match.created_at) && (
+              <div className="mt-2 text-xs text-sky-200/80">
+                Date:{" "}
+                {candidate.match.source_date ||
+                  candidate.match.created_at}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
 
               {typeof item.oldStatementScore === "number" && (
                 <div className="mt-2 text-xs text-cyan-200/80">

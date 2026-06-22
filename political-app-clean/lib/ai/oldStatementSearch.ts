@@ -55,6 +55,10 @@ export function findBestOldStatement(
 
   let bestMatch: ExistingStatementMatch | null = null;
   let bestScore = 0;
+  const scoredMatches: {
+  match: ExistingStatementMatch;
+  score: number;
+}[] = [];
     function getStatementTime(item: ExistingStatementMatch) {
     const rawDate = item.source_date || item.created_at;
 
@@ -68,9 +72,14 @@ export function findBestOldStatement(
   for (const item of statements) {
     const itemPolitician = (item.politician || "").toLowerCase();
 
-    if (itemPolitician !== lowerPolitician) {
-      continue;
-    }
+const politicianMatches =
+  itemPolitician === lowerPolitician ||
+  itemPolitician.includes(lowerPolitician) ||
+  lowerPolitician.includes(itemPolitician);
+
+if (!politicianMatches) {
+  continue;
+}
 
     const title = (item.title || "").toLowerCase();
     const summary = (item.summary || "").toLowerCase();
@@ -125,6 +134,12 @@ export function findBestOldStatement(
     if (weakGenericMatch) {
       score -= 80;
     }
+    if (score >= 70) {
+  scoredMatches.push({
+    match: item,
+    score,
+  });
+}
 
     if (score > bestScore) {
       bestScore = score;
@@ -132,10 +147,15 @@ export function findBestOldStatement(
     }
   }
 
-  return bestMatch && bestScore >= 90
-    ? {
-        match: bestMatch,
-        score: bestScore,
-      }
-    : null;
+  const topMatches = scoredMatches
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3);
+
+return bestMatch && bestScore >= 70
+  ? {
+      match: bestMatch,
+      score: bestScore,
+      topMatches,
+    }
+  : null;
 }
