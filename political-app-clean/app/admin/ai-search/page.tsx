@@ -633,6 +633,31 @@ return (
                 onClick={() => createContradictionDraft(item)}
                 className="mt-5 rounded-2xl bg-white px-5 py-3 font-bold text-black"
               >
+                <div className="mb-4 rounded-xl bg-black/20 p-4">
+  <div className="mb-2 text-xs font-bold uppercase text-orange-300">
+    OLD STATEMENT
+  </div>
+
+  <div className="text-sm text-white">
+    {item.oldStatement ||
+      item.bestOldStatement?.summary ||
+      item.bestOldStatement?.title ||
+      "No old statement available"}
+  </div>
+</div>
+
+<div className="mb-4 rounded-xl bg-black/20 p-4">
+  <div className="mb-2 text-xs font-bold uppercase text-cyan-300">
+    NEW STATEMENT
+  </div>
+
+  <div className="text-sm text-white">
+    {item.newStatement ||
+      item.summary ||
+      item.title ||
+      "No new statement available"}
+  </div>
+</div>
                 {candidateAnalyses[item.url] && (
   <div >
     <div className="text-xs font-bold text-black">
