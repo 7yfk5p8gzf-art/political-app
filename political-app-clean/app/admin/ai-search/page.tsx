@@ -395,6 +395,31 @@ const slug =
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+      const { data: existingDraft } = await supabase
+  .from("contradictions")
+  .select("id")
+  .eq(
+    "old_statement",
+    cleanText(
+      item.oldStatement ||
+      item.bestOldStatement?.title ||
+      ""
+    )
+  )
+  .eq(
+    "new_statement",
+    cleanText(
+      item.newStatement ||
+      item.title ||
+      ""
+    )
+  )
+  .maybeSingle();
+
+if (existingDraft) {
+  alert("Draft already exists");
+  return;
+}
 
   const { data, error } = await supabase
     .from("contradictions")
