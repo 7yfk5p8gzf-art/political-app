@@ -569,8 +569,10 @@ const topicFilteredResults =
 console.log("AI diversified results count:", diversifiedResults.length);
     const { data: existingSources } = await supabase
   .from("sources")
-  .select("title, summary, url, politician, topic")
-  .limit(50);
+  .select(
+    "title, summary, url, politician, topic, created_at"
+  )
+  .limit(500);
 
     
 

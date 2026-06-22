@@ -13,41 +13,64 @@ export type ContradictionScoringResult = {
 export function scoreContradiction(
   input: ContradictionScoringInput
 ): ContradictionScoringResult {
-  const hasPolitician = Boolean(input.politician);
-
-  const hasTopic = Boolean(input.topic);
-
-  const hasSummary = Boolean(
-    input.summary && input.summary.length > 80
-  );
-
-  const hasStrongTitle = Boolean(
-    input.title && input.title.length > 30
-  );
-
-  const contradictionProbability =
-    (hasPolitician ? 25 : 0) +
-    (hasTopic ? 25 : 0) +
-    (hasSummary ? 25 : 0) +
-    (hasStrongTitle ? 25 : 0);
-
   const contradictionReasons: string[] = [];
 
-  if (hasPolitician) {
+  let contradictionProbability = 0;
+
+  if (input.politician) {
+    contradictionProbability += 15;
     contradictionReasons.push("Known politician detected");
   }
 
-  if (hasTopic) {
+  if (input.topic) {
+    contradictionProbability += 15;
     contradictionReasons.push("Topic identified");
   }
 
-  if (hasSummary) {
+  if (input.summary && input.summary.length > 80) {
+    contradictionProbability += 10;
     contradictionReasons.push("Detailed summary available");
   }
 
-  if (hasStrongTitle) {
+  if (input.title && input.title.length > 30) {
+    contradictionProbability += 10;
     contradictionReasons.push("Strong statement title");
   }
+
+  const text = `
+${input.title || ""}
+${input.summary || ""}
+`.toLowerCase();
+
+  const contradictionWords = [
+    "changed",
+    "reversed",
+    "contradiction",
+    "u-turn",
+    "previously",
+    "earlier",
+    "before",
+    "now",
+    "instead",
+    "but now",
+  ];
+
+  const matches = contradictionWords.filter((word) =>
+    text.includes(word)
+  );
+
+  contradictionProbability += matches.length * 10;
+
+  if (matches.length > 0) {
+    contradictionReasons.push(
+      "Potential contradiction language detected"
+    );
+  }
+
+  contradictionProbability = Math.min(
+    contradictionProbability,
+    100
+  );
 
   return {
     contradictionProbability,

@@ -31,28 +31,35 @@ export function buildContradictionCandidate(
   let candidateStrength = 0;
 
   if (hasIntent) {
-    candidateStrength += 25;
+    candidateStrength += 20;
   }
 
   if (hasTopicCluster) {
-    candidateStrength += 25;
+    candidateStrength += 15;
   }
 
   if (hasOldStatementQueries) {
-    candidateStrength += 25;
+    candidateStrength += 10;
   }
 
-  if (probability >= 75) {
+  if (probability >= 90) {
     candidateStrength += 25;
+  } else if (probability >= 75) {
+    candidateStrength += 15;
+  } else if (probability >= 50) {
+    candidateStrength += 8;
   }
 
-  const isCandidate = candidateStrength >= 50;
+  candidateStrength = Math.min(candidateStrength, 85);
+
+  const isCandidate =
+    candidateStrength >= 45 && probability >= 50;
 
   return {
     isCandidate,
     candidateStrength,
     candidateReason: isCandidate
-      ? "Possible semantic contradiction candidate"
-      : "Not enough contradiction signals",
+      ? "Possible contradiction candidate, requires AI review"
+      : "Weak contradiction signals",
   };
 }

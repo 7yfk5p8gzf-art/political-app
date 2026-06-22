@@ -34,6 +34,8 @@ export type ExistingStatementMatch = {
   url?: string | null;
   politician?: string | null;
   topic?: string | null;
+  source_date?: string | null;
+  created_at?: string | null;
 };
 
 export function findBestOldStatement(
@@ -53,6 +55,15 @@ export function findBestOldStatement(
 
   let bestMatch: ExistingStatementMatch | null = null;
   let bestScore = 0;
+    function getStatementTime(item: ExistingStatementMatch) {
+    const rawDate = item.source_date || item.created_at;
+
+    if (!rawDate) return null;
+
+    const time = new Date(rawDate).getTime();
+
+    return Number.isNaN(time) ? null : time;
+  }
 
   for (const item of statements) {
     const itemPolitician = (item.politician || "").toLowerCase();
@@ -93,6 +104,16 @@ export function findBestOldStatement(
 
     if (item.url) {
       score += 5;
+    }
+        const statementTime = getStatementTime(item);
+
+    if (statementTime) {
+      const ageInDays =
+        (Date.now() - statementTime) / (1000 * 60 * 60 * 24);
+
+      if (ageInDays > 30) score += 10;
+      if (ageInDays > 180) score += 15;
+      if (ageInDays > 365) score += 20;
     }
 
     const weakGenericMatch =
