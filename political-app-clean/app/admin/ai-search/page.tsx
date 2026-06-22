@@ -83,6 +83,8 @@ export default function AiSearchPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [selectedSources, setSelectedSources] = useState<SearchResult[]>([]);
+const [candidateResults, setCandidateResults] = useState<SearchResult[]>([]);
   function getPerspectiveFromUrl(url?: string) {
   const u = url || "";
 
@@ -171,6 +173,29 @@ console.log("FRONTEND RESULTS:", sortedResults);
 setResults(sortedResults);
 console.log("AI diversity check:", sortedResults);
   setLoading(false);
+}
+function toggleSelectedSource(item: SearchResult) {
+  setSelectedSources((prev) => {
+    const exists = prev.some((x) => x.url === item.url);
+
+    if (exists) {
+      return prev.filter((x) => x.url !== item.url);
+    }
+
+    return [...prev, item];
+  });
+}
+
+function analyzeSelectedSources() {
+  const candidates = selectedSources
+    .filter((x) => x.contradictionCandidate?.isCandidate)
+    .sort(
+      (a, b) =>
+        (b.contradictionCandidate?.candidateStrength || 0) -
+        (a.contradictionCandidate?.candidateStrength || 0)
+    );
+
+  setCandidateResults(candidates);
 }
 async function saveSource(item: SearchResult) {
   const { data, error } = await supabase
@@ -391,6 +416,20 @@ return (
         {loading ? "Searching..." : "Search"}
       </button>
     </div>
+        {selectedSources.length > 0 && (
+      <div className="mt-6 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-5">
+        <div className="text-sm font-bold text-orange-200">
+          Selected sources: {selectedSources.length}
+        </div>
+
+        <button
+          onClick={analyzeSelectedSources}
+          className="mt-4 rounded-2xl bg-orange-500 px-6 py-3 font-bold text-black"
+        >
+          Analyze Selected Sources
+        </button>
+      </div>
+    )}
     {results.length > 0 && (
   <div className="mb-8 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
     <div className="text-sm uppercase tracking-[0.3em] text-cyan-300">
@@ -440,10 +479,87 @@ return (
     </div>
   </div>
 )}
+    {candidateResults.length > 0 && (
+      <div className="mt-10 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-6">
+        <div className="text-sm uppercase tracking-[0.3em] text-orange-300">
+          AI Contradiction Candidates
+        </div>
+
+        <div className="mt-3 text-2xl font-bold text-white">
+          {candidateResults.length} candidate found
+        </div>
+
+        <div className="mt-6 space-y-4">
+          {candidateResults.map((item, index) => (
+            <div
+              key={index}
+              className="rounded-2xl border border-white/10 bg-black/30 p-5"
+            >
+              <div className="text-sm font-bold text-orange-200">
+                Candidate strength:{" "}
+                {item.contradictionCandidate?.candidateStrength ?? 0}%
+              </div>
+
+              <h3 className="mt-3 text-xl font-bold text-white">
+                {item.title}
+              </h3>
+
+              {item.bestOldStatement?.title && (
+                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+                  <div className="text-xs font-bold text-cyan-200">
+                    Old statement
+                  </div>
+
+                  <div className="mt-2 text-sm text-cyan-100">
+                    {item.bestOldStatement.title}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 rounded-xl border border-orange-500/20 bg-orange-500/10 p-4">
+                <div className="text-xs font-bold text-orange-200">
+                  Candidate reason
+                </div>
+
+                <div className="mt-2 text-sm text-orange-100">
+                  {item.contradictionCandidate?.candidateReason}
+                </div>
+              </div>
+
+              <button
+                onClick={() => createContradictionDraft(item)}
+                className="mt-5 rounded-2xl bg-white px-5 py-3 font-bold text-black"
+              >
+                Create Draft
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
 
     <div className="mt-10 space-y-6">
   {results.map((item, index) => (
     <div key={index}>
+      <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+        <input
+          type="checkbox"
+          checked={selectedSources.some((x) => x.url === item.url)}
+          onChange={() => toggleSelectedSource(item)}
+          className="h-5 w-5"
+        />
+
+        <div className="text-sm text-neutral-300">
+          Select for contradiction analysis
+        </div>
+
+        {item.contradictionCandidate?.isCandidate && (
+          <div className="ml-auto rounded-full bg-orange-500/20 px-3 py-1 text-xs font-bold text-orange-200">
+            Candidate {item.contradictionCandidate.candidateStrength}%
+          </div>
+        )}
+      </div>
+
       <SourcePreviewCard
         title={item.title}
         summary={item.summary}
