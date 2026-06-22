@@ -46,6 +46,11 @@ export function findBestOldStatement(
   const lowerTopic = topic.toLowerCase();
   const lowerPolitician = politician.toLowerCase();
 
+  const topicKeywords = lowerTopic
+    .split(/[\s,.-]+/)
+    .map((x) => x.trim())
+    .filter((x) => x.length >= 4);
+
   let bestMatch: ExistingStatementMatch | null = null;
   let bestScore = 0;
 
@@ -56,24 +61,48 @@ export function findBestOldStatement(
       continue;
     }
 
-    const text = `
-${item.title || ""}
-${item.summary || ""}
-${item.topic || ""}
-`.toLowerCase();
+    const title = (item.title || "").toLowerCase();
+    const summary = (item.summary || "").toLowerCase();
+    const itemTopic = (item.topic || "").toLowerCase();
+
+    const text = `${title} ${summary} ${itemTopic}`;
 
     let score = 0;
 
-    if (text.includes(lowerTopic)) {
-      score += 60;
+    const matchedKeywords = topicKeywords.filter((keyword) =>
+      text.includes(keyword)
+    );
+
+    if (itemTopic === lowerTopic) {
+      score += 80;
     }
 
-    if (item.topic && item.topic.toLowerCase().includes(lowerTopic)) {
+    if (itemTopic.includes(lowerTopic)) {
+      score += 50;
+    }
+
+    if (title.includes(lowerTopic)) {
+      score += 45;
+    }
+
+    if (summary.includes(lowerTopic)) {
       score += 30;
     }
 
+    score += matchedKeywords.length * 20;
+
     if (item.url) {
-      score += 10;
+      score += 5;
+    }
+
+    const weakGenericMatch =
+      matchedKeywords.length === 0 &&
+      !itemTopic.includes(lowerTopic) &&
+      !title.includes(lowerTopic) &&
+      !summary.includes(lowerTopic);
+
+    if (weakGenericMatch) {
+      score -= 80;
     }
 
     if (score > bestScore) {
@@ -82,7 +111,7 @@ ${item.topic || ""}
     }
   }
 
-  return bestMatch && bestScore >= 40
+  return bestMatch && bestScore >= 70
     ? {
         match: bestMatch,
         score: bestScore,

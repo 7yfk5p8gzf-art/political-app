@@ -600,7 +600,7 @@ return (
                 className="mt-5 rounded-2xl bg-white px-5 py-3 font-bold text-black"
               >
                 {candidateAnalyses[item.url] && (
-  <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+  <div >
     <div className="text-xs font-bold text-emerald-200">
       AI Analysis
     </div>
