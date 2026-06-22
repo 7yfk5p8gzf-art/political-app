@@ -33,13 +33,16 @@ Válaszolj JSON formátumban:
 
   "confidence_score": 0,
   "severity_score": 0,
-  "review_status": "approved",
+  "review_status": "draft",
   "strength": "medium",
   "timeline_hint": "...",
-  "transcript_quote": "...",
-  "timestamp": "00:00",
-  "quote_precision": "medium"
-  video_context: {
+  "old_transcript_quote": "",
+  "old_timestamp": "",
+  "old_quote_precision": "medium",
+  "new_transcript_quote": "",
+  "new_timestamp": "",
+  "new_quote_precision": "medium",
+  "video_context": {
   has_video: false,
   start_timestamp: "",
   best_timestamp: "",
@@ -74,6 +77,13 @@ mert a megfogalmazás eltérő.
 
 Figyelj a kontextusra és az időbeli változásra is.
 Egy álláspont változás nem mindig jelent valódi ellentmondást.
+Ha a két állítás csak lazán kapcsolódik egymáshoz, vagy nem ugyanarról a konkrét témáról szól, akkor:
+- strength legyen "weak"
+- confidence_score legyen 0 és 35 között
+- severity_score legyen 0 és 25 között
+- analysis mezőben írd le, hogy nincs bizonyított ellentmondás
+
+Ha nincs világos régi és új állítás közti ütközés, ne erőltesd az ellentmondást.
 
 Vedd figyelembe:
 - történelmi eseményeket
@@ -168,7 +178,7 @@ ${new_statement}
     let timeline_hint = "";
     let confidence_score = 0;
 let severity_score = 0;
-let review_status = "approved";
+let review_status = "draft";
 let old_transcript_quote = "";
 let old_timestamp = "";
 let old_quote_precision = "medium";

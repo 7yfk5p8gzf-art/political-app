@@ -601,24 +601,24 @@ return (
               >
                 {candidateAnalyses[item.url] && (
   <div >
-    <div className="text-xs font-bold text-emerald-200">
+    <div className="text-xs font-bold text-black">
       AI Analysis
     </div>
 
-    <div className="mt-2 text-sm text-emerald-100">
-      {candidateAnalyses[item.url].analysis}
-    </div>
+    <div className="mt-2 text-sm text-black">
+  {candidateAnalyses[item.url].analysis}
+</div>
 
     {candidateAnalyses[item.url].evidence_summary && (
-      <div className="mt-3 text-sm text-emerald-200/80">
+      <div className="mt-3 text-sm text-black">
         {candidateAnalyses[item.url].evidence_summary}
       </div>
     )}
 
     <div className="mt-3 flex flex-wrap gap-2 text-xs">
-      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-100">
-        Strength: {candidateAnalyses[item.url].strength}
-      </span>
+      <span className="text-neutral-800">
+  Strength: {candidateAnalyses[item.url].strength}
+</span>
 
       <span className="rounded-full bg-white/10 px-3 py-1 text-white">
         Confidence: {candidateAnalyses[item.url].confidence_score}%
@@ -630,7 +630,7 @@ return (
     </div>
 
     {candidateAnalyses[item.url].timeline_hint && (
-      <div className="mt-3 text-xs text-emerald-200/70">
+      <div className="mt-3 text-xs text-black">
         {candidateAnalyses[item.url].timeline_hint}
       </div>
     )}

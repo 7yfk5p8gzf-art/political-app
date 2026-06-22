@@ -89,7 +89,7 @@ export function findBestOldStatement(
       score += 30;
     }
 
-    score += matchedKeywords.length * 20;
+    score += matchedKeywords.length * 30;
 
     if (item.url) {
       score += 5;
@@ -111,7 +111,7 @@ export function findBestOldStatement(
     }
   }
 
-  return bestMatch && bestScore >= 70
+  return bestMatch && bestScore >= 90
     ? {
         match: bestMatch,
         score: bestScore,
