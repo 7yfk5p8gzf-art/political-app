@@ -49,6 +49,12 @@ contradictionCandidate?: {
   summary?: string | null;
   url?: string | null;
   politician?: string | null;
+  old_date?: string | null;
+new_date?: string | null;
+publishedAt?: string | null;
+published_at?: string | null;
+source_date?: string | null;
+created_at?: string | null;
  
   
 } | null;
@@ -400,7 +406,7 @@ old_source:
   item.sources?.[0]?.url ||
   item.bestOldStatement?.url ||
   "",
-  old_date: null,
+  
   
 
 new_source:

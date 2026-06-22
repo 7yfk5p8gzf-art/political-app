@@ -1,3 +1,44 @@
+# PROJECT STATUS
+
+Last updated: 2026-06-22
+
+## Current State
+
+Working MVP workflow:
+
+AI Search
+→ Select Sources
+→ Analyze Selected Sources
+→ AI Contradiction Finder
+→ AI Analysis
+→ Create Draft
+→ Supabase contradictions
+→ Admin Contradictions
+→ Review / Publish
+
+Status: WORKING
+
+---
+
+## Next Priorities
+
+1. HTML cleanup (<strong>, &quot;)
+2. Review page cleanup
+3. Better candidate scoring
+4. Duplicate draft protection
+5. Public contradiction page polish
+
+---
+
+## NOT CURRENT PRIORITIES
+
+- Donate
+- Comments
+- AI moderation
+- Animations
+- Advanced timeline scoring
+- Advanced date extraction
+
 # Political App Project Map
 
 ## Current MVP Flow
