@@ -6,6 +6,16 @@ import AdminBackButton from "@/components/admin/AdminBackButton";
 import SourcePreviewCard from "@/components/public/SourcePreviewCard";
 import { compareSemantics } from "@/lib/ai/semanticComparison";
 import { analyzeTimelineReasoning } from "@/lib/ai/timelineReasoning";
+function cleanText(text?: string | null) {
+  if (!text) return "";
+
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .trim();
+}
 
 type SearchResult = {
   title: string;
@@ -392,15 +402,17 @@ const slug =
       slug,
       politician: item.politician || null,
       topic: item.topic || null,
-      old_statement:
+      old_statement: cleanText(
   item.oldStatement ||
   item.bestOldStatement?.title ||
-  "",
+  ""
+),
 
-new_statement:
+new_statement: cleanText(
   item.newStatement ||
   item.title ||
-  "",
+  ""
+),
 
 old_source:
   item.sources?.[0]?.url ||
