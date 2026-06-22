@@ -76,6 +76,15 @@ dateSignals?: {
 
 };
 
+type CandidateAnalysis = {
+  analysis: string;
+  evidence_summary: string;
+  strength: "weak" | "medium" | "strong";
+  timeline_hint: string;
+  confidence_score: number;
+  severity_score: number;
+  review_status: string;
+};
 
 
 
@@ -85,6 +94,10 @@ export default function AiSearchPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedSources, setSelectedSources] = useState<SearchResult[]>([]);
 const [candidateResults, setCandidateResults] = useState<SearchResult[]>([]);
+const [analyzingSelected, setAnalyzingSelected] = useState(false);
+const [candidateAnalyses, setCandidateAnalyses] = useState<
+  Record<string, CandidateAnalysis>
+>({});
   function getPerspectiveFromUrl(url?: string) {
   const u = url || "";
 
@@ -186,7 +199,7 @@ function toggleSelectedSource(item: SearchResult) {
   });
 }
 
-function analyzeSelectedSources() {
+async function analyzeSelectedSources() {
   const candidates = selectedSources
     .filter((x) => x.contradictionCandidate?.isCandidate)
     .sort(
@@ -196,6 +209,62 @@ function analyzeSelectedSources() {
     );
 
   setCandidateResults(candidates);
+
+  if (candidates.length === 0) {
+    alert("No contradiction candidates found.");
+    return;
+  }
+
+  setAnalyzingSelected(true);
+
+  const analysisEntries = await Promise.all(
+    candidates.map(async (item) => {
+      try {
+        const response = await fetch("/api/ai-contradiction-analysis", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            politician: item.politician,
+            topic: item.topic,
+            old_statement: `${item.bestOldStatement?.title || ""}
+
+${item.bestOldStatement?.summary || ""}`,
+            new_statement: `${item.title}
+
+${item.summary || ""}`,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+
+        return [item.url, data] as const;
+      } catch (err) {
+        console.error("AI contradiction analysis failed:", err);
+
+        return [
+          item.url,
+          {
+            analysis: "AI analysis failed.",
+            evidence_summary: "",
+            strength: "weak",
+            timeline_hint: "",
+            confidence_score: 0,
+            severity_score: 0,
+            review_status: "draft",
+          },
+        ] as const;
+      }
+    })
+  );
+
+  setCandidateAnalyses(Object.fromEntries(analysisEntries));
+  setAnalyzingSelected(false);
 }
 async function saveSource(item: SearchResult) {
   const { data, error } = await supabase
@@ -426,7 +495,7 @@ return (
           onClick={analyzeSelectedSources}
           className="mt-4 rounded-2xl bg-orange-500 px-6 py-3 font-bold text-black"
         >
-          Analyze Selected Sources
+          {analyzingSelected ? "Analyzing..." : "Analyze Selected Sources"}
         </button>
       </div>
     )}
@@ -530,6 +599,43 @@ return (
                 onClick={() => createContradictionDraft(item)}
                 className="mt-5 rounded-2xl bg-white px-5 py-3 font-bold text-black"
               >
+                {candidateAnalyses[item.url] && (
+  <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+    <div className="text-xs font-bold text-emerald-200">
+      AI Analysis
+    </div>
+
+    <div className="mt-2 text-sm text-emerald-100">
+      {candidateAnalyses[item.url].analysis}
+    </div>
+
+    {candidateAnalyses[item.url].evidence_summary && (
+      <div className="mt-3 text-sm text-emerald-200/80">
+        {candidateAnalyses[item.url].evidence_summary}
+      </div>
+    )}
+
+    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-100">
+        Strength: {candidateAnalyses[item.url].strength}
+      </span>
+
+      <span className="rounded-full bg-white/10 px-3 py-1 text-white">
+        Confidence: {candidateAnalyses[item.url].confidence_score}%
+      </span>
+
+      <span className="rounded-full bg-white/10 px-3 py-1 text-white">
+        Severity: {candidateAnalyses[item.url].severity_score}%
+      </span>
+    </div>
+
+    {candidateAnalyses[item.url].timeline_hint && (
+      <div className="mt-3 text-xs text-emerald-200/70">
+        {candidateAnalyses[item.url].timeline_hint}
+      </div>
+    )}
+  </div>
+)}
                 Create Draft
               </button>
             </div>
