@@ -11,6 +11,7 @@ type SearchResult = {
   title: string;
   url: string;
   summary: string;
+  sources?: SearchResult[];
   oldStatement?: string;
 newStatement?: string;
   politician?: string;
@@ -385,19 +386,42 @@ const slug =
       slug,
       politician: item.politician || null,
       topic: item.topic || null,
-      old_statement: item.bestOldStatement?.title || "",
-          new_statement: item.title,
-          old_source: item.bestOldStatement?.url || "",
+      old_statement:
+  item.oldStatement ||
+  item.bestOldStatement?.title ||
+  "",
 
-          new_source: item.url,
-      ai_summary: `${item.summary}
+new_statement:
+  item.newStatement ||
+  item.title ||
+  "",
+
+old_source:
+  item.sources?.[0]?.url ||
+  item.bestOldStatement?.url ||
+  "",
+  old_date: null,
+  
+
+new_source:
+  item.sources?.[1]?.url ||
+  item.url ||
+  "",
+  new_date: null,
+  
+      ai_summary: `${
+  candidateAnalyses[item.url]?.analysis ||
+  item.summary ||
+  item.oldStatement ||
+  ""
+}
 
 
 
 Semantic comparison:
 - Possible contradiction: ${semanticResult.possibleContradiction ? "yes" : "no"}
-- Detected shift: ${semanticResult.detectedShift}
-- Similarity score: ${semanticResult.similarityScore}%
+- Detected shift: ${semanticResult.detectedShift || "neutral"}
+- Similarity score: ${semanticResult.similarityScore ?? 0}
 
 AI candidate:
 - Candidate: ${item.contradictionCandidate?.isCandidate ? "yes" : "no"}
@@ -407,10 +431,10 @@ AI candidate:
   "No candidate reason"}
 
 Timeline reasoning:
-- Category: ${timelineResult.timelineCategory}
-- Strength: ${timelineResult.timelineStrength}%
+- Category: ${timelineResult.timelineCategory || "unknown"}
+- Strength: ${timelineResult.timelineStrength ?? 0}
 - Years between: ${timelineResult.yearsBetween ?? "unknown"}
-- Reasoning: ${timelineResult.reasoning}
+- Reasoning: ${timelineResult.reasoning || "No timeline reasoning available"}
 
 Date detection:
 - Detected year: ${item.dateSignals?.detectedYear ?? "unknown"}

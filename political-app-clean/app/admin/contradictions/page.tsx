@@ -13,6 +13,8 @@ type Contradiction = {
   new_statement: string | null;
   status: string | null;
   created_at: string | null;
+  old_date?: string | null;
+new_date?: string | null;
 };
 
 export default function AdminContradictionsPage() {
@@ -204,6 +206,19 @@ async function deleteContradiction(id: string) {
               <h2 className="text-2xl font-bold">
                 {item.slug || "Untitled contradiction"}
               </h2>
+              <div className="mt-2 text-xs text-neutral-400 space-y-1">
+  <div>
+    Created: {item.created_at || "unknown"}
+  </div>
+
+  <div>
+    Old date: {item.old_date || "unknown"}
+  </div>
+
+  <div>
+    New date: {item.new_date || "unknown"}
+  </div>
+</div>
 
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
