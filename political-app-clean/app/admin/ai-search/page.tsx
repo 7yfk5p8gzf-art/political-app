@@ -569,10 +569,16 @@ return (
 
         <button
           onClick={analyzeSelectedSources}
+          disabled={analyzingSelected}
           className="mt-4 rounded-2xl bg-orange-500 px-6 py-3 font-bold text-black"
         >
           {analyzingSelected ? "Analyzing..." : "Analyze Selected Sources"}
         </button>
+        {analyzingSelected && (
+  <div className="mt-3 text-sm text-yellow-300">
+    AI Contradiction Finder is analyzing sources...
+  </div>
+)}
       </div>
     )}
     {results.length > 0 && (

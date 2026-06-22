@@ -1,3 +1,7 @@
+- Loading indicator for AI analysis
+- Date extraction for old/new statements
+
+
 # PROJECT STATUS
 
 Last updated: 2026-06-22
