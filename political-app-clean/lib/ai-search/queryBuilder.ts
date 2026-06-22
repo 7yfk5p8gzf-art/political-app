@@ -1,3 +1,14 @@
+const COUNTRY_VIDEO_SOURCES: Record<string, string[]> = {
+  HU: ["youtube.com", "hirado.hu", "hirtv.hu", "atv.hu", "partizanmedia.hu"],
+  DE: ["youtube.com", "zdf.de", "tagesschau.de", "phoenix.de", "n-tv.de", "welt.de"],
+  AT: ["youtube.com", "orf.at", "derstandard.at"],
+  IT: ["youtube.com", "la7.it", "rainews.it", "mediaset.it"],
+  FR: ["youtube.com", "france24.com", "bfmtv.com", "francetvinfo.fr"],
+  ES: ["youtube.com", "rtve.es", "elpais.com", "elmundo.es"],
+  NL: ["youtube.com", "nos.nl", "nu.nl"],
+  PL: ["youtube.com", "tvn24.pl", "polsatnews.pl"],
+  US: ["youtube.com", "c-span.org", "foxnews.com", "cnn.com", "nbcnews.com"],
+};
 export function buildVideoQueries({
   effectiveQuery,
   topicTerms,
@@ -8,14 +19,21 @@ export function buildVideoQueries({
   country?: string | null;
 }) {
   const common = [
-    `${effectiveQuery} ${topicTerms} interview`,
-    `${effectiveQuery} ${topicTerms} debate`,
-    `${effectiveQuery} ${topicTerms} speech`,
-    `${effectiveQuery} ${topicTerms} press conference`,
-    `${effectiveQuery} ${topicTerms} video`,
-    `${effectiveQuery} ${topicTerms} youtube`,
-    `${effectiveQuery} ${topicTerms} site:youtube.com`,
-  ];
+  `${effectiveQuery} ${topicTerms} site:youtube.com/watch`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com`,
+  `${effectiveQuery} ${topicTerms} youtube interview`,
+  `${effectiveQuery} ${topicTerms} youtube speech`,
+  `${effectiveQuery} ${topicTerms} youtube press conference`,
+];
+  const countryKey = (country || "").toUpperCase();
+
+const videoSources =
+  COUNTRY_VIDEO_SOURCES[countryKey] || ["youtube.com"];
+
+const countrySourceQueries = videoSources.map(
+  (domain) =>
+    `${effectiveQuery} ${topicTerms} site:${domain} video`
+);
 
   if (country === "DE") {
     return [
@@ -123,5 +141,8 @@ export function buildVideoQueries({
     ];
   }
 
-  return common;
+  return [
+  ...common,
+  ...countrySourceQueries,
+];
 }

@@ -269,6 +269,7 @@ function extractYouTubeVideoId(url: string) {
 
 export async function POST(req: Request) {
   try {
+    console.log("🔥🔥🔥 AI SEARCH ROUTE RUNNING - NEW CODE 🔥🔥🔥");
     const { query } = await req.json();
     
     const politicians = await loadPoliticians();
@@ -281,17 +282,19 @@ const expandedQueries = buildTopicExpansionQueries({
 
 console.log("Expanded queries:", expandedQueries);
 const normalizedQuery = query.trim().toLowerCase();
+
 const { data: cachedSearch } = await supabase
   .from("ai_search_cache")
   .select("response")
   .eq("normalized_query", normalizedQuery)
   .maybeSingle();
 
- if (cachedSearch?.response) {
-   console.log("AI search cache hit:", normalizedQuery);
+if (cachedSearch?.response) {
+  console.log("AI search cache hit:", normalizedQuery);
 
   return NextResponse.json(cachedSearch.response);
- }
+}
+
 const effectiveQuery = `${parsedQuery.politician || ""} ${parsedQuery.topic}`.trim();
 
     if (!query) {
@@ -411,19 +414,31 @@ const countrySources =
 
 const localQueries =
   countrySources?.articles?.length
-    ? countrySources.articles.map(
-        (domain) => `${effectiveQuery} ${topicTerms} site:${domain}`
-      )
+    ? countrySources.articles.slice(0, 5).map(
+    (domain) => `${effectiveQuery} ${topicTerms} site:${domain}`
+  )
     : [`${effectiveQuery} ${topicTerms}`];
 
 const internationalQueries = INTERNATIONAL_SOURCES.map(
   (domain) => `${effectiveQuery} ${topicTerms} site:${domain}`
 );
+console.log("LOCAL QUERY COUNT:", localQueries.length);
+console.log("VIDEO QUERY COUNT:", videoQueries.length);
+console.log("INT QUERY COUNT:", internationalQueries.slice(0, 2).length);
+const articleQueries = [
+  ...localQueries,
+];
+
+const youtubeQueries = [
+  `${effectiveQuery} ${topicTerms} site:youtube.com/watch`,
+  `${effectiveQuery} ${topicTerms} site:youtube.com ${parsedQuery.politician || ""}`,
+  `${effectiveQuery} ${topicTerms} youtube interview`,
+  `${effectiveQuery} ${topicTerms} youtube speech`,
+];
 
 const sourceQueries = [
-  ...localQueries,
-  ...videoQueries,
-  ...internationalQueries.slice(0, 2),
+  ...articleQueries,
+  ...youtubeQueries,
 ];
 console.log("SOURCE QUERIES COUNT:", sourceQueries.length);
 console.log("VIDEO QUERIES:", videoQueries);
@@ -449,6 +464,15 @@ const searchResponses = await Promise.all(
 
 const searchJsons = await Promise.all(
   searchResponses.map((response) => response.json())
+);
+console.log(
+  "BRAVE RESPONSE KEYS:",
+  searchJsons.map((json) => Object.keys(json))
+);
+
+console.log(
+  "BRAVE VIDEOS COUNT:",
+  searchJsons.map((json) => json.videos?.results?.length || 0)
 );
 console.log("AI Brave raw JSON:", JSON.stringify(searchJsons, null, 2));
 const braveErrors = searchJsons.filter(
@@ -1058,7 +1082,7 @@ if (results.length > 0) {
   await supabase.from("ai_search_cache").upsert({
     normalized_query: normalizedQuery,
     response: {
-      articleQueries: [...localQueries, ...internationalQueries],
+      articleQueries,
       videoQueries,
       articles: finalArticles,
       videos: finalVideos,
@@ -1068,8 +1092,8 @@ if (results.length > 0) {
 }
 
 return NextResponse.json({
-  articleQueries: [...localQueries, ...internationalQueries],
-  videoQueries,
+  articleQueries,
+  videoQueries: youtubeQueries,
   articles: finalArticles,
   videos: finalVideos,
   results,
