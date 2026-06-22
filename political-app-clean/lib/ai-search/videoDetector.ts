@@ -13,12 +13,10 @@ const isBadRootUrl =
   url.endsWith("euronews.com/");
 
 if (isBadRootUrl) return false;
-  return (
-  item.type === "video" &&
-  (
-    url.includes("youtube.com/watch") ||
-    url.includes("youtu.be/")
-  ) &&
-  !url.includes("/shorts/")
-);
+
+return (
+  url.includes("youtube.com/watch") ||
+  url.includes("youtu.be/")
+) && !url.includes("/shorts/");
+
 }

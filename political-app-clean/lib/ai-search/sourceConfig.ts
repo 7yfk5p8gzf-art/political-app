@@ -138,3 +138,19 @@ export const INTERNATIONAL_SOURCES = [
   "politico.com",
   "theguardian.com",
 ];
+export const PAYWALL_DOMAINS = [
+  "wsj.com",
+  "ft.com",
+  "bloomberg.com",
+  "thetimes.co.uk",
+  "economist.com",
+
+  "faz.net",
+  "spiegel.de",
+
+  "lefigaro.fr",
+
+  "corriere.it",
+
+  "nzz.ch",
+];

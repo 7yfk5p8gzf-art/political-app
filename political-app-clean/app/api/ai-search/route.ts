@@ -27,6 +27,7 @@ import { buildVideoQueries } from "@/lib/ai-search/queryBuilder";
 import {
   COUNTRY_SOURCES,
   INTERNATIONAL_SOURCES,
+  PAYWALL_DOMAINS,
 } from "@/lib/ai-search/sourceConfig";
 import { ALLOWED_DOMAINS } from "@/lib/ai-search/domainConfig";
 
@@ -491,6 +492,19 @@ const rawResults: BraveResult[] = searchJsons.flatMap((json) => [
   ...(json.news?.results || []),
   ...(json.videos?.results || []),
 ]);
+const youtubeRawResults = rawResults.filter((item) => {
+  const url = (item.url || "").toLowerCase();
+  return url.includes("youtube.com") || url.includes("youtu.be");
+});
+
+console.log(
+  "YOUTUBE RAW RESULTS:",
+  youtubeRawResults.map((x) => ({
+    title: x.title,
+    url: x.url,
+    type: (x as any).type,
+  }))
+);
 console.log(
   "VIDEO RESULTS:",
   searchJsons.flatMap((json) => json.videos?.results || []).length
@@ -606,7 +620,7 @@ const scopedResults = diversifiedResults.filter((item) => {
   }
 });
 const rawVideoResults =
-  extractVideoResults(scopedResults);
+  extractVideoResults(rawResults);
 
 console.log(
   "RAW VIDEO RESULTS:",
@@ -643,9 +657,18 @@ console.log(
   }))
 );
 
-    const articleResults = scopedResults.filter(
-  (item) => !isVideoResult(item)
-);
+    const articleResults = scopedResults.filter((item) => {
+  const url = (item.url || "").toLowerCase();
+
+  if (
+    url.includes("youtube.com/watch") ||
+    url.includes("youtu.be/")
+  ) {
+    return false;
+  }
+
+  return !isVideoResult(item);
+});
 
     const articles = await Promise.all(
       articleResults.map((item) =>
@@ -909,8 +932,13 @@ function getDomainBonus(item: any) {
     const isCountrySource = rankingCountrySources.some(
       (source: string) => domain === source || domain.endsWith("." + source)
     );
+    const isPaywallSource = PAYWALL_DOMAINS.some(
+  (source) => domain === source || domain.endsWith("." + source)
+);
 
-    if (isCountrySource) return 100;
+    if (isCountrySource && isPaywallSource) return 40;
+if (isCountrySource) return 100;
+if (isPaywallSource) return -50;
 
     if (
       domain.includes("reuters") ||
