@@ -14,6 +14,13 @@ type SearchResult = {
   source?: string;
   age?: string;
   score?: number;
+  sourceDomain?: string;
+sourceLanguage?: string;
+sourcePerspective?: string;
+politician?: string;
+topic?: string;
+summary?: string;
+language?: string;
 };
 
 
@@ -654,7 +661,9 @@ const { data: cached } = await supabase
 
 const CACHE_TTL_HOURS = 24;
 
-if (cached?.response && cached?.created_at) {
+const useCache = false;
+
+if (useCache && cached?.response && cached?.created_at) {
   const cacheAge =
     Date.now() - new Date(cached.created_at).getTime();
 
@@ -748,7 +757,15 @@ const expandedQuery = cleanQuery
 const expanded = expandSearchQueries(expandedQuery);
 
 const articleQueries = expanded.articleQueries.slice(0, 4);
-const videoQueries = expanded.videoQueries.slice(0, 3);
+const videoQueries = [
+  ...expanded.videoQueries,
+  `${cleanQuery} site:youtube.com interview`,
+  `${cleanQuery} site:youtube.com speech`,
+  `${cleanQuery} site:youtube.com beszéd`,
+  `${cleanQuery} site:youtube.com interjú`,
+  `${cleanQuery} site:youtube.com full interview`,
+  `${cleanQuery} site:youtube.com sajtótájékoztató`,
+].slice(0, 6);
 
 
     const articleSearches = await Promise.all(
@@ -756,7 +773,7 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
     );
 
     const videoSearches = await Promise.all(
-      videoQueries.map((q) => braveSearch(q, 4))
+      videoQueries.map((q) => braveSearch(q, 5))
     );
 
     const allArticleResults = articleSearches.flatMap((r) => r.results);
@@ -789,46 +806,69 @@ const videoQueries = expanded.videoQueries.slice(0, 3);
   const trust = detectSourceTrust(item);
 
   return {
-    ...item,
-    local_priority: prioritizedLocalUrls.has(item.url),
-    score: scoreResult(item, cleanQuery),
-    quality_score: scoreSourceQuality(item),
+  ...item,
+  type: "article",
 
-    source_trust_type: trust.source_trust_type,
-    source_trust_score: trust.source_trust_score,
+  sourceDomain: item.sourceDomain || getDomain(item.url),
+  sourceLanguage: item.sourceLanguage || item.language || meta.language || "unknown",
+  sourcePerspective: item.sourcePerspective || trust.source_trust_type || "unknown",
 
-    final_score:
-  scoreResult(item, cleanQuery) * 0.5 +
-  scoreSourceQuality(item) * 0.3 +
-  trust.source_trust_score * 0.2 +
-  (prioritizedLocalUrls.has(item.url) ? 25 : 0),
-  };
+  politician: item.politician || detectedPolitician?.full_name || "",
+  topic: item.topic || meta.topic || "",
+  summary: item.summary || item.description || "",
+
+  local_priority: prioritizedLocalUrls.has(item.url),
+  score: scoreResult(item, cleanQuery),
+  quality_score: scoreSourceQuality(item),
+
+  source_trust_type: trust.source_trust_type,
+  source_trust_score: trust.source_trust_score,
+
+  final_score:
+    scoreResult(item, cleanQuery) * 0.5 +
+    scoreSourceQuality(item) * 0.3 +
+    trust.source_trust_score * 0.2 +
+    (prioritizedLocalUrls.has(item.url) ? 25 : 0),
+};
 })
       .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
 
     const videos = uniqueByUrl(allVideoResults)
       .filter(
-        (item) =>
-          (item.url.includes("youtube.com") || item.url.includes("youtu.be")) &&
-          resultMatchesQuery(item, cleanQuery)
-      )
+  (item) =>
+    item.url.includes("youtube.com") ||
+    item.url.includes("youtu.be")
+)
       .map((item) => {
   const trust = detectSourceTrust(item);
 
   return {
-    ...item,
-    score: scoreResult(item, cleanQuery),
-    quality_score: scoreSourceQuality(item),
+  ...item,
 
-    source_trust_type: trust.source_trust_type,
-    source_trust_score: trust.source_trust_score,
+  type: "video",
 
-    final_score:
-      scoreResult(item, cleanQuery) * 0.45 +
-      scoreSourceQuality(item) * 0.35 +
-      trust.source_trust_score * 0.2,
-  };
+  sourceDomain: item.sourceDomain || getDomain(item.url),
+  sourceLanguage:
+    item.sourceLanguage || item.language || meta.language || "unknown",
+  sourcePerspective:
+    item.sourcePerspective || trust.source_trust_type || "unknown",
+
+  politician: item.politician || detectedPolitician?.full_name || "",
+  topic: item.topic || meta.topic || "",
+  summary: item.summary || item.description || "",
+
+  score: scoreResult(item, cleanQuery),
+  quality_score: scoreSourceQuality(item),
+
+  source_trust_type: trust.source_trust_type,
+  source_trust_score: trust.source_trust_score,
+
+  final_score:
+    scoreResult(item, cleanQuery) * 0.45 +
+    scoreSourceQuality(item) * 0.35 +
+    trust.source_trust_score * 0.2,
+};
 })
       .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
       .slice(0, 5);
@@ -1181,6 +1221,7 @@ await autoSaveSources({
   videos,
   meta,
   detectedPolitician,
+  
   detectedTopic,
 });
 await saveContradictionSeed({
@@ -1189,7 +1230,23 @@ await saveContradictionSeed({
   detectedTopic,
   query: cleanQuery,
 });
+console.log("AI SEARCH FINAL COUNTS:", {
+  articles: articles.length,
+  videos: videos.length,
+  results: articles.length + videos.length,
+});
+const results = [
+  ...videos.map((item) => ({
+    ...item,
+    type: "video",
+  })),
+  ...articles.map((item) => ({
+    ...item,
+    type: "article",
+  })),
+].slice(0, 10);
     const responsePayload = {
+      results,
       articles,
       videos,
       summary:
@@ -1342,6 +1399,13 @@ function extractYouTubeId(url: string) {
   );
   return match?.[1] || null;
 }
+function getDomain(url: string) {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return "unknown";
+  }
+}
 
 function decodeHtml(text: string) {
   return text
@@ -1351,6 +1415,9 @@ function decodeHtml(text: string) {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
 }
+
+
+  
 
 function formatTimestamp(seconds: number) {
   const h = Math.floor(seconds / 3600);
