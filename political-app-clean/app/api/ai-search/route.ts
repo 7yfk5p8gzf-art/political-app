@@ -293,7 +293,7 @@ const { data: cachedSearch } = await supabase
 if (cachedSearch?.response) {
   console.log("AI search cache hit:", normalizedQuery);
 
-  return NextResponse.json(cachedSearch.response);
+   return NextResponse.json(cachedSearch.response);
 }
 
 const effectiveQuery = `${parsedQuery.politician || ""} ${parsedQuery.topic}`.trim();
@@ -1023,6 +1023,10 @@ console.log(
 const finalArticles = countryRankedResults
   .filter((x) => x.type === "article")
   .slice(0, 5);
+  console.log(
+  "FINAL ARTICLES COUNT:",
+  finalArticles.length
+);
 
 const finalVideos = countryRankedResults
   .filter((x) => {
