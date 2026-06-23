@@ -13,6 +13,7 @@ type Contradiction = {
   new_statement: string | null;
   status: string | null;
   created_at: string | null;
+  ai_summary?: string | null;
   old_date?: string | null;
 new_date?: string | null;
 };
@@ -210,6 +211,17 @@ async function deleteContradiction(id: string) {
   <div>
     Created: {item.created_at || "unknown"}
   </div>
+  {item.ai_summary && (
+  <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+    <div className="mb-2 text-xs font-bold uppercase text-cyan-300">
+      AI Analysis
+    </div>
+
+    <div className="text-sm text-neutral-300">
+      {item.ai_summary}
+    </div>
+  </div>
+)}
 
   <div>
     Old date: {item.old_date || "unknown"}

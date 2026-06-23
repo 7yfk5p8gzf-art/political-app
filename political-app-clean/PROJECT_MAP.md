@@ -1,6 +1,10 @@
 - Loading indicator for AI analysis
 - Date extraction for old/new statements
+- Loading indicator for AI analysis still needs better UX
 
+- AI Summary cleanup
+  - Show only human-readable summary in admin list
+  - Hide debug sections (semantic/timeline/date detection)
 
 # PROJECT STATUS
 

@@ -186,6 +186,10 @@ const [candidateAnalyses, setCandidateAnalyses] = useState<
   if (!searchQuery) return;
 
   setLoading(true);
+  setSelectedSources([]);
+setCandidateResults([]);
+setCandidateAnalyses({});
+setAnalyzingSelected(false);
 
   const response = await fetch("/api/ai-search", {
   method: "POST",
@@ -240,6 +244,7 @@ async function analyzeSelectedSources() {
   );
 
   setAnalyzingSelected(true);
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const finderResponse = await fetch("/api/admin/ai-contradiction-finder", {
   method: "POST",
   headers: {
@@ -768,6 +773,7 @@ return (
     )}
   </div>
 )}
+<div className="mt-4 border-t border-black/20 pt-4" />
                 Create Draft
               </button>
             </div>
