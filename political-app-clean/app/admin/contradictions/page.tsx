@@ -16,6 +16,9 @@ type Contradiction = {
   ai_summary?: string | null;
   old_date?: string | null;
 new_date?: string | null;
+
+confidence_score?: number | null;
+severity_score?: number | null;
 };
 
 export default function AdminContradictionsPage() {
@@ -202,11 +205,23 @@ async function deleteContradiction(id: string) {
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase">
                   {item.topic || "No topic"}
                 </span>
+                <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs uppercase text-orange-300">
+  {item.confidence_score && item.confidence_score > 70
+    ? "STRONG"
+    : item.confidence_score && item.confidence_score > 40
+    ? "MEDIUM"
+    : "WEAK"}
+</span>
               </div>
 
               <h2 className="text-2xl font-bold">
-                {item.slug || "Untitled contradiction"}
-              </h2>
+  {item.politician && item.topic
+    ? `${item.politician} – ${item.topic}`
+    : item.topic ||
+      item.politician ||
+      item.slug ||
+      "Untitled contradiction"}
+</h2>
               <div className="mt-2 text-xs text-neutral-400 space-y-1">
   <div>
     Created: {item.created_at || "unknown"}
@@ -218,8 +233,9 @@ async function deleteContradiction(id: string) {
     </div>
 
     <div className="text-sm text-neutral-300">
-      {item.ai_summary}
-    </div>
+      {item.ai_summary
+  ?.split("Semantic comparison:")[0]
+  ?.trim()}  </div>
   </div>
 )}
 
