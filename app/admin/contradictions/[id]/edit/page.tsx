@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { getAuthHeaders } from "@/lib/clientAuth";
 
 type Contradiction = {
   id: string;
@@ -58,9 +59,12 @@ export default function EditContradictionPage() {
 
     setSaving(true);
 
-    const { error } = await supabase
-      .from("contradictions")
-      .update({
+    const response = await fetch(`/api/admin/contradictions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({
+        action: "edit",
+        fields: {
         politician: item.politician,
         topic: item.topic,
         topic_hu: item.topic_hu,
@@ -80,13 +84,14 @@ ai_summary_de: item.ai_summary_de,
 ai_summary_en: item.ai_summary_en,
 ai_summary_fr: item.ai_summary_fr,
         status: item.status,
-      })
-      .eq("id", id);
+        },
+      }),
+    });
 
     setSaving(false);
 
-    if (error) {
-      alert("Mentési hiba: " + error.message);
+    if (!response.ok) {
+      alert("Mentési hiba: " + ((await response.json().catch(() => null))?.error || "ismeretlen hiba"));
       return;
     }
 

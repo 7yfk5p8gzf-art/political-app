@@ -4,6 +4,7 @@ import { getServerAdminClient } from '@/lib/serverSupabase';
 
 const EDITORIAL_ROLES: AppRole[] = ['superadmin', 'admin', 'reviewer'];
 const STATUS_VALUES = ['draft', 'review', 'approved', 'published'] as const;
+const EDIT_FIELDS = ['politician', 'topic', 'topic_hu', 'topic_de', 'topic_en', 'topic_fr', 'slug', 'old_statement', 'old_date', 'old_source', 'new_statement', 'new_date', 'new_source', 'ai_summary', 'ai_summary_hu', 'ai_summary_de', 'ai_summary_en', 'ai_summary_fr', 'status'] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authenticateRequest(request, EDITORIAL_ROLES);
@@ -24,7 +25,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     let update: Record<string, string | null>;
     let auditAction: string;
     let details: string;
-    if (action === 'soft_delete' || action === 'restore') {
+    if (action === 'edit') {
+      const fields = body?.fields;
+      if (!fields || typeof fields !== 'object') return NextResponse.json({ error: 'Érvénytelen szerkesztési adatok.' }, { status: 400 });
+      const candidate = fields as Record<string, unknown>;
+      update = {};
+      for (const field of EDIT_FIELDS) {
+        if (candidate[field] === undefined) continue;
+        if (typeof candidate[field] !== 'string' || candidate[field].length > 20000) return NextResponse.json({ error: 'Érvénytelen szerkesztési mező.' }, { status: 400 });
+        update[field] = candidate[field];
+      }
+      if (!Object.keys(update).length) return NextResponse.json({ error: 'Nincs módosítandó mező.' }, { status: 400 });
+      if (update.status && !STATUS_VALUES.includes(update.status as typeof STATUS_VALUES[number])) return NextResponse.json({ error: 'Érvénytelen contradiction státusz.' }, { status: 400 });
+      if (update.status === 'published' && !['admin', 'superadmin'].includes(auth.user.role)) return NextResponse.json({ error: 'Publikálni csak admin jogosultsággal lehet.' }, { status: 403 });
+      if (update.status) update.published_at = update.status === 'published' ? new Date().toISOString() : null;
+      auditAction = 'edit_contradiction';
+      details = `Contradiction szerkesztve: ${current.slug || id}`;
+    } else if (action === 'soft_delete' || action === 'restore') {
       if (!['admin', 'superadmin'].includes(auth.user.role)) return NextResponse.json({ error: 'Ehhez admin jogosultság szükséges.' }, { status: 403 });
       const deleting = action === 'soft_delete';
       update = { deleted_at: deleting ? new Date().toISOString() : null, deleted_by: deleting ? auth.user.email || auth.user.role : null };
