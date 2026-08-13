@@ -66,10 +66,16 @@ export default function AdminReviewPage() {
     updateData.published_at = new Date().toISOString();
   }
 
-  await supabase
-    .from("contradictions")
-    .update(updateData)
-    .eq("id", id);
+  const res = await fetch(`/api/admin/contradictions/${id}/workflow`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+    body: JSON.stringify(updateData),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => null);
+    alert(json?.error || "Workflow hiba");
+    return;
+  }
 
   loadItems();
 }
@@ -109,10 +115,15 @@ ${data.topic || "Ismeretlen"}
 
   const json = await res.json();
 
-  await supabase
-    .from("contradictions")
-    .update({ ai_summary: json.text })
-    .eq("id", id);
+  const save = await fetch(`/api/admin/contradictions/${id}/workflow`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+    body: JSON.stringify({ ai_summary: json.text || "" }),
+  });
+  if (!save.ok) {
+    alert("AI összefoglaló mentése sikertelen");
+    return;
+  }
 
   alert("AI kész");
   loadItems();

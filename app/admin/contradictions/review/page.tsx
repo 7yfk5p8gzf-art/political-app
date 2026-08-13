@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-function makeSlug(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
+import { getAuthHeaders } from "@/lib/clientAuth";
 type Contradiction = {
   id: string;
   politician: string | null;
@@ -59,26 +51,13 @@ export default function ReviewQueuePage() {
     reviewStatus: "review" | "rejected" | "approved",
     status: "draft" | "rejected" | "published"
   ) {
-    const { error } = await supabase
-      .from("contradictions")
-      .update({
-        slug:
-  status === "published"
-    ? makeSlug(`${items.find((x) => x.id === id)?.politician || "politician"}-${items.find((x) => x.id === id)?.topic || "contradiction"}`)
-    : undefined,
-        review_status: reviewStatus,
-        status,
-        reviewed_at: new Date().toISOString(),
-        published_at:
-          status === "published"
-            ? new Date().toISOString()
-            : null,
-      })
-      .eq("id", id);
-
-    if (!error) {
-      await loadItems();
-    }
+    const res = await fetch(`/api/admin/contradictions/${id}/workflow`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ review_status: reviewStatus, status }),
+    });
+    if (!res.ok) alert((await res.json().catch(() => null))?.error || "Workflow hiba");
+    else await loadItems();
   }
 
   useEffect(() => {
