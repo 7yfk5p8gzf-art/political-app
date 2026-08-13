@@ -1,10 +1,11 @@
 ﻿import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { authenticateRequest } from '@/lib/serverAuth';
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321",
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    ""
+    "build-only-placeholder-key"
 );
 
 type SearchResult = {
@@ -625,9 +626,12 @@ if (!existingDraft) {
 
 export async function POST(req: Request) {
   try {
+    const auth = await authenticateRequest(req, ['superadmin', 'admin', 'reviewer']);
+    if ('failure' in auth) return NextResponse.json({ error: auth.failure.message }, { status: auth.failure.status });
+
     const { query } = await req.json();
 
-    if (!query || !String(query).trim()) {
+    if (!query || !String(query).trim() || String(query).length > 1000) {
       return NextResponse.json(
         {
           articles: [],
@@ -1756,4 +1760,3 @@ return {
   source_trust_score: 45,
 };
 }
-

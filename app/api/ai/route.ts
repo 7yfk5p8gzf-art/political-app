@@ -1,5 +1,15 @@
+import { NextResponse } from 'next/server';
+import { authenticateRequest } from '@/lib/serverAuth';
+
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
+  const auth = await authenticateRequest(req, ['superadmin', 'admin', 'reviewer']);
+  if ('failure' in auth) return NextResponse.json({ error: auth.failure.message }, { status: auth.failure.status });
+
+  const body = await req.json().catch(() => null);
+  const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
+  if (!prompt || prompt.length > 12000) {
+    return NextResponse.json({ error: 'A prompt kötelező és legfeljebb 12000 karakter lehet.' }, { status: 400 });
+  }
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -15,7 +25,11 @@ export async function POST(req: Request) {
 
   const data = await response.json();
 
-  return Response.json({
+  if (!response.ok) {
+    return NextResponse.json({ error: 'AI szolgáltatási hiba.' }, { status: 502 });
+  }
+
+  return NextResponse.json({
     text: data.output?.[0]?.content?.[0]?.text || "Nem sikerült AI választ generálni.",
   });
 }

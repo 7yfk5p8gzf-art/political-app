@@ -3,8 +3,12 @@ create table if not exists public.profiles (
   email text unique not null,
   full_name text,
   role text not null default 'editor' check (role in ('superadmin', 'admin', 'reviewer', 'editor')),
+  is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists is_active boolean not null default true;
 
 alter table public.profiles enable row level security;
 

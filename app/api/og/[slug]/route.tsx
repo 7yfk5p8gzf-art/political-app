@@ -45,15 +45,16 @@ function shortStatement(text: string | null | undefined) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   const { data } = await supabase
     .from("contradictions")
     .select("politician, old_statement, new_statement, ai_summary")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .maybeSingle();
 
-  const politician = normalizePolitician(data?.politician, params.slug);
+  const politician = normalizePolitician(data?.politician, slug);
 
   const ai = (data?.ai_summary || "").toLowerCase();
 

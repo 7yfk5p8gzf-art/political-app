@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
+import { getAuthHeaders } from '@/lib/clientAuth';
 
 type Source = {
   id: string;
@@ -260,6 +261,7 @@ export default function AdminSourcesPage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(await getAuthHeaders()),
       },
       body: JSON.stringify({ query: queryToUse }),
     });

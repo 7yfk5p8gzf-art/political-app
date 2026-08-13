@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { getAuthHeaders } from '@/lib/clientAuth';
 
 type Item = {
   id: string;
@@ -102,6 +103,7 @@ ${data.topic || "Ismeretlen"}
 
   const res = await fetch("/api/ai", {
     method: "POST",
+    headers: { ...(await getAuthHeaders()) },
     body: JSON.stringify({ prompt }),
   });
 

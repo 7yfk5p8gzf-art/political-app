@@ -4,9 +4,10 @@ export const runtime = "edge";
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const title = params.slug.replaceAll("-", " ").toUpperCase();
+  const { slug } = await params;
+  const title = slug.replaceAll("-", " ").toUpperCase();
 
   return new ImageResponse(
     (

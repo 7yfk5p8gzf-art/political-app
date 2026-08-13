@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { getAuthHeaders } from '@/lib/clientAuth';
 
 type Comparison = {
   id: string;
@@ -75,7 +76,7 @@ export default function DashboardStats() {
 
       const res = await fetch("/api/ai/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
         body: JSON.stringify({ prompt: aiPrompt }),
       });
 

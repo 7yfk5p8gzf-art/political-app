@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 
 type Props = {
   children: React.ReactNode;
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -16,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (supabaseUrl && supabaseKey) {
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/contradictions?id=eq.${params.slug}&select=*`,
+      `${supabaseUrl}/rest/v1/contradictions?id=eq.${slug}&select=*`,
       {
         headers: {
           apikey: supabaseKey,
@@ -38,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const ogImageUrl = `${baseUrl}/api/og/${params.slug}`;
+  const ogImageUrl = `${baseUrl}/api/og/${slug}`;
 
   return {
     title,

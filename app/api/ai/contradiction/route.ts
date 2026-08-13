@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { authenticateRequest } from '@/lib/serverAuth';
 
 export async function POST(req: Request) {
   try {
+    const auth = await authenticateRequest(req, ['superadmin', 'admin', 'reviewer']);
+    if ('failure' in auth) return NextResponse.json({ error: auth.failure.message }, { status: auth.failure.status });
+
     const body = await req.json();
 
     const politician = body?.politician || "";
@@ -10,7 +14,8 @@ export async function POST(req: Request) {
     const newStatement = body?.newStatement || "";
     const newDate = body?.newDate || "";
 
-    if (!politician || !oldStatement || !newStatement) {
+    if (!politician || !oldStatement || !newStatement ||
+        [politician, oldStatement, newStatement, oldDate, newDate].some((value) => value.length > 12000)) {
       return NextResponse.json(
         { error: "Hiányzik a politikus, régi állítás vagy új állítás" },
         { status: 400 }

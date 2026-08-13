@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
+import { authenticateRequest } from '@/lib/serverAuth';
 
 export async function POST(req: Request) {
   try {
+    const auth = await authenticateRequest(req, ['superadmin', 'admin', 'reviewer']);
+    if ('failure' in auth) return NextResponse.json({ error: auth.failure.message }, { status: auth.failure.status });
+
     const body = await req.json();
     const prompt = body?.prompt || body?.topic || body?.title;
 
-    if (!prompt) {
+    if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 12000) {
       return NextResponse.json({ error: "Hiányzik a prompt" }, { status: 400 });
     }
 

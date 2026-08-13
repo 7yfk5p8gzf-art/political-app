@@ -11,8 +11,7 @@ import PublicInput from "@/components/public/ui/PublicInput";
 import PublicGrid from "@/components/public/ui/PublicGrid";
 import PublicSection from "@/components/public/ui/PublicSection";
 import PublicStatCard from "@/components/public/ui/PublicStatCard";
-export default function PoliticiansPage() {
-  const lang = "hu";
+const lang = "hu";
 
 type Item = {
   id: string;
@@ -89,6 +88,8 @@ const labels = {
     noTopic: "Aucun sujet",
   },
 };
+
+type Lang = keyof typeof labels;
 
 function slugify(text: string) {
   return text
