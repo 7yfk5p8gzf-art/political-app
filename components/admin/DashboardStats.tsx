@@ -121,12 +121,13 @@ export default function DashboardStats() {
         status: "draft",
       };
 
-      const { error } = editingId
-        ? await supabase.from("comparisons").update(payload).eq("id", editingId)
-        : await supabase.from("comparisons").insert(payload);
-
-      if (error) {
-        alert(error.message);
+      const response = await fetch(editingId ? `/api/admin/comparisons/${editingId}` : "/api/admin/comparisons", {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        alert((await response.json().catch(() => null))?.error || "Mentési hiba");
         return;
       }
 
@@ -156,10 +157,9 @@ export default function DashboardStats() {
   const handleDelete = async (id: string) => {
     if (!confirm("Biztos törlöd?")) return;
 
-    const { error } = await supabase.from("comparisons").delete().eq("id", id);
-
-    if (error) {
-      alert(error.message);
+    const response = await fetch(`/api/admin/comparisons/${id}`, { method: "DELETE", headers: await getAuthHeaders() });
+    if (!response.ok) {
+      alert((await response.json().catch(() => null))?.error || "Törlési hiba");
       return;
     }
 
@@ -167,13 +167,13 @@ export default function DashboardStats() {
   };
 
   const handlePublish = async (id: string) => {
-    const { error } = await supabase
-      .from("comparisons")
-      .update({ status: "published" })
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
+    const response = await fetch(`/api/admin/comparisons/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ status: "published" }),
+    });
+    if (!response.ok) {
+      alert((await response.json().catch(() => null))?.error || "Publikálási hiba");
       return;
     }
 

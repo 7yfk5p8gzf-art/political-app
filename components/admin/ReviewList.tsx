@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { canPublish, canReview } from '@/lib/permissions';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { getAuthHeaders } from '@/lib/clientAuth';
 
 type Comparison = {
   id: number;
@@ -75,14 +76,14 @@ useEffect(() => {
     id: number,
     newStatus: 'draft' | 'review' | 'published' | 'rejected'
   ) => {
-    const { error } = await supabase
-      .from('comparisons')
-      .update({ status: newStatus })
-      .eq('id', id);
-
-    if (error) {
-      console.error(error);
-      alert(`Státusz hiba: ${error.message}`);
+    const response = await fetch(`/api/admin/comparisons/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      alert(`Státusz hiba: ${result?.error || 'ismeretlen hiba'}`);
       return;
     }
 
@@ -93,14 +94,10 @@ useEffect(() => {
     const confirmed = window.confirm('Biztosan törlöd ezt a témát?');
     if (!confirmed) return;
 
-    const { error } = await supabase
-      .from('comparisons')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(error);
-      alert(`Törlési hiba: ${error.message}`);
+    const response = await fetch(`/api/admin/comparisons/${id}`, { method: 'DELETE', headers: await getAuthHeaders() });
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      alert(`Törlési hiba: ${result?.error || 'ismeretlen hiba'}`);
       return;
     }
 
