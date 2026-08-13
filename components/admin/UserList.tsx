@@ -4,7 +4,7 @@ import Badge from '@/components/shared/Badge';
 import SectionCard from '@/components/shared/SectionCard';
 import { useAuth } from '@/hooks/useAuth';
 import { roleLabels } from '@/lib/constants';
-import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/clientAuth';
 import { Role } from '@/types/user';
 import { useEffect, useState } from 'react';
 
@@ -66,18 +66,15 @@ export default function UserList() {
     setLoading(true);
     setMessage('');
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, role, full_name, created_at, is_active')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      setMessage(error.message);
+    const response = await fetch('/api/admin/users', { headers: await getAuthHeaders() });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      setMessage(result?.error ?? 'Felhasználók betöltése sikertelen.');
       setLoading(false);
       return;
     }
 
-    setUsers((data ?? []) as ProfileRow[]);
+    setUsers((result?.users ?? []) as ProfileRow[]);
     setLoading(false);
   };
 
@@ -88,26 +85,6 @@ export default function UserList() {
       setLoading(false);
     }
   }, [user]);
-
-  const writeAuditLog = async (
-    action: string,
-    recordId: string,
-    details: string
-  ) => {
-    if (!user) return;
-
-    await supabase.from('audit_logs').insert([
-      {
-        user_id: user.id,
-        user_email: user.email,
-        user_role: user.role,
-        action,
-        table_name: 'profiles',
-        record_id: recordId,
-        details,
-      },
-    ]);
-  };
 
   const updateRole = async (id: string, newRole: Role) => {
     if (!user) return;
@@ -131,21 +108,16 @@ export default function UserList() {
       return;
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', id);
-
-    if (error) {
-      setMessage(error.message);
+    const response = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+      body: JSON.stringify({ role: newRole }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      setMessage(result?.error ?? 'Felhasználó módosítása sikertelen.');
       return;
     }
-
-    await writeAuditLog(
-      'update_user_role',
-      id,
-      `User role módosítva: ${targetUser.email} · ${targetUser.role} → ${newRole}`
-    );
 
     setUsers((current) =>
       current.map((item) =>
@@ -176,23 +148,16 @@ export default function UserList() {
       return;
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_active: isActive })
-      .eq('id', id);
-
-    if (error) {
-      setMessage(error.message);
+    const response = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+      body: JSON.stringify({ is_active: isActive }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      setMessage(result?.error ?? 'Felhasználó módosítása sikertelen.');
       return;
     }
-
-    await writeAuditLog(
-      isActive ? 'reactivate_user' : 'deactivate_user',
-      id,
-      `${isActive ? 'User újraaktiválva' : 'User letiltva'}: ${
-        targetUser.email
-      }`
-    );
 
     setUsers((current) =>
       current.map((item) =>
