@@ -98,16 +98,10 @@ export default function AdminSourcesPage() {
   async function loadSources() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("sources")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      alert("Hiba betöltésnél: " + error.message);
-    }
-
-    if (data) setItems(data);
+    const response = await fetch("/api/admin/sources", { headers: await getAuthHeaders() });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) alert("Hiba betöltésnél: " + (result?.error || "ismeretlen hiba"));
+    if (response.ok && result?.sources) setItems(result.sources);
     setLoading(false);
   }
 
@@ -184,22 +178,13 @@ export default function AdminSourcesPage() {
     };
 
     if (editingId) {
-      const { error } = await supabase
-        .from("sources")
-        .update(payload)
-        .eq("id", editingId);
-
-      if (error) {
-        alert("Hiba szerkesztésnél: " + error.message);
-        return;
-      }
+      const response = await fetch(`/api/admin/sources/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) }, body: JSON.stringify(payload) });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) { alert("Hiba szerkesztésnél: " + (result?.error || "ismeretlen hiba")); return; }
     } else {
-      const { error } = await supabase.from("sources").insert([payload]);
-
-      if (error) {
-        alert("Hiba mentésnél: " + error.message);
-        return;
-      }
+      const response = await fetch("/api/admin/sources", { method: "POST", headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) }, body: JSON.stringify(payload) });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) { alert("Hiba mentésnél: " + (result?.error || "ismeretlen hiba")); return; }
     }
 
     setForm(emptyForm);
@@ -234,12 +219,9 @@ export default function AdminSourcesPage() {
   }
 
   async function quickStatus(id: string, status: string) {
-    const { error } = await supabase.from("sources").update({ status }).eq("id", id);
-
-    if (error) {
-      alert("Státusz hiba: " + error.message);
-      return;
-    }
+    const response = await fetch(`/api/admin/sources/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) }, body: JSON.stringify({ status }) });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) { alert("Státusz hiba: " + (result?.error || "ismeretlen hiba")); return; }
 
     loadSources();
   }
@@ -311,12 +293,9 @@ export default function AdminSourcesPage() {
     const ok = confirm("Biztos törlöd ezt a source-t?");
     if (!ok) return;
 
-    const { error } = await supabase.from("sources").delete().eq("id", id);
-
-    if (error) {
-      alert("Hiba törlésnél: " + error.message);
-      return;
-    }
+    const response = await fetch(`/api/admin/sources/${id}`, { method: "DELETE", headers: await getAuthHeaders() });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) { alert("Hiba törlésnél: " + (result?.error || "ismeretlen hiba")); return; }
 
     loadSources();
   }
