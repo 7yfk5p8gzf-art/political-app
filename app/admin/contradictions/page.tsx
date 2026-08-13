@@ -41,15 +41,6 @@ type Contradiction = {
   topic_fr: string | null;
 };
 
-function makeSlug(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 export default function AdminContradictionsPage() {
   const [sources, setSources] = useState<Source[]>([]);
   const [items, setItems] = useState<Contradiction[]>([]);
@@ -62,7 +53,6 @@ export default function AdminContradictionsPage() {
 
   const [search, setSearch] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string>("editor");
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -82,28 +72,6 @@ export default function AdminContradictionsPage() {
     }
   }, [showDeleted]);
 
-  async function logAction(
-    action: string,
-    recordId: string | null,
-    details: string
-  ) {
-    const { error } = await supabase.from("audit_logs").insert([
-      {
-        user_id: userId,
-        user_email: userEmail,
-        user_role: role,
-        action,
-        table_name: "contradictions",
-        record_id: recordId,
-        details,
-      },
-    ]);
-
-    if (error) {
-      console.error("Audit log hiba:", error.message);
-    }
-  }
-
   async function checkAccess() {
     const {
       data: { user },
@@ -122,7 +90,6 @@ export default function AdminContradictionsPage() {
 
     const userRole = profile?.role ?? "editor";
     setUserRole(role);
-    setUserId(user.id);
     setRole(userRole);
 
     if (
@@ -269,62 +236,16 @@ export default function AdminContradictionsPage() {
       return;
     }
 
-    const person =
-      oldS.politician?.trim() || newS.politician?.trim() || "ismeretlen";
-
-    const topic = oldS.topic?.trim() || newS.topic?.trim() || "tema";
-
-    const slugBase = makeSlug(
-      `${person}-${topic}-${oldS.source_date || "regen"}-vs-${
-        newS.source_date || "most"
-      }`
-    );
-
-    const slug = `${slugBase}-${Date.now()}`;
-
-    const { data, error } = await supabase
-      .from("contradictions")
-      .insert([
-        {
-          old_source_id: oldSource,
-          new_source_id: newSource,
-          politician: person,
-          topic,
-          topic_hu: topic,
-          topic_de: null,
-          topic_en: null,
-          topic_fr: null,
-          slug,
-          language: oldS.language || newS.language || "hu",
-
-          old_statement: oldS.quote_text || oldS.title || null,
-          old_date: oldS.source_date || null,
-          old_source: oldS.article_url || oldS.video_url || oldS.url || null,
-          old_video_url: oldS.video_url || null,
-
-          new_statement: newS.quote_text || newS.title || null,
-          new_date: newS.source_date || null,
-          new_source: newS.article_url || newS.video_url || newS.url || null,
-          new_video_url: newS.video_url || null,
-
-          ai_summary:
-            `Régi: ${oldS.ai_summary || oldS.summary || oldS.title || ""}\n\n` +
-            `Új: ${newS.ai_summary || newS.summary || newS.title || ""}`,
-        },
-      ])
-      .select("id, slug")
-      .single();
-
-    if (error) {
-      alert("Mentési hiba: " + error.message);
+    const response = await fetch("/api/admin/contradictions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ old_source_id: oldSource, new_source_id: newSource }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      alert("Mentési hiba: " + (result?.error || "ismeretlen hiba"));
       return;
     }
-
-    await logAction(
-      "create_contradiction",
-      data?.id || null,
-      `Új contradiction létrehozva draftként: ${slug}`
-    );
 
     setOldSource("");
     setNewSource("");
@@ -341,26 +262,15 @@ export default function AdminContradictionsPage() {
     const ok = confirm("Biztos törlöd ezt az ellentmondást? Mostantól csak a lomtárba kerül, visszaállítható.");
     if (!ok) return;
 
-    const item = items.find((x) => x.id === id);
-
-    const { error } = await supabase
-      .from("contradictions")
-      .update({
-        deleted_at: new Date().toISOString(),
-        deleted_by: userEmail || role || "unknown",
-      })
-      .eq("id", id);
-
-    if (error) {
-      alert("Törlési hiba: " + error.message);
+    const response = await fetch(`/api/admin/contradictions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ action: "soft_delete" }),
+    });
+    if (!response.ok) {
+      alert("Törlési hiba: " + ((await response.json().catch(() => null))?.error || "ismeretlen hiba"));
       return;
     }
-
-    await logAction(
-      "soft_delete_contradiction",
-      id,
-      `Contradiction lomtárba helyezve: ${item?.slug || id}`
-    );
 
     await loadContradictions();
   }
@@ -371,26 +281,15 @@ export default function AdminContradictionsPage() {
       return;
     }
 
-    const item = items.find((x) => x.id === id);
-
-    const { error } = await supabase
-      .from("contradictions")
-      .update({
-        deleted_at: null,
-        deleted_by: null,
-      })
-      .eq("id", id);
-
-    if (error) {
-      alert("Restore hiba: " + error.message);
+    const response = await fetch(`/api/admin/contradictions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ action: "restore" }),
+    });
+    if (!response.ok) {
+      alert("Restore hiba: " + ((await response.json().catch(() => null))?.error || "ismeretlen hiba"));
       return;
     }
-
-    await logAction(
-      "restore_contradiction",
-      id,
-      `Contradiction visszaállítva: ${item?.slug || id}`
-    );
 
     await loadContradictions();
   }
@@ -418,28 +317,15 @@ export default function AdminContradictionsPage() {
       return;
     }
 
-    const oldStatus = item?.status || "draft";
-    const updateData: any = { status };
-
-    if (status === "published") {
-      updateData.published_at = new Date().toISOString();
-    }
-
-    const { error } = await supabase
-      .from("contradictions")
-      .update(updateData)
-      .eq("id", id);
-
-    if (error) {
-      alert("Status hiba: " + error.message);
+    const response = await fetch(`/api/admin/contradictions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ action: "status", status }),
+    });
+    if (!response.ok) {
+      alert("Status hiba: " + ((await response.json().catch(() => null))?.error || "ismeretlen hiba"));
       return;
     }
-
-    await logAction(
-      "update_contradiction_status",
-      id,
-      `Status módosítva: ${oldStatus} → ${status}. Slug: ${item?.slug || id}`
-    );
 
     await loadContradictions();
   }
@@ -485,16 +371,15 @@ ${data.topic || "Ismeretlen"}
 
     const json = await res.json();
 
-    await supabase
-      .from("contradictions")
-      .update({ ai_summary: json.text })
-      .eq("id", id);
-
-    await logAction(
-      "generate_ai_summary",
-      id,
-      `AI összefoglaló generálva. Politikus: ${data.politician || "-"}`
-    );
+    const save = await fetch(`/api/admin/contradictions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+      body: JSON.stringify({ action: "ai_summary", ai_summary: json.text || "" }),
+    });
+    if (!save.ok) {
+      alert("AI összefoglaló mentése sikertelen");
+      return;
+    }
 
     alert("AI kész");
     await loadContradictions();
