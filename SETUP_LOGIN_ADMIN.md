@@ -36,4 +36,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 - `/admin/users`
 
 ## Megjegyzés
-TypeScript ellenőrzés lefutott hibamentesen. A teljes `next build` itt a környezet miatt nem futott le, mert a Linuxos SWC csomagot online akarta letölteni, de internet nem volt a konténerben.
+Az alkalmazás lokálisan a `npm run lint`, `npm run typecheck`, `npm test` és dummy Supabase env mellett a `npm run build` ellenőrzésekkel validálható. A production Supabase SQL-eket külön, kézi review után kell futtatni; a repository buildje és CI-ja nem módosít adatbázist.

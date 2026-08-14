@@ -1,15 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("error");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) window.location.href = getSafeNextPath();
+    });
+  }, []);
+
+  function getSafeNextPath() {
+    const next = new URLSearchParams(window.location.search).get("next");
+    return next && next.startsWith("/") && !next.startsWith("//") ? next : "/admin";
+  }
 
   async function login() {
+    if (!email.trim() || !password) {
+      setMessageType("error");
+      setMessage("Add meg az email címedet és a jelszavadat.");
+      return;
+    }
+
     setLoading(true);
+    setMessage("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -19,56 +39,70 @@ export default function LoginPage() {
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      setMessageType("error");
+      setMessage(error.message);
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = getSafeNextPath();
   }
 
   async function register() {
+    if (!email.trim() || password.length < 8) {
+      setMessageType("error");
+      setMessage("A regisztrációhoz érvényes email és legalább 8 karakteres jelszó szükséges.");
+      return;
+    }
+
     setLoading(true);
+    setMessage("");
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: { data: { full_name: email.split("@")[0] } },
     });
-
-    if (data?.user) {
-      await supabase.from("profiles").insert([
-        {
-          id: data.user.id,
-          role: "editor",
-        },
-      ]);
-    }
 
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      setMessageType("error");
+      setMessage(error.message);
       return;
     }
 
-    alert("Regisztráció sikeres! Jelentkezz be.");
+    setMessageType("success");
+    setMessage(data.session ? "Regisztráció sikeres, most már beléphetsz." : "Regisztráció sikeres. Ellenőrizd az email címedet a belépéshez.");
   }
 
   async function loginWithGoogle() {
-    await supabase.auth.signInWithOAuth({
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/`,
       },
     });
+    if (error) {
+      setLoading(false);
+      setMessageType("error");
+      setMessage(error.message);
+    }
   }
 
   async function loginWithApple() {
-    await supabase.auth.signInWithOAuth({
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "apple",
       options: {
         redirectTo: `${window.location.origin}/`,
       },
     });
+    if (error) {
+      setLoading(false);
+      setMessageType("error");
+      setMessage(error.message);
+    }
   }
 
   return (
@@ -118,6 +152,8 @@ export default function LoginPage() {
         <input
           type="email"
           placeholder="Email"
+          autoComplete="email"
+          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={inputStyle}
@@ -126,10 +162,18 @@ export default function LoginPage() {
         <input
           type="password"
           placeholder="Jelszó"
+          autoComplete="current-password"
+          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           style={inputStyle}
         />
+
+        {message ? (
+          <p style={{ color: messageType === "error" ? "#b91c1c" : "#047857", margin: "4px 0 12px" }} role="alert">
+            {message}
+          </p>
+        ) : null}
 
         <button onClick={login} disabled={loading} style={primaryButtonStyle}>
           Belépés

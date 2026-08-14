@@ -67,8 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const role = (profile?.role as Role) ?? 'editor';
-    const fullName = profile?.full_name ?? null;
+    if (!profile) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const role = profile.role;
+    const fullName = profile.full_name;
 
     setUser({
       id: authUser.id,

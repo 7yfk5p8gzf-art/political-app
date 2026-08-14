@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { useParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
+import { absoluteUrl } from "@/lib/siteConfig";
 import { detectBrowserLang, saveLang, t, type Lang } from "@/lib/i18n";
 import FloatingShareSidebar from "../../../src/components/FloatingShareSidebar";
 
@@ -237,13 +238,23 @@ export default function ContradictionDetailPage() {
   async function vote(type: "yes" | "no") {
     if (!item || voted) return;
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      window.location.href = `/login?next=${encodeURIComponent(`/contradictions/${slug}`)}`;
+      return;
+    }
+
     const { error } = await supabase.from("contradiction_votes").insert({
       contradiction_id: item.id,
+      user_id: user.id,
       vote_type: type,
     });
 
     if (error) {
-      alert(labels[lang].voteError + error.message);
+      console.error(labels[lang].voteError, error);
       return;
     }
 
@@ -254,7 +265,6 @@ export default function ContradictionDetailPage() {
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href);
-    alert(labels[lang].copied);
   }
 
   function getShareText() {
@@ -266,7 +276,7 @@ export default function ContradictionDetailPage() {
   function shareUrl(
     platform: "x" | "facebook" | "whatsapp" | "telegram" | "reddit"
   ) {
-    const publicUrl = `https://political-app-six.vercel.app/contradictions/${slug}`;
+    const publicUrl = absoluteUrl(`/contradictions/${slug}`);
     const url = encodeURIComponent(publicUrl);
     const text = encodeURIComponent(getShareText());
 
@@ -468,8 +478,6 @@ const emptyCardStyle: CSSProperties = {
   borderRadius: 18,
   padding: 28,
 };
-
-
 
 
 

@@ -13,6 +13,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Hiányzik a prompt" }, { status: 400 });
     }
 
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Az AI szolgáltatás nincs konfigurálva." }, { status: 503 });
+    }
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {

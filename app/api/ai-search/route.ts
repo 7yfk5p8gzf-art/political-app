@@ -5,7 +5,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321",
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "build-only-placeholder-key"
+    "missing-supabase-key"
 );
 
 type SearchResult = {
@@ -625,6 +625,13 @@ if (!existingDraft) {
 }
 
 export async function POST(req: Request) {
+  if (!process.env.OPENAI_API_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return NextResponse.json(
+      { error: "Az AI keresés nincs konfigurálva." },
+      { status: 503 }
+    );
+  }
+
   try {
     const auth = await authenticateRequest(req, ['superadmin', 'admin', 'reviewer']);
     if ('failure' in auth) return NextResponse.json({ error: auth.failure.message }, { status: auth.failure.status });

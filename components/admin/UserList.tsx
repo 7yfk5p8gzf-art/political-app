@@ -25,7 +25,7 @@ const roleTone: Record<Role, 'blue' | 'green' | 'amber' | 'slate'> = {
 };
 
 function isMainAdmin(role: string) {
-  return role === 'superadmin' || role === 'superadmin';
+  return role === 'superadmin';
 }
 
 function canOpenUsers(role: string) {

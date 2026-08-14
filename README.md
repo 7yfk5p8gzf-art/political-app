@@ -1,17 +1,17 @@
-# Political App Starter
+# Political Compare MVP
 
-Ez egy Next.js + Tailwind starter projekt a politikai összehasonlító apphoz.
+Next.js + Supabase alapú politikai összehasonlító MVP.
 
-## Mit tud most?
+## Fő funkciók
+
 - publikus kezdőlap
-- comparison oldal
-- contradiction oldal
-- admin login
-- role alapú mock auth localStorage-val
-- admin dashboard
-- review lista
-- felhasználólista
-- audit log
+- publikus comparison és contradiction oldalak, forrásokkal, AI-összefoglalóval és szavazással
+- Supabase Auth alapú bejelentkezés és szerepkörös admin felület
+- forrás- és contradiction-kezelés, review/publish workflow
+- comparison-kezelés
+- felhasználó- és szerepkör-kezelés
+- audit log és AI-generálás/keresés
+- production RLS, UUID foreign key és orphan vote cleanup/migration SQL-ek
 
 ## Indítás
 ```bash
@@ -22,15 +22,14 @@ npm run dev
 Utána nyisd meg:
 - http://localhost:3000
 
-## Demo belépések
-- `foadmin@app.hu` / `demo123` → Főadmin
-- `admin2@app.hu` / `demo123` → Admin
-- `reviewer@app.hu` / `demo123` → Reviewer
-- `editor@app.hu` / `demo123` → Szerkesztő
+## Ellenőrzés
 
-## Következő lépések
-- Supabase auth
-- adatbázis bekötése
-- review actionök backenddel
-- admin meghívásos rendszer
-- AI import workflow
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build:ci
+```
+
+Éles futtatáshoz a Supabase és az AI szolgáltatás valódi környezeti változóit kell a deployment secret store-ban beállítani. A production adatbázis SQL-eit a `supabase/` könyvtár tartalmazza; ezeket nem futtatja a build vagy a CI.

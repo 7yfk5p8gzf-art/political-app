@@ -1,3 +1,5 @@
+import { siteImageUrl, siteUrl } from '@/lib/siteConfig';
+
 export default function Head() {
   return (
     <>
@@ -20,12 +22,12 @@ export default function Head() {
 
       <meta
         property="og:image"
-        content="https://political-app-six.vercel.app/og-image.jpg"
+        content={siteImageUrl}
       />
 
       <meta
         property="og:url"
-        content="https://political-app-six.vercel.app/topics"
+        content={`${siteUrl}/topics`}
       />
 
       <meta name="twitter:card" content="summary_large_image" />
@@ -42,7 +44,7 @@ export default function Head() {
 
       <meta
         name="twitter:image"
-        content="https://political-app-six.vercel.app/og-image.jpg"
+        content={siteImageUrl}
       />
     </>
   );

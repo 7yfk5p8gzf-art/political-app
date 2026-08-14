@@ -11,7 +11,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'A prompt kötelező és legfeljebb 12000 karakter lehet.' }, { status: 400 });
   }
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'Az AI szolgáltatás nincs konfigurálva.' }, { status: 503 });
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -21,15 +26,19 @@ export async function POST(req: Request) {
       model: "gpt-4.1-mini",
       input: prompt,
     }),
-  });
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!response.ok) {
-    return NextResponse.json({ error: 'AI szolgáltatási hiba.' }, { status: 502 });
+    if (!response.ok) {
+      return NextResponse.json({ error: 'AI szolgáltatási hiba.' }, { status: 502 });
+    }
+
+    return NextResponse.json({
+      text: data.output?.[0]?.content?.[0]?.text || "Nem sikerült AI választ generálni.",
+    });
+  } catch (error) {
+    console.error('AI request failed:', error);
+    return NextResponse.json({ error: 'Az AI szolgáltatás átmenetileg nem elérhető.' }, { status: 502 });
   }
-
-  return NextResponse.json({
-    text: data.output?.[0]?.content?.[0]?.text || "Nem sikerült AI választ generálni.",
-  });
 }

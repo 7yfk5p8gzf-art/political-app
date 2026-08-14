@@ -1,8 +1,7 @@
 import "./globals.css";
 import Providers from "@/app/providers";
+import { siteImageUrl, siteUrl } from "@/lib/siteConfig";
 import type { Metadata } from "next";
-
-const siteUrl = "https://political-app-six.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://political-app-six.vercel.app/og-image.jpg",
+        url: siteImageUrl,
         width: 1200,
         height: 630,
         alt: "Political Compare",
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
   title: "Political Compare",
   description:
     "Régi és új politikai állítások összehasonlítása AI elemzéssel, forrásokkal és közösségi szavazással.",
-  images: ["https://political-app-six.vercel.app/og-image.jpg"],
+    images: [siteImageUrl],
 },
 };
 
