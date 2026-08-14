@@ -11,7 +11,7 @@ import PublicInput from "@/components/public/ui/PublicInput";
 import PublicGrid from "@/components/public/ui/PublicGrid";
 import PublicSection from "@/components/public/ui/PublicSection";
 import PublicStatCard from "@/components/public/ui/PublicStatCard";
-const lang = "hu";
+import { detectBrowserLang, saveLang } from "@/lib/i18n";
 
 type Item = {
   id: string;
@@ -89,7 +89,7 @@ const labels = {
   },
 };
 
-type Lang = keyof typeof labels;
+type PageLang = keyof typeof labels;
 
 function slugify(text: string) {
   return text
@@ -120,10 +120,10 @@ export default function PoliticiansPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [search, setSearch] = useState("");
-  
+  const [lang, setLang] = useState<PageLang>("hu");
 
   useEffect(() => {
-    
+    setLang(detectBrowserLang());
     load();
   }, []);
 
@@ -217,12 +217,10 @@ export default function PoliticiansPage() {
             </div>
 
             <div className="flex gap-2">
-              {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
+              {(["hu", "de", "en", "fr"] as PageLang[]).map((l) => (
                 <button
                   key={l}
-                  onClick={() => {
-                    
-                  }}
+                  onClick={() => { setLang(l); saveLang(l); }}
                   className={`rounded-xl px-4 py-2 text-sm font-black transition-all ${
                     lang === l
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
@@ -246,32 +244,32 @@ export default function PoliticiansPage() {
           {filteredPoliticians.map((p) => (
             <PublicCard
               key={p.slug}
-              className="min-h-[280px] border-white/5 bg-slate-900/95 text-white hover:scale-[1.02]"
+              className="min-h-[280px] border-slate-200 bg-white text-slate-950"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/10 text-xl font-black text-white ring-1 ring-white/10">
+                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-slate-900 text-xl font-black text-white">
                     {getInitials(p.name)}
                   </div>
 
                   <div>
                     <PublicTag>{p.country || labels[lang].noCountry}</PublicTag>
 
-                    <h2 className="mt-3 text-3xl font-black tracking-tight text-white">
+                    <h2 className="mt-3 max-w-[12ch] break-words text-3xl font-black tracking-tight text-slate-950">
                       {p.name}
                     </h2>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
-                <span className="text-sm font-bold text-slate-400">
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <span className="text-sm font-bold text-slate-500">
                   {labels[lang].topTopic}:
                 </span>{" "}
                 {p.topTopic ? (
                   <a
                     href={`/topics/${slugify(p.topTopic)}`}
-                    className="font-black text-white underline decoration-2 underline-offset-4"
+                    className="font-black text-slate-900 underline decoration-2 underline-offset-4"
                   >
                     {p.topTopic} →
                   </a>

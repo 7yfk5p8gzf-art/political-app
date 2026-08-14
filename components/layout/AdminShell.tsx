@@ -43,13 +43,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [isLoading, router, user]);
 
   if (isLoading || roleLoading || !user) {
-    return <div className="flex min-h-screen items-center justify-center">Jogosultság ellenőrzése...</div>;
+    return <div className="flex min-h-screen items-center justify-center bg-slate-100 px-6 text-center text-sm font-semibold text-slate-600">Jogosultság ellenőrzése...</div>;
   }
 
   if (!allowed) return null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="min-h-screen bg-[#eef1f4] text-slate-900">
       <div className="flex">
         <AdminSidebar
           user={user}
@@ -58,7 +58,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             router.push('/login');
           }}
         />
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="min-w-0 flex-1 p-4 md:p-8 lg:p-10">{children}</main>
       </div>
     </div>
   );

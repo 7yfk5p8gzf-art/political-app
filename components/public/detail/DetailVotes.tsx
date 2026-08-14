@@ -16,8 +16,8 @@ export default function DetailVotes({
   onVote,
 }: Props) {
   return (
-    <PublicCard className="mb-10 border-white/5 bg-slate-900/95 text-white">
-      <div className="mb-5 text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+    <PublicCard className="mb-10 border-slate-200 bg-white">
+      <div className="mb-5 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
         Community Vote
       </div>
 
@@ -27,25 +27,25 @@ export default function DetailVotes({
           disabled={voted}
           className="
             rounded-2xl
-            border border-emerald-400/20
-            bg-emerald-500/10
+            border border-emerald-200
+            bg-emerald-50
             p-6
 
             text-left
             transition-all duration-300
 
-            hover:scale-[1.01]
-            hover:bg-emerald-500/20
+            hover:border-emerald-400
+            hover:bg-emerald-100
 
             disabled:cursor-not-allowed
             disabled:opacity-60
           "
         >
-          <div className="text-sm font-black uppercase tracking-[0.2em] text-emerald-300">
+          <div className="text-sm font-black uppercase tracking-[0.2em] text-emerald-800">
             YES
           </div>
 
-          <div className="mt-3 text-5xl font-black text-white">
+          <div className="mt-3 text-5xl font-black text-slate-950">
             {yesPercent}%
           </div>
         </button>
@@ -55,31 +55,31 @@ export default function DetailVotes({
           disabled={voted}
           className="
             rounded-2xl
-            border border-rose-400/20
-            bg-rose-500/10
+            border border-rose-200
+            bg-rose-50
             p-6
 
             text-left
             transition-all duration-300
 
-            hover:scale-[1.01]
-            hover:bg-rose-500/20
+            hover:border-rose-400
+            hover:bg-rose-100
 
             disabled:cursor-not-allowed
             disabled:opacity-60
           "
         >
-          <div className="text-sm font-black uppercase tracking-[0.2em] text-rose-300">
+          <div className="text-sm font-black uppercase tracking-[0.2em] text-rose-800">
             NO
           </div>
 
-          <div className="mt-3 text-5xl font-black text-white">
+          <div className="mt-3 text-5xl font-black text-slate-950">
             {noPercent}%
           </div>
         </button>
       </div>
 
-      <div className="text-sm font-bold text-slate-400">
+      <div className="text-sm font-bold text-slate-500">
         Total votes: {totalVotes}
       </div>
     </PublicCard>

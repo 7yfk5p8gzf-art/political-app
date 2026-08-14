@@ -7,28 +7,20 @@
   color-scheme: light;
 
   --page-bg:
-    radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 32%),
-    radial-gradient(circle at top right, rgba(168,85,247,0.12), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    linear-gradient(180deg, #f7f5f0 0%, #eef1f4 100%);
 
   --card-bg: rgba(255,255,255,0.92);
 
-  --card-border: rgba(255,255,255,0.72);
+  --card-border: #d8dee5;
 
   --text-main: #0f172a;
 
   --text-muted: #475569;
 
-  --hero-bg:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,0.94),
-      rgba(248,250,252,0.82)
-    );
+  --hero-bg: linear-gradient(135deg, #fffdf8, #f1f4f6);
 
   --shadow-main:
-    0 28px 80px rgba(15,23,42,0.13),
-    inset 0 1px 0 rgba(255,255,255,0.9);
+    0 14px 38px rgba(15,23,42,0.08);
 }
 
 html.dark {
@@ -68,6 +60,8 @@ body {
 body {
   background: var(--page-bg);
   color: var(--text-main);
+  font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 
   transition:
     background 0.25s ease,
@@ -80,4 +74,22 @@ a {
 
 button {
   @apply transition-colors;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #facc15;
+  color: #172033;
+}
+
+.text-balance {
+  text-wrap: balance;
 }

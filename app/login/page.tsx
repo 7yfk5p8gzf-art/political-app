@@ -106,129 +106,80 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f5f1e8",
-      }}
-    >
-      <div
-        style={{
-          width: 380,
-          padding: 26,
-          border: "1px solid #111827",
-          background: "white",
-          borderRadius: 18,
-          boxShadow: "0 18px 40px rgba(15,23,42,0.12)",
-        }}
-      >
-        <h1 style={{ fontSize: 30, marginBottom: 8 }}>Bejelentkezés</h1>
+    <main className="flex min-h-screen items-center justify-center bg-[#eef1f4] px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.10)] sm:p-8">
+        <div className="mb-8 border-b border-slate-200 pb-6">
+          <div className="text-xs font-black uppercase tracking-[0.28em] text-slate-500">Political Intelligence</div>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Bejelentkezés</h1>
+        </div>
 
-        <p style={{ color: "#64748b", marginBottom: 20 }}>
+        <p className="mb-5 text-sm leading-6 text-slate-600">
           Lépj be emaillel, Google-fiókkal vagy Apple ID-val.
         </p>
 
         <button
+          type="button"
           onClick={loginWithGoogle}
           disabled={loading}
-          style={socialButtonStyle}
+          className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue with Google
         </button>
 
         <button
+          type="button"
           onClick={loginWithApple}
           disabled={loading}
-          style={socialButtonStyle}
+          className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue with Apple
         </button>
 
         <div style={dividerStyle}>vagy emaillel</div>
 
-        <input
+        <label className="mb-3 block">
+          <span className="mb-1.5 block text-sm font-bold text-slate-700">Email</span>
+          <input
           type="email"
           placeholder="Email"
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={inputStyle}
-        />
+          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-600 focus:ring-4 focus:ring-amber-400/20"
+          />
+        </label>
 
-        <input
+        <label className="mb-3 block">
+          <span className="mb-1.5 block text-sm font-bold text-slate-700">Jelszó</span>
+          <input
           type="password"
           placeholder="Jelszó"
           autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={inputStyle}
-        />
+          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-600 focus:ring-4 focus:ring-amber-400/20"
+          />
+        </label>
 
         {message ? (
-          <p style={{ color: messageType === "error" ? "#b91c1c" : "#047857", margin: "4px 0 12px" }} role="alert">
+          <p className={`mb-3 rounded-xl border px-3 py-2 text-sm ${messageType === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`} role="alert">
             {message}
           </p>
         ) : null}
 
-        <button onClick={login} disabled={loading} style={primaryButtonStyle}>
+        <button type="button" onClick={login} disabled={loading} className="mb-3 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
           Belépés
         </button>
 
-        <button onClick={register} disabled={loading} style={secondaryButtonStyle}>
+        <button type="button" onClick={register} disabled={loading} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
           Regisztráció
         </button>
       </div>
     </main>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: 12,
-  marginBottom: 10,
-  border: "1px solid #cbd5e1",
-  borderRadius: 10,
-  fontSize: 15,
-};
-
-const primaryButtonStyle = {
-  width: "100%",
-  padding: 12,
-  background: "#111827",
-  color: "white",
-  fontWeight: 800,
-  marginBottom: 10,
-  cursor: "pointer",
-  borderRadius: 10,
-  border: "none",
-};
-
-const secondaryButtonStyle = {
-  width: "100%",
-  padding: 12,
-  border: "1px solid #111827",
-  fontWeight: 800,
-  cursor: "pointer",
-  borderRadius: 10,
-  background: "white",
-};
-
-const socialButtonStyle = {
-  width: "100%",
-  padding: 12,
-  border: "1px solid #111827",
-  background: "#f8fafc",
-  color: "#111827",
-  fontWeight: 900,
-  cursor: "pointer",
-  borderRadius: 10,
-  marginBottom: 10,
-};
 
 const dividerStyle = {
   textAlign: "center" as const,

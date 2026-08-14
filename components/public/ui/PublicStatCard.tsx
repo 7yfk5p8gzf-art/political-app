@@ -10,25 +10,22 @@ export default function PublicStatCard({
   return (
     <div
       className="
-        rounded-3xl
-        border border-white/10
-        bg-slate-900/95
-        p-6
+        rounded-2xl
+        border border-slate-200
+        bg-slate-50
+        p-5
 
         text-center
-        text-white
-
-        shadow-[0_20px_50px_rgba(15,23,42,0.25)]
-
-        transition-all duration-300
-        hover:scale-[1.02]
+        text-slate-950
+        transition-shadow duration-300
+        hover:shadow-sm
       "
     >
       <div className="text-4xl font-black tracking-tight">
         {value}
       </div>
 
-      <div className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+      <div className="mt-2 text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </div>
     </div>

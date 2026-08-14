@@ -11,9 +11,9 @@ export default function PublicEmptyState({
 }: Props) {
   return (
     <PublicCard className="p-10 text-center">
-      <div className="text-5xl">🗂️</div>
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl dark:bg-slate-800" aria-hidden="true">—</div>
 
-      <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
+      <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
         {title}
       </h2>
 

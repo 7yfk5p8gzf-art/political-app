@@ -10,7 +10,7 @@ export default function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[2rem] bg-white border border-slate-200 shadow-sm p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
       <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-xl font-bold">{title}</h3>
@@ -19,6 +19,6 @@ export default function SectionCard({
         {right}
       </div>
       {children}
-    </div>
+    </section>
   );
 }

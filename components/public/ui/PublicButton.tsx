@@ -25,12 +25,7 @@ export default function PublicButton({
     return (
       <a
         href={href}
-        className="
-inline-flex items-center justify-center rounded-xl
-bg-slate-900 px-4 py-2 text-sm font-black text-white
-transition-all hover:scale-[1.02] hover:bg-slate-700
-dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200
-"
+        className={`${styleClass} ${className}`}
       >
         {children}
       </a>
@@ -39,6 +34,7 @@ dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`${styleClass} ${className}`}
     >

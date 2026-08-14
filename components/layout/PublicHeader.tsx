@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { detectBrowserLang, saveLang, type Lang } from "@/lib/i18n";
 
 export default function PublicHeader() {
   const [lang, setLang] = useState<Lang>("hu");
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setLang(detectBrowserLang());
@@ -18,48 +21,35 @@ export default function PublicHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 mb-6 rounded-3xl border border-white/10 bg-slate-950/70 px-6 py-4 shadow-[0_10px_40px_rgba(0,0,0,0.25)] backdrop-blur-2xl">
-      <div className="flex flex-wrap items-center justify-between gap-6">
-        <Link href="/" className="group block">
-          <div className="text-xs font-black uppercase tracking-[0.35em] text-slate-400">
-            Political Intelligence
-          </div>
-
-          <div className="mt-1 text-2xl font-black tracking-tight text-white">
-            Contradiction Platform
-          </div>
+    <header className="sticky top-0 z-50 mb-8 border-b border-slate-800 bg-slate-950/95 px-4 py-3 text-white shadow-lg shadow-slate-950/10 backdrop-blur md:rounded-2xl md:px-6">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4">
+        <Link href="/" className="min-w-0" onClick={() => setOpen(false)}>
+          <div className="truncate text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Political Intelligence</div>
+          <div className="truncate text-lg font-black tracking-tight text-white md:text-xl">Contradiction Platform</div>
         </Link>
 
-        <nav className="flex flex-wrap items-center gap-3">
-          <Link href="/" className="rounded-full px-4 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white">
-            Home
-          </Link>
+        <button type="button" aria-expanded={open} aria-controls="public-navigation" aria-label="Menü megnyitása" onClick={() => setOpen((value) => !value)} className="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-200 md:hidden">
+          {open ? "Bezárás" : "Menü"}
+        </button>
 
-          <Link href="/contradictions" className="rounded-full px-4 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white">
-            Contradictions
-          </Link>
-
-          <Link href="/topics" className="rounded-full px-4 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white">
-            Topics
-          </Link>
-
-          <Link href="/politicians" className="rounded-full px-4 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white">
-            Politicians
-          </Link>
-
-          <Link href="/login" className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-slate-900 hover:bg-slate-200">
-            Login / Register
-          </Link>
-
-          <div className="ml-2 flex gap-2">
+        <nav id="public-navigation" className={`${open ? "flex" : "hidden"} absolute left-3 right-3 top-[calc(100%+8px)] flex-col gap-1 rounded-2xl border border-slate-700 bg-slate-950 p-3 shadow-2xl md:static md:flex md:flex-row md:items-center md:gap-1 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}>
+          {[['/', 'Kezdőlap'], ['/contradictions', 'Ellentmondások'], ['/topics', 'Témák'], ['/politicians', 'Politikusok']].map(([href, label]) => (
+            <Link key={href} href={href} onClick={() => setOpen(false)} className={`rounded-xl px-3 py-2 text-sm font-bold ${pathname === href || (href !== '/' && pathname.startsWith(href)) ? 'bg-white text-slate-950' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
+              {label}
+            </Link>
+          ))}
+          <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl bg-amber-400 px-4 py-2 text-center text-sm font-black text-slate-950 hover:bg-amber-300">Belépés</Link>
+          <div className="flex gap-1 border-t border-slate-800 pt-2 md:ml-2 md:border-0 md:pt-0">
             {(["hu", "de", "en", "fr"] as Lang[]).map((l) => (
               <button
                 key={l}
+                type="button"
+                aria-label={`Nyelv: ${l.toUpperCase()}`}
                 onClick={() => changeLang(l)}
                 className={
                   lang === l
-                    ? "rounded-xl bg-indigo-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-indigo-500/30"
-                    : "rounded-xl bg-white/90 px-4 py-2 text-sm font-black text-slate-900 hover:bg-white"
+                    ? "rounded-lg bg-amber-400 px-2.5 py-1.5 text-xs font-black text-slate-950"
+                    : "rounded-lg px-2.5 py-1.5 text-xs font-black text-slate-400 hover:bg-white/10 hover:text-white"
                 }
               >
                 {l.toUpperCase()}

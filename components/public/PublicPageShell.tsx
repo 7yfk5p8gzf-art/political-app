@@ -40,23 +40,8 @@ export default function PublicPageShell({
   }
 
   return (
-    <main
-  className={publicStyles.page}
-  style={{
-    minHeight: "100vh",
-    padding: "32px 16px 64px",
-    background: "var(--page-bg)",
-    color: "var(--text-main)",
-  }}
->
-      <div
-  className={publicStyles.shell}
-  style={{
-    width: "100%",
-    maxWidth: "1120px",
-    margin: "0 auto",
-  }}
->
+    <main className={`${publicStyles.page} min-h-screen px-4 pb-16 pt-4 text-[var(--text-main)] sm:px-6`} style={{ background: "var(--page-bg)" }}>
+      <div className="mx-auto w-full max-w-[1180px]">
         <div
           style={{
             position: "fixed",
@@ -66,8 +51,10 @@ export default function PublicPageShell({
           }}
         >
           <button
+  type="button"
+  aria-label="Téma váltása"
   onClick={toggleDarkMode}
-  className={publicStyles.buttonSecondary}
+  className={`${publicStyles.buttonSecondary} px-3 py-2 text-xs`}
   style={{
               
               backdropFilter: "blur(10px)",
